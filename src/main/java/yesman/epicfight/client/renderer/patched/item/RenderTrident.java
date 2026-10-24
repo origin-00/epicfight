@@ -29,7 +29,7 @@ public class RenderTrident extends RenderItemBase {
 		MathUtils.mulStack(poseStack, modelMatrix);
 		ItemDisplayContext transformType = (hand == InteractionHand.MAIN_HAND) ? ItemDisplayContext.THIRD_PERSON_RIGHT_HAND : ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
 		Minecraft mc = Minecraft.getInstance();
-		mc.gameRenderer.itemInHandRenderer.renderItem(entitypatch.getOriginal(), stack, transformType, !(hand == InteractionHand.MAIN_HAND), poseStack, buffer, packedLight);
+		submitItem(entitypatch.getOriginal(), stack, transformType, poseStack, buffer, packedLight);
 		poseStack.popPose();
 	}
 	

@@ -1,19 +1,19 @@
 package yesman.epicfight.api.event.types.registry;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.event.Event;
 import yesman.epicfight.skill.SkillBuilder;
 
 public class SkillBuilderModificationEvent extends Event {
-	private final ResourceLocation registryName;
+	private final Identifier registryName;
 	private final SkillBuilder<?> skillBuilder;
 	
-	public SkillBuilderModificationEvent(ResourceLocation registryName, SkillBuilder<?> skillBuilder) {
+	public SkillBuilderModificationEvent(Identifier registryName, SkillBuilder<?> skillBuilder) {
 		this.registryName = registryName;
 		this.skillBuilder = skillBuilder;
 	}
 	
-	public ResourceLocation getRegistryName() {
+	public Identifier getRegistryName() {
 		return this.registryName;
 	}
 	

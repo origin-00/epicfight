@@ -44,6 +44,9 @@ public class MixinMinecraft {
     public HitResult hitResult;
 
     @Shadow
+    public Entity crosshairPickEntity;
+
+    @Shadow
     public Entity getCameraEntity() { throw new AbstractMethodError(); }
 	
 	@Inject(at = @At(value = "HEAD"), method = "handleKeybinds()V")
@@ -82,18 +85,13 @@ public class MixinMinecraft {
         }
     }
 
-    @WrapOperation(
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/GameRenderer;pick(F)V"
-        ),
-        method = "tick()V"
-    )
-    private void epicfight$tick(GameRenderer gameRenderer, float partialTick, Operation<Void> originalOperation) {
+    /// Picks from the third-person crosshair in TPS mode. Since 1.21.9 picking is `Minecraft#pick`,
+    /// called from both the render loop and the tick (it used to be `GameRenderer#pick`).
+    @Inject(at = @At("HEAD"), method = "pick(F)V", cancellable = true)
+    private void epicfight$pick(float partialTicks, CallbackInfo ci) {
         if (EpicFightCameraAPI.getInstance().isTPSMode()) {
             this.pickInTPSPerspectiveMode();
-        } else {
-            this.gameRenderer.pick(partialTick);
+            ci.cancel();
         }
     }
 
@@ -121,6 +119,7 @@ public class MixinMinecraft {
         if (entity != null) {
             if (this.level != null) {
                 this.hitResult = EpicFightCameraAPI.getInstance().getCrosshairHitResult();
+                this.crosshairPickEntity = EpicFightCameraAPI.getInstance().getFocusingEntity();
 
                 if (this.hitResult != null) {
                     double d0 = this.player.blockInteractionRange();
@@ -128,9 +127,9 @@ public class MixinMinecraft {
                     double distanceLimit = Math.max(d0, entityReach) + ClientConfig.cameraZoom * 0.5D;
                     Vec3 hitPos = this.hitResult.getLocation();
 
-                    if (hitPos.distanceToSqr(this.gameRenderer.getMainCamera().getPosition()) > distanceLimit * distanceLimit) {
-                        Vec3 cameraPos = this.gameRenderer.getMainCamera().getPosition();
-                        this.hitResult = BlockHitResult.miss(hitPos, Direction.getNearest(cameraPos.x, cameraPos.y, cameraPos.z), BlockPos.containing(hitPos));
+                    if (hitPos.distanceToSqr(this.gameRenderer.getMainCamera().position()) > distanceLimit * distanceLimit) {
+                        Vec3 cameraPos = this.gameRenderer.getMainCamera().position();
+                        this.hitResult = BlockHitResult.miss(hitPos, Direction.getApproximateNearest(cameraPos.x, cameraPos.y, cameraPos.z), BlockPos.containing(hitPos));
                     }
                 }
             }

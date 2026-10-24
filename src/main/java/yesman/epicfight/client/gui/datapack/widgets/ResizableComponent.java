@@ -1,6 +1,6 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -119,7 +119,7 @@ public interface ResizableComponent extends GuiEventListener, NarratableEntry {
 	 *        Vanilla Widget Functions       *
 	 *****************************************/
 	void _setActive(boolean active);
-	void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks);
+	void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks);
 	int _getX();
 	int _getY();
 	int _getWidth();

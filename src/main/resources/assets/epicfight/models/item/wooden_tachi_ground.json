@@ -1,0 +1,7 @@
+{
+  "gui_light": "front",
+  "parent": "epicfight:item/tachi",
+  "textures": {
+    "layer0": "epicfight:item/wooden_tachi_gui"
+  }
+}

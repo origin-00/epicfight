@@ -2,13 +2,12 @@ package yesman.epicfight.api.client.model;
 
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -19,10 +18,7 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec4f;
-import yesman.epicfight.client.renderer.EpicFightRenderTypes;
-import yesman.epicfight.client.renderer.shader.compute.ComputeShaderSetup;
-import yesman.epicfight.client.renderer.shader.compute.loader.ComputeShaderProvider;
-import yesman.epicfight.config.ClientConfig;
+import yesman.epicfight.client.renderer.submit.RecordingBufferSource;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
 
@@ -39,10 +35,11 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 	
 	private final int maxJointCount;
 	
-	@Nullable
-	private ComputeShaderSetup computerShaderSetup;
-	
-	public SkinnedMesh(@Nullable Map<String, Number[]> arrayMap, @Nullable Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, @Nullable SkinnedMesh parent, RenderProperties properties) {
+	/// Per-draw scratch space for the joint matrices of the part being drawn.
+	private static final OpenMatrix4f[] TOTAL_POSES = OpenMatrix4f.allocateMatrixArray(EpicFightSharedConstants.MAX_JOINTS);
+	private static final OpenMatrix4f[] TOTAL_NORMALS = OpenMatrix4f.allocateMatrixArray(EpicFightSharedConstants.MAX_JOINTS);
+
+public SkinnedMesh(@Nullable Map<String, Number[]> arrayMap, @Nullable Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, @Nullable SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
 		
 		this.weights = parent == null ? ParseUtil.unwrapFloatWrapperArray(arrayMap.get("weights")) : parent.weights;
@@ -84,30 +81,11 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 		}
 		
 		this.maxJointCount = maxJointId;
-
-		if (ComputeShaderProvider.supportComputeShader()) {
-			if (RenderSystem.isOnRenderThread()) {
-				this.computerShaderSetup = ComputeShaderProvider.getComputeShaderSetup(this);
-			} else {
-				RenderSystem.recordRenderCall(() -> {
-					this.computerShaderSetup = ComputeShaderProvider.getComputeShaderSetup(this);
-				});
-			}
-		}
 	}
 	
+	/// Kept for API compatibility: meshes no longer own GPU buffers (26.1.2 port: the compute
+	/// shader skinning path is not part of this build).
 	public void destroy() {
-		if (RenderSystem.isOnRenderThread()) {
-			if (this.computerShaderSetup != null) {
-				this.computerShaderSetup.destroyBuffers();
-			}
-		} else {
-			RenderSystem.recordRenderCall(() -> {
-				if (this.computerShaderSetup != null) {
-					this.computerShaderSetup.destroyBuffers();
-				}
-			});
-		}
 	}
 	
 	@Override
@@ -199,22 +177,22 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 				OpenMatrix4f transform = part.getVanillaPartTransform();
 				
 				for (int i = 0; i < poses.length; i++) {
-					ComputeShaderSetup.TOTAL_POSES[i].load(poses[i]);
+					TOTAL_POSES[i].load(poses[i]);
 					
 					if (armature != null) {
-						ComputeShaderSetup.TOTAL_POSES[i].mulBack(armature.searchJointById(i).getToOrigin());
+						TOTAL_POSES[i].mulBack(armature.searchJointById(i).getToOrigin());
 					}
 					
 					if (transform != null) {
-						ComputeShaderSetup.TOTAL_POSES[i].mulBack(transform);
+						TOTAL_POSES[i].mulBack(transform);
 					}
 					
-					ComputeShaderSetup.TOTAL_NORMALS[i] = ComputeShaderSetup.TOTAL_POSES[i].removeTranslation();
+					TOTAL_NORMALS[i] = TOTAL_POSES[i].removeTranslation();
 				}
 				
 				for (VertexBuilder vi : part.getVertices()) {
-					this.getVertexPosition(vi.position, POSITION, ComputeShaderSetup.TOTAL_POSES);
-					this.getVertexNormal(vi.position, vi.normal, NORMAL, ComputeShaderSetup.TOTAL_NORMALS);
+					this.getVertexPosition(vi.position, POSITION, TOTAL_POSES);
+					this.getVertexNormal(vi.position, vi.normal, NORMAL, TOTAL_NORMALS);
 					
 					POSITION.mul(pose);
 					NORMAL.mul(normal);
@@ -236,11 +214,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 
 	@Override
 	public void draw(PoseStack poseStack, MultiBufferSource bufferSources, RenderType renderType, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, @Nullable Armature armature, OpenMatrix4f[] poses) {
-        if (ClientConfig.activateComputeShader && this.computerShaderSetup != null) {
-			this.computerShaderSetup.drawWithShader(this, poseStack, bufferSources, EpicFightRenderTypes.getTriangulated(renderType), packedLight, r, g, b, a, overlay, armature, poses);
-		} else {
-			this.drawPosed(poseStack, bufferSources.getBuffer(EpicFightRenderTypes.getTriangulated(renderType)), drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
-		}
+		RecordingBufferSource.drawTriangles(bufferSources, renderType, buffer -> this.drawPosed(poseStack, buffer, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses));
 	}
 	
 	public int getMaxJointCount() {
@@ -264,21 +238,11 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 	}
 	
 	public class SkinnedMeshPart extends MeshPart {
-		private ComputeShaderSetup.MeshPartBuffer partVBO;
-
 		public SkinnedMeshPart(List<VertexBuilder> animatedMeshPartList, @Nullable Mesh.RenderProperties renderProperties, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
 			super(animatedMeshPartList, renderProperties, vanillaPartTracer);
 		}
 		
-		public void initVBO(ComputeShaderSetup.MeshPartBuffer partVBO) {
-			this.partVBO = partVBO;
-		}
-		
-		public ComputeShaderSetup.MeshPartBuffer getPartVBO() {
-			return this.partVBO;
-		}
-		
-		@Override
+@Override
 		public void draw(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 			if (this.isHidden()) {
 				return;

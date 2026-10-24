@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.lwjgl.opengl.GL43C;
@@ -14,7 +14,7 @@ import yesman.epicfight.client.renderer.shader.compute.backend.program.ComputePr
 import yesman.epicfight.client.renderer.shader.compute.backend.program.ComputeShader;
 
 public final class ComputeShaderLoader {
-	public static ComputeProgram loadComputeShaderProgram(ResourceProvider resourceManager, ResourceLocation resourceLocation, BarrierFlags... barrierFlags) throws IllegalStateException {
+	public static ComputeProgram loadComputeShaderProgram(ResourceProvider resourceManager, Identifier resourceLocation, BarrierFlags... barrierFlags) throws IllegalStateException {
 		Optional<Resource> resource = resourceManager.getResource(resourceLocation);
 		
 		if (resource.isEmpty()) {

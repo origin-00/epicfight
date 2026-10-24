@@ -7,7 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import yesman.epicfight.api.data.reloader.SkillReloadListener;
@@ -30,7 +30,7 @@ public class PlayerSkillActivated extends EntityPatchCondition {
 	
 	@Override
 	public PlayerSkillActivated read(CompoundTag tag) {
-		String skillName = this.assertTag("skill", "string", tag, StringTag.class, CompoundTag::getString);
+		String skillName = this.assertTag("skill", "string", tag, StringTag.class, (compoundTag, key) -> compoundTag.getStringOr(key, ""));
 		
 		if ((this.skill = SkillReloadListener.getSkill(skillName)) == null) {
 			throw new NoSuchElementException(MessageFormat.format("{} condition error: Skill named {} does not exist", this.getClass().getSimpleName(), skillName));
@@ -66,6 +66,6 @@ public class PlayerSkillActivated extends EntityPatchCondition {
     @OnlyIn(Dist.CLIENT) // TODO: Remove OnlyIn annotation and completely decouple the widget provider code
 	public List<ParameterEditor> getAcceptingParameters(Screen screen) {
 		AbstractWidget popupBox = new PopupBox.RegistryPopupBox<>(screen, screen.getMinecraft().font, 0, 0, 0, 0, null, null, Component.literal("skill"), EpicFightRegistries.SKILL, null);
-		return List.of(ParameterEditor.of(skill -> StringTag.valueOf(skill.toString()), tag -> EpicFightRegistries.SKILL.get(ResourceLocation.parse(ParseUtil.nullOrToString(tag, Tag::getAsString))), popupBox));
+		return List.of(ParameterEditor.of(skill -> StringTag.valueOf(skill.toString()), tag -> EpicFightRegistries.SKILL.get(Identifier.parse(ParseUtil.nullOrToString(tag, ParseUtil::tagAsString))), popupBox));
 	}
 }

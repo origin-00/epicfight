@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 import com.mojang.serialization.Codec;
 

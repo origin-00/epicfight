@@ -1,5 +1,6 @@
 package yesman.epicfight.api.utils;
 
+import net.minecraft.nbt.StringTag;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -19,7 +20,7 @@ import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.mutable.MutableInt;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -33,6 +34,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public abstract class ParseUtil {
+	/// Replacement for `Tag#getAsString()` (removed in 1.21.5): the raw value of a string tag,
+	/// the SNBT form of anything else, exactly as the old method returned.
+	public static String tagAsString(Tag tag) {
+		return tag instanceof StringTag stringTag ? stringTag.value() : tag.toString();
+	}
+	
 	public static Integer[] toIntArray(JsonArray array) {
 		List<Integer> result = Lists.newArrayList();
 		
@@ -304,12 +311,12 @@ public abstract class ParseUtil {
 	public static JsonObject convertToJsonObject(CompoundTag compoundtag) {
 		JsonObject root = CompoundTag.CODEC.encodeStart(JsonOps.INSTANCE, compoundtag).getOrThrow().getAsJsonObject();
 		
-		compoundtag.getAllKeys().forEach(key -> {
+		compoundtag.keySet().forEach(key -> {
 			Tag val = compoundtag.get(key);
 			
-			if (val instanceof ByteTag byteTag && (byteTag.getAsByte() == 0 || byteTag.getAsByte() == 1)) {
+			if (val instanceof ByteTag byteTag && (byteTag.value() == 0 || byteTag.value() == 1)) {
 				root.remove(key);
-				root.addProperty(key, byteTag.getAsByte() == 1);
+				root.addProperty(key, byteTag.value() == 1);
 			}
 		});
 		
@@ -362,7 +369,7 @@ public abstract class ParseUtil {
 	
 	public static CompoundTag parseTagOrThrow(JsonElement jsonElement) {
 		try {
-			return TagParser.parseTag(jsonElement.toString());
+			return TagParser.parseCompoundFully(jsonElement.toString());
 		} catch (CommandSyntaxException e) {
 			throw new RuntimeException("Can't parse element:", e);
 		}
@@ -387,7 +394,7 @@ public abstract class ParseUtil {
         }
 
         String[] astring = new String[]{"minecraft", str};
-        int i = str.indexOf(ResourceLocation.NAMESPACE_SEPARATOR);
+        int i = str.indexOf(Identifier.NAMESPACE_SEPARATOR);
 
         if (i >= 0) {
             astring[1] = str.substring(i + 1);
@@ -397,7 +404,7 @@ public abstract class ParseUtil {
             }
         }
 
-        return ResourceLocation.isValidNamespace(astring[0]) && ResourceLocation.isValidPath(astring[1]);
+        return Identifier.isValidNamespace(astring[0]) && Identifier.isValidPath(astring[1]);
     }
 
 	private ParseUtil() {}

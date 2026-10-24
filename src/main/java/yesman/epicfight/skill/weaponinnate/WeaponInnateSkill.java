@@ -1,21 +1,20 @@
 package yesman.epicfight.skill.weaponinnate;
 
+import net.minecraft.resources.Identifier;
+import yesman.epicfight.client.gui.render.TexturedFanRenderState;
+import net.minecraft.util.ARGB;
+import yesman.epicfight.client.gui.GuiColors;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
-import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import org.lwjgl.opengl.GL11;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
 import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.api.utils.math.Vec2f;
@@ -258,7 +257,7 @@ public abstract class WeaponInnateSkill extends Skill {
 	}
 	
 	@Override @ClientOnly
-	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphics guiGraphics, float x, float y, float partialTick) {
+	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphicsExtractor guiGraphics, float x, float y, float partialTick) {
 		boolean creative = container.getExecutor().getOriginal().isCreative();
 		boolean fullstack = creative || container.isFull();
 		boolean canUse = !container.isDisabled() && container.getSkill().checkExecuteCondition(container);
@@ -309,71 +308,73 @@ public abstract class WeaponInnateSkill extends Skill {
 			lastVertexY = y;
 		}
 		
-		RenderSystem.enableBlend();
-		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
-		RenderSystem.setShader(GameRenderer::getPositionTexShader);
-		RenderSystem.setShaderTexture(0, container.getSkill().getSkillTexture());
+		Identifier skillTexture = container.getSkill().getSkillTexture();
+		int readyColor;
 		
 		if (canUse) {
-			if (container.getStack() > 0) {
-				RenderSystem.setShaderColor(0.0F, 0.64F, 0.72F, 0.8F);
-			} else {
-				RenderSystem.setShaderColor(0.0F, 0.5F, 0.5F, 0.6F);
-			}
+			readyColor = container.getStack() > 0 ? ARGB.colorFromFloat(0.8F, 0.0F, 0.64F, 0.72F) : ARGB.colorFromFloat(0.6F, 0.0F, 0.5F, 0.5F);
 		} else {
-			RenderSystem.setShaderColor(0.5F, 0.5F, 0.5F, 0.6F);
+			readyColor = ARGB.colorFromFloat(0.6F, 0.5F, 0.5F, 0.5F);
 		}
 		
-		PoseStack poseStack = guiGraphics.pose();
-		Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_TEX);
-        
-        for (int j = 0; j < vertexNum; j++) {
-        	bufferbuilder.addVertex(poseStack.last(), x + iconSize * CLOCK_POS[j].x, y + iconSize * CLOCK_POS[j].y, 0.0F).setUv(CLOCK_POS[j].x, CLOCK_POS[j].y);
-		}
-        
-        bufferbuilder.addVertex(poseStack.last(), lastVertexX, lastVertexY, 0.0F).setUv(lastTexX, lastTexY);
-        BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
-        
-        if (canUse) {
-			RenderSystem.setShaderColor(0.08F, 0.79F, 0.95F, 1.0F);
-		} else {
-			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		}
-        
-        GL11.glCullFace(GL11.GL_FRONT);
-        bufferbuilder = tessellator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_TEX);
-        
-        for (int j = 0; j < 2; j++) {
-        	bufferbuilder.addVertex(poseStack.last(), x + iconSize * CLOCK_POS[j].x, y + iconSize * CLOCK_POS[j].y, 0.0F).setUv(CLOCK_POS[j].x, CLOCK_POS[j].y);
+		// The elapsed part of the cooldown: a fan from the icon center clockwise to the current angle.
+		float[] elapsedVertices = new float[(vertexNum + 1) * 2];
+		float[] elapsedUvs = new float[(vertexNum + 1) * 2];
+		
+		for (int j = 0; j < vertexNum; j++) {
+			elapsedVertices[j * 2] = x + iconSize * CLOCK_POS[j].x;
+			elapsedVertices[j * 2 + 1] = y + iconSize * CLOCK_POS[j].y;
+			elapsedUvs[j * 2] = CLOCK_POS[j].x;
+			elapsedUvs[j * 2 + 1] = CLOCK_POS[j].y;
 		}
 		
-		for (int j = CLOCK_POS.length - 1; j >= vertexNum; j--) {
-        	bufferbuilder.addVertex(poseStack.last(), x + iconSize * CLOCK_POS[j].x, y + iconSize * CLOCK_POS[j].y, 0.0F).setUv(CLOCK_POS[j].x, CLOCK_POS[j].y);
+		elapsedVertices[vertexNum * 2] = lastVertexX;
+		elapsedVertices[vertexNum * 2 + 1] = lastVertexY;
+		elapsedUvs[vertexNum * 2] = lastTexX;
+		elapsedUvs[vertexNum * 2 + 1] = lastTexY;
+		TexturedFanRenderState.submit(guiGraphics, skillTexture, elapsedVertices, elapsedUvs, readyColor);
+		
+		// The remaining part, from the current angle back to twelve o'clock.
+		int remaining = CLOCK_POS.length - vertexNum;
+		float[] remainingVertices = new float[(2 + remaining + 1) * 2];
+		float[] remainingUvs = new float[(2 + remaining + 1) * 2];
+		int k = 0;
+		
+		for (int j = 0; j < 2; j++, k++) {
+			remainingVertices[k * 2] = x + iconSize * CLOCK_POS[j].x;
+			remainingVertices[k * 2 + 1] = y + iconSize * CLOCK_POS[j].y;
+			remainingUvs[k * 2] = CLOCK_POS[j].x;
+			remainingUvs[k * 2 + 1] = CLOCK_POS[j].y;
 		}
-        
-        bufferbuilder.addVertex(poseStack.last(), lastVertexX, lastVertexY, 0.0F).setUv(lastTexX, lastTexY);
-        BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
-        
-        GL11.glCullFace(GL11.GL_BACK);
-     	RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+		
+		for (int j = CLOCK_POS.length - 1; j >= vertexNum; j--, k++) {
+			remainingVertices[k * 2] = x + iconSize * CLOCK_POS[j].x;
+			remainingVertices[k * 2 + 1] = y + iconSize * CLOCK_POS[j].y;
+			remainingUvs[k * 2] = CLOCK_POS[j].x;
+			remainingUvs[k * 2 + 1] = CLOCK_POS[j].y;
+		}
+		
+		remainingVertices[k * 2] = lastVertexX;
+		remainingVertices[k * 2 + 1] = lastVertexY;
+		remainingUvs[k * 2] = lastTexX;
+		remainingUvs[k * 2 + 1] = lastTexY;
+		TexturedFanRenderState.submit(guiGraphics, skillTexture, remainingVertices, remainingUvs, canUse ? ARGB.colorFromFloat(1.0F, 0.08F, 0.79F, 0.95F) : -1);
         
         if (container.isActivated() && (container.getSkill().getActivateType() == ActivateType.DURATION || container.getSkill().getActivateType() == ActivateType.DURATION_INFINITE)) {
 			String s = String.format("%.0f", container.getRemainDuration() / 20.0F);
 			int stringWidth = (gui.getFont().width(s) - 6) / 3;
-			guiGraphics.drawString(gui.getFont(), s, x + 13 - stringWidth, y + 13, 16777215, true);
+			guiGraphics.text(gui.getFont(), s, (int)(x + 13 - stringWidth), (int)(y + 13), GuiColors.text(16777215), true);
 		} else if (!fullstack) {
 			String s = String.valueOf((int)(cooldownRatio * 100.0F));
 			int stringWidth = (gui.getFont().width(s) - 6) / 3;
-			guiGraphics.drawString(gui.getFont(), s, x + 13 - stringWidth, y + 13, 16777215, true);
+			guiGraphics.text(gui.getFont(), s, (int)(x + 13 - stringWidth), (int)(y + 13), GuiColors.text(16777215), true);
 		}
 		
 		if (container.getSkill().getMaxStack() > 1) {
 			String s = String.valueOf(container.getStack());
 			int stringWidth = (gui.getFont().width(s) - 6) / 3;
-			guiGraphics.drawString(gui.getFont(), s, x + 25 - stringWidth, y + 22, 16777215, true);
+			guiGraphics.text(gui.getFont(), s, (int)(x + 25 - stringWidth), (int)(y + 22), GuiColors.text(16777215), true);
 		}
 		
-		RenderSystem.disableBlend();
 	}
 }

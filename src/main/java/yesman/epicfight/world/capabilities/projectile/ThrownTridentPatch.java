@@ -6,7 +6,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.ThrownTrident;
+import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -122,7 +122,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 					if (entity instanceof LivingEntity livingentity) {
 						f = EnchantmentHelper.modifyDamage((ServerLevel)this.original.level(), this.original.getPickupItemStackOrigin(), livingentity, source, f);
 						
-						if (entity.hurt(source, f)) {
+						if (entity.hurtOrSimulate(source, f)) {
 							entity.playSound(EpicFightSounds.BLADE_HIT.get(), 1.0F, 1.0F);
 							((ServerLevel)entity.level()).sendParticles(EpicFightParticles.HIT_BLADE.get(), entity.position().x, entity.position().y + entity.getBbHeight() * 0.5D, entity.position().z, 0, 0, 0, 0, 1.0D);
 						}

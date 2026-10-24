@@ -1,9 +1,11 @@
 package yesman.epicfight.api.ex_cap.listeners;
 
+import net.minecraft.util.ExtraCodecs;
+import net.minecraft.resources.FileToIdConverter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -16,7 +18,7 @@ import yesman.epicfight.network.server.SPDatapackSync;
 import java.util.Map;
 
 @Deprecated
-public class ExCapDataCreationReloadListener extends SimpleJsonResourceReloadListener
+public class ExCapDataCreationReloadListener extends SimpleJsonResourceReloadListener<JsonElement>
 {
 
     public static final String DIRECTORY = "capabilities/weapons/ex_cap_data/definitions";
@@ -25,10 +27,10 @@ public class ExCapDataCreationReloadListener extends SimpleJsonResourceReloadLis
 
     public ExCapDataCreationReloadListener()
     {
-        super(GSON, DIRECTORY);
+        super(ExtraCodecs.JSON, FileToIdConverter.json(DIRECTORY));
     }
     @Override
-    protected void apply(@NotNull Map<ResourceLocation, JsonElement> elementMap, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller)
+    protected void apply(@NotNull Map<Identifier, JsonElement> elementMap, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller)
     {
         ExCapDataRegistrationEvent exCapDataRegistrationEvent = new ExCapDataRegistrationEvent();
         EpicFightEventHooks.Registry.EX_CAP_DATA_CREATION.post(exCapDataRegistrationEvent);

@@ -44,7 +44,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
     @Override
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
-        this.returnDuration = parameters.getInt("return_duration");
+        this.returnDuration = parameters.getIntOr("return_duration", 0);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
                     if (isFront) {
                         skillContainer.getExecutor().playSound(EpicFightSounds.CLASH.get(), -0.05F, 0.1F);
                         ServerPlayer playerentity = skillContainer.getServerExecutor().getOriginal();
-                        EpicFightParticles.HIT_BLUNT.get().spawnParticleWithArgument(playerentity.serverLevel(), HitParticleType.FRONT_OF_EYES, HitParticleType.ZERO, playerentity, damageSource.getDirectEntity());
+                        EpicFightParticles.HIT_BLUNT.get().spawnParticleWithArgument(playerentity.level(), HitParticleType.FRONT_OF_EYES, HitParticleType.ZERO, playerentity, damageSource.getDirectEntity());
 
                         float knockback = 0.25F;
 

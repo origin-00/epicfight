@@ -1,7 +1,7 @@
 package yesman.epicfight.world.capabilities.projectile;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.projectile.DragonFireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.DragonFireball;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;

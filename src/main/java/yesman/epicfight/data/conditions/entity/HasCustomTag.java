@@ -24,7 +24,7 @@ public class HasCustomTag extends EntityCondition {
 	private final Set<String> allowedTags;
 	
 	public HasCustomTag(ListTag allowedTags) {
-		this.allowedTags = allowedTags.stream().map(Tag::getAsString).collect(Collectors.toUnmodifiableSet());
+		this.allowedTags = allowedTags.stream().map(ParseUtil::tagAsString).collect(Collectors.toUnmodifiableSet());
 	}
 	
 	@Override
@@ -41,7 +41,7 @@ public class HasCustomTag extends EntityCondition {
 	@Override
 	public boolean predicate(Entity target) {
 		for (String tag : this.allowedTags) {
-			if (target.getTags().contains(tag)) {
+			if (target.entityTags().contains(tag)) {
 				return true;
 			}
 		}
@@ -53,6 +53,6 @@ public class HasCustomTag extends EntityCondition {
     @OnlyIn(Dist.CLIENT) // TODO: Remove OnlyIn annotation and completely decouple the widget provider code
 	public List<ParameterEditor> getAcceptingParameters(Screen screen) {
 		ResizableEditBox editbox = new ResizableEditBox(screen.getMinecraft().font, 0, 0, 0, 0, Component.literal("tag"), null, null);
-		return List.of(ParameterEditor.of((value) -> StringTag.valueOf(value.toString()), (tag) -> ParseUtil.nullOrToString(tag, Tag::getAsString), (AbstractWidget)editbox));
+		return List.of(ParameterEditor.of((value) -> StringTag.valueOf(value.toString()), (tag) -> ParseUtil.nullOrToString(tag, ParseUtil::tagAsString), (AbstractWidget)editbox));
 	}
 }

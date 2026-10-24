@@ -2,7 +2,7 @@ package yesman.epicfight.client.gui;
 
 import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
 import yesman.epicfight.generated.LangKeys;
@@ -22,7 +22,7 @@ public class VersionNotifier {
         this.count = 0;
     }
 
-    public void render(GuiGraphics guiGraphics, boolean inWorld) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, boolean inWorld) {
         if (!this.visible) {
             return;
         }
@@ -39,11 +39,11 @@ public class VersionNotifier {
             String l1 = Component.translatable(LangKeys.GUI_MESSAGE_VERSION_NOTIFIER_TEST_VERSION_WARNING_LINE1).getString();
             String l2 = Component.translatable(LangKeys.GUI_MESSAGE_VERSION_NOTIFIER_TEST_VERSION_WARNING_LINE2, ModList.get().getModFileById(EpicFightMod.MODID).versionString()).getString();
 
-            guiGraphics.drawString(this.minecraft.font, l1, (width - this.minecraft.font.width(l1) - 2), 8, 16777215);
-            guiGraphics.drawString(this.minecraft.font, l2, (width - this.minecraft.font.width(l2) - 2), 20, 16777215);
+            guiGraphics.text(this.minecraft.font, l1, (width - this.minecraft.font.width(l1) - 2), 8, GuiColors.text(16777215));
+            guiGraphics.text(this.minecraft.font, l2, (width - this.minecraft.font.width(l2) - 2), 20, GuiColors.text(16777215));
         } else {
             String l1 = Component.translatable(LangKeys.GUI_MESSAGE_VERSION_NOTIFIER, ModList.get().getModFileById(EpicFightMod.MODID).versionString()).getString();
-            guiGraphics.drawString(this.minecraft.font, l1, (width - this.minecraft.font.width(l1) - 2), 8, 16777215);
+            guiGraphics.text(this.minecraft.font, l1, (width - this.minecraft.font.width(l1) - 2), 8, GuiColors.text(16777215));
         }
     }
 }

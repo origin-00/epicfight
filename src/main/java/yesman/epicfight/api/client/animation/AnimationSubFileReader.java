@@ -9,7 +9,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.GsonHelper;
 import yesman.epicfight.api.animation.AnimationManager;
@@ -227,7 +227,7 @@ public class AnimationSubFileReader {
 		
 		@Override
 		public void applySubFileInfo(PovSettings deserialized, StaticAnimation animation) {
-			ResourceLocation povAnimationLocation = deserialized.hasUniqueAnimation() ? AnimationManager.getSubAnimationFileLocation(animation.getLocation(), SUBFILE_POV_ANIMATION) : animation.getLocation();
+			Identifier povAnimationLocation = deserialized.hasUniqueAnimation() ? AnimationManager.getSubAnimationFileLocation(animation.getLocation(), SUBFILE_POV_ANIMATION) : animation.getLocation();
 			DirectStaticAnimation povAnimation = new DirectStaticAnimation(povAnimationLocation, animation.getTransitionTime(), animation.isRepeat(), animation.getRegistryName().toString() + "_pov", animation.getArmature()) {
 				@Override
 				public float getPlaySpeed(LivingEntityPatch<?> entitypatch, DynamicAnimation pAnimation) {

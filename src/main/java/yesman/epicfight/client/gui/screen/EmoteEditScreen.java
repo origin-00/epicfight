@@ -1,13 +1,17 @@
 package yesman.epicfight.client.gui.screen;
 
+import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ObjectSelectionList;
-import net.minecraft.client.gui.navigation.CommonInputs;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -47,7 +51,6 @@ public class EmoteEditScreen extends Screen {
         super(Component.translatable(LangKeys.GUI_TITLE_EMOTE_SETTINGS));
 
         // Load minecraft instance preemptively
-        this.minecraft = Minecraft.getInstance();
 
         this.emoteSelectionList = new EmoteSelectionList(
             this.minecraft,
@@ -89,8 +92,8 @@ public class EmoteEditScreen extends Screen {
         );
 
         this.emotePreviewer.setBackgroundClearColor(new Vec4f(0.0F, 0.0F, 0.0F, 0.0F));
-        this.emotePreviewer.setFigureTexture(playerpatch.getOriginal().getSkin().texture());
-        this.emotePreviewer.setMesh(playerpatch.getOriginal().getSkin().model() == PlayerSkin.Model.SLIM ? Meshes.ALEX : Meshes.BIPED);
+        this.emotePreviewer.setFigureTexture(playerpatch.getOriginal().getSkin().body().texturePath());
+        this.emotePreviewer.setMesh(playerpatch.getOriginal().getSkin().model() == PlayerModelType.SLIM ? Meshes.ALEX : Meshes.BIPED);
 
         this.saveButton = AnchoredButton.buttonBuilder(
                 Component.translatable(GUI_WIDGET_COMMON_SAVE),
@@ -173,10 +176,10 @@ public class EmoteEditScreen extends Screen {
     }
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.blit(Screen.HEADER_SEPARATOR, 4, 18, 0.0F, 0.0F, this.width - 8, 2, 32, 2);
-        guiGraphics.drawString(this.font, this.title, 6, 7, 16777215);
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.HEADER_SEPARATOR, 4, 18, 0.0F, 0.0F, this.width - 8, 2, 32, 2);
+        guiGraphics.text(this.font, this.title, 6, 7, GuiColors.text(16777215));
     }
 
     @Override
@@ -222,23 +225,25 @@ public class EmoteEditScreen extends Screen {
         }
 
         @Override
-        protected void renderListItems(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        protected void extractListItems(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             guiGraphics.enableScissor(this.getX(), this.getY(), this.getX() + this.getRowWidth() + 2, this.getY() + this.getHeight());
-            super.renderListItems(guiGraphics, mouseX, mouseY, partialTick);
+            super.extractListItems(guiGraphics, mouseX, mouseY, partialTick);
             guiGraphics.disableScissor();
         }
 
         @Override
-        protected void renderSelection(GuiGraphics guiGraphics, int top, int width, int height, int outerColor, int innerColor) {
+        protected void extractSelection(GuiGraphicsExtractor guiGraphics, EmoteSelectionList.Entry entry, int outlineColor) {
             if (!this.isFocused()) {
                 return;
             }
 
             int left = this.getX();
             int right = this.getRowRight();
+            int top = entry.getY();
+            int bottom = top + entry.getHeight();
 
-            guiGraphics.fill(left, top - 2, right, top + height + 2, outerColor);
-            guiGraphics.fill(left + 1, top - 1, right - 1, top + height + 1, innerColor);
+            guiGraphics.fill(left, top, right, bottom, outlineColor);
+            guiGraphics.fill(left + 1, top + 1, right - 1, bottom - 1, -16777216);
         }
 
         @Override
@@ -251,14 +256,6 @@ public class EmoteEditScreen extends Screen {
             return this.getWidth() - EMOTE_PREVIEWER_WIDTH;
         }
 
-        @Override @Nullable
-        protected EmoteSelectionList.Entry getEntryAtPosition(double mouseX, double mouseY) {
-            int xStart = this.getX();
-            int xEnd = xStart + this.getRowWidth();
-            int mouseRelativeY = Mth.floor(mouseY - (double)this.getY()) - this.headerHeight + (int)this.getScrollAmount() - 4;
-            int rowPosition = mouseRelativeY / this.itemHeight;
-            return mouseX >= xStart && mouseX <= xEnd && rowPosition >= 0 && mouseRelativeY >= 0 && rowPosition < this.getItemCount() ? this.children().get(rowPosition) : null;
-        }
 
         @Override
         public @NotNull ScreenRectangle getRectangle() {
@@ -266,7 +263,7 @@ public class EmoteEditScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getRight() - 6;
         }
 
@@ -278,14 +275,20 @@ public class EmoteEditScreen extends Screen {
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
                 this.onPressed();
                 return true;
             }
 
             @Override
-            public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-                if (CommonInputs.selected(keyCode)) {
+            public boolean keyPressed(KeyEvent event) {
+                int keyCode = event.key();
+                int scanCode = event.scancode();
+                int modifiers = event.modifiers();
+                if (new KeyEvent(keyCode, 0, 0).isSelection()) {
                     this.onPressed();
                     return true;
                 } else {
@@ -324,8 +327,12 @@ public class EmoteEditScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTick) {
-                guiGraphics.drawString(font, Component.translatable(this.emote.value().title()), left + 2, top + height / 2 - 3, -1);
+            public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean hovered, float partialTick) {
+                int top = this.getY();
+                int left = this.getX();
+                int width = this.getWidth();
+                int height = this.getContentHeight();
+                guiGraphics.text(font, Component.translatable(this.emote.value().title()), left + 2, top + height / 2 - 3, -1);
             }
         }
 

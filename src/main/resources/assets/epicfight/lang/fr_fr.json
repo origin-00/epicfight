@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	"key.epicfight.gui": "GUI d'Epic Fight",
 	"key.epicfight.combat": "Combat d'Epic Fight",
+	"key.category.epicfight.combat": "Combat d'Epic Fight",
+	"key.category.epicfight.gui": "GUI d'Epic Fight",
 	"key.epicfight.show_tooltip": "Show Weapon Innate Skill Tooltip",
 	"key.epicfight.switch_mode": "Basculer en mode Combat/Minage",
 	"key.epicfight.attack": "Attack",

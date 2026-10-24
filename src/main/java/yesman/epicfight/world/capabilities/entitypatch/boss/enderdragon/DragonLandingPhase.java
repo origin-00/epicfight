@@ -1,5 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.MoverType;
@@ -52,7 +53,7 @@ public class DragonLandingPhase extends PatchedDragonPhase {
 	}
 	
 	@Override
-	public void doServerTick() {
+	public void doServerTick(ServerLevel level) {
 		double dx = this.landingPosition.x - this.dragon.getX();
 		double dy = this.landingPosition.y - this.dragon.getY();
 		double dz = this.landingPosition.z - this.dragon.getZ();

@@ -4,7 +4,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * An accessor class
@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 public interface AssetAccessor<O> extends Supplier<O> {
 	O get();
 	
-	ResourceLocation registryName();
+	Identifier registryName();
 	
 	default boolean isPresent() {
 		return this.get() != null;

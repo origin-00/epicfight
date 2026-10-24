@@ -1,5 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon;
 
+import net.minecraft.server.level.ServerLevel;
 import java.util.List;
 
 import net.minecraft.core.BlockPos;
@@ -35,6 +36,6 @@ public abstract class PatchedDragonPhase extends AbstractDragonPhaseInstance {
 	}
 	
 	protected List<Player> getPlayersNearbyWithin(double within) {
-		return this.dragon.level().getNearbyPlayers(EnderDragonPatch.DRAGON_TARGETING, this.dragon, this.dragon.getBoundingBox().inflate(within, within, within));
+		return ((ServerLevel)this.dragon.level()).getNearbyPlayers(EnderDragonPatch.DRAGON_TARGETING, this.dragon, this.dragon.getBoundingBox().inflate(within, within, within));
 	}
 }

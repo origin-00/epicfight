@@ -1,7 +1,9 @@
 package yesman.epicfight.client.gui.widgets;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -65,9 +67,9 @@ public class Static extends AbstractWidget implements AnchoredWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
         String correctedString = this.font.plainSubstrByWidth(this.getMessage().getString(), this.getWidth());
-        guiGraphics.drawString(this.font, correctedString, this.getX(), this.getY() + this.height / 2 - this.font.lineHeight / 2, this.fontColor, false);
+        guiGraphics.text(this.font, correctedString, this.getX(), this.getY() + this.height / 2 - this.font.lineHeight / 2, GuiColors.text(this.fontColor), false);
     }
 
     @Override
@@ -80,16 +82,25 @@ public class Static extends AbstractWidget implements AnchoredWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int action) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int action = event.button();
         return false;
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int action) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int action = event.button();
         return false;
     }
 
-    public boolean mouseDragged(double mouseX, double mouseY, int action, double p_93648_, double p_93649_) {
+    public boolean mouseDragged(MouseButtonEvent event, double p_93648_, double p_93649_) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int action = event.button();
         return false;
     }
 

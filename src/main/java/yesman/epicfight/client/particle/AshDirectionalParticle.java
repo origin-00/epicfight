@@ -1,5 +1,6 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.util.RandomSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.BaseAshSmokeParticle;
 import net.minecraft.client.particle.Particle;
@@ -19,7 +20,7 @@ public class AshDirectionalParticle extends BaseAshSmokeParticle {
 			this.sprites = pSprites;
 		}
 
-		public Particle createParticle(SimpleParticleType pType, ClientLevel pLevel, double pX, double pY, double pZ, double pXSpeed, double pYSpeed, double pZSpeed) {
+		public Particle createParticle(SimpleParticleType pType, ClientLevel pLevel, double pX, double pY, double pZ, double pXSpeed, double pYSpeed, double pZSpeed, RandomSource random) {
 			return new AshDirectionalParticle(pLevel, pX, pY, pZ, pXSpeed, pYSpeed, pZSpeed, 2.0F, this.sprites);
 		}
 	}

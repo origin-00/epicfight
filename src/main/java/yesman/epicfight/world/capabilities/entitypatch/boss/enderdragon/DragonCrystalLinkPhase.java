@@ -1,5 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon;
 
+import net.minecraft.server.level.ServerLevel;
 import java.util.List;
 
 import net.minecraft.core.BlockPos;
@@ -107,7 +108,7 @@ public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 	}
 	
 	@Override
-	public void doServerTick() {
+	public void doServerTick(ServerLevel level) {
 		this.absorbCount--;
 		this.dragon.ambientSoundTime = 0;
 		

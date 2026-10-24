@@ -1,7 +1,8 @@
 package yesman.epicfight.client.gui.widgets;
 
+import yesman.epicfight.client.gui.GuiColors;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -29,7 +30,7 @@ public class TextButton extends Button {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        guiGraphics.drawString(this.font, this.getMessage(), this.getX() + 2, this.getY(), this.isHoveredOrFocused() ? this.hoveredOrFocusedColor : this.defaultColor);
+    protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        guiGraphics.text(this.font, this.getMessage(), this.getX() + 2, this.getY(), GuiColors.text(this.isHoveredOrFocused() ? this.hoveredOrFocusedColor : this.defaultColor));
     }
 }

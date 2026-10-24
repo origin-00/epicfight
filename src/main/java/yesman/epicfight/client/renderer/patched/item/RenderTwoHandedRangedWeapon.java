@@ -22,7 +22,7 @@ public class RenderTwoHandedRangedWeapon extends RenderItemBase {
 		
 		poseStack.pushPose();
 		MathUtils.mulStack(poseStack, modelMatrix);
-		itemInHandRenderer.renderItem(entitypatch.getOriginal(), stack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, false, poseStack, buffer, packedLight);
+		submitItem(entitypatch.getOriginal(), stack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, poseStack, buffer, packedLight);
 		poseStack.popPose();
 	}
 }

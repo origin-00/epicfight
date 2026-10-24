@@ -2,7 +2,7 @@ package yesman.epicfight.api.ex_cap.modules.core.events;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.event.Event;
 import yesman.epicfight.api.ex_cap.modules.core.data.BuilderEntry;
 import yesman.epicfight.api.ex_cap.managers.ExCapManager;
@@ -13,13 +13,13 @@ import java.util.Map;
 @Deprecated(forRemoval = true)
 public class ExCapBuilderCreationEvent extends Event
 {
-    private final Map<ResourceLocation, WeaponCapability.Builder> builders = Maps.newHashMap();
+    private final Map<Identifier, WeaponCapability.Builder> builders = Maps.newHashMap();
 
-    public Map<ResourceLocation, WeaponCapability.Builder> getBuilders() {
+    public Map<Identifier, WeaponCapability.Builder> getBuilders() {
         return ImmutableMap.copyOf(builders);
     }
 
-    public void addBuilder(ResourceLocation rl, WeaponCapability.Builder builder) {
+    public void addBuilder(Identifier rl, WeaponCapability.Builder builder) {
         ExCapManager.addAcceptor(rl);
         builders.put(rl, builder);
     }

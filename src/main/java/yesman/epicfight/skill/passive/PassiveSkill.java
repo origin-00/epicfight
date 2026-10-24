@@ -1,6 +1,8 @@
 package yesman.epicfight.skill.passive;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.compress.utils.Lists;
@@ -27,10 +29,10 @@ public abstract class PassiveSkill extends Skill {
 	}
 	
 	@Override @ClientOnly
-	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphics guiGraphics, float x, float y, float partialTick) {
-		guiGraphics.blit(this.getSkillTexture(), (int)x, (int)y, 24, 24, 0, 0, 1, 1, 1, 1);
+	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphicsExtractor guiGraphics, float x, float y, float partialTick) {
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.getSkillTexture(), (int)x, (int)y, 0, 0, 24, 24, 1, 1, 1, 1);
 		String remainTime = String.format("%.0f", container.getMaxResource() - container.getResource());
-		guiGraphics.drawString(gui.getFont(), remainTime, x + 12 - 4 * remainTime.length(), (y+6), 16777215, true);
+		guiGraphics.text(gui.getFont(), remainTime, (int)(x + 12 - 4 * remainTime.length()), (int)((y+6)), GuiColors.text(16777215), true);
 	}
 
 	@Override

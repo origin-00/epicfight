@@ -2,6 +2,7 @@ package yesman.epicfight.world.entity;
 
 import java.util.List;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -27,7 +28,7 @@ public class AreaEffectBreath extends AreaEffectCloud {
 	public AreaEffectBreath(EntityType<? extends AreaEffectBreath> entityType, Level level) {
 		super(entityType, level);
 		this.setDuration(5);
-		this.addEffect(new MobEffectInstance(MobEffects.HARM, 1, 1));
+		this.addEffect(new MobEffectInstance(MobEffects.INSTANT_DAMAGE, 1, 1));
 	}
 	
 	public AreaEffectBreath(Level level, double x, double y, double z) {
@@ -73,7 +74,7 @@ public class AreaEffectBreath extends AreaEffectCloud {
 					
 					EpicFightDamageSource damageSource = EpicFightDamageSources.enderDragonBreath(this.getOwner(), this).setStunType(StunType.SHORT);
 					
-					if (livingentity.isInvulnerableTo(damageSource)) {
+					if (this.level() instanceof ServerLevel serverLevel && livingentity.isInvulnerableTo(serverLevel, damageSource)) {
 						continue;
 					}
 					

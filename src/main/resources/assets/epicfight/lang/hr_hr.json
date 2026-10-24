@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	"key.epicfight.gui": "Epic Fight GUI",
 	"key.epicfight.combat": "Epic Fight Combat",
+	"key.category.epicfight.combat": "Epic Fight Combat",
+	"key.category.epicfight.gui": "Epic Fight GUI",
 	"key.epicfight.show_tooltip": "Prikaz alata za urođenu vještinu oružja",
 	"key.epicfight.switch_mode": "Uključi/Isključi način Kopanja/Napada",
 	"key.epicfight.attack": "Napad",

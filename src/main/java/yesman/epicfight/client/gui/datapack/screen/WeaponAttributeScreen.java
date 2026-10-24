@@ -1,13 +1,15 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -45,8 +47,6 @@ public class WeaponAttributeScreen extends Screen {
 		this.itemType = itemType;
 		this.parentScreen = parentScreen;
 		this.rootTag = rootTag;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		
 		final ResizableEditBox impactEditBox = new ResizableEditBox(this.font, 0, 0, 0, 0, Component.literal("impact"), null, null);
 		final ResizableEditBox armorNegationEditBox = new ResizableEditBox(this.font, 0, 0, 0, 0, Component.literal("armor_negation"), null, null);
@@ -64,13 +64,13 @@ public class WeaponAttributeScreen extends Screen {
 		stunArmorEditBox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsableAllowingMinus(context, Double::parseDouble));
 		weightEditBox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsableAllowingMinus(context, Double::parseDouble));
 		
-		this.weaponAttributeEditors.put("armor_negation", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), armorNegationEditBox));
-		this.weaponAttributeEditors.put("impact", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), impactEditBox));
-		this.weaponAttributeEditors.put("max_strikes", ParameterEditor.of((value) -> IntTag.valueOf(ParseUtil.parseOrGet(value.toString(), Integer::parseInt, 0)), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), maxStrikesEditBox));
-		this.weaponAttributeEditors.put("damage_bonus", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), damageBonusEditBox));
-		this.weaponAttributeEditors.put("speed_bonus", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), speedBonusEditBox));
-		this.armorAttributeEditors.put("stun_armor", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), stunArmorEditBox));
-		this.armorAttributeEditors.put("weight", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), weightEditBox));
+		this.weaponAttributeEditors.put("armor_negation", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), armorNegationEditBox));
+		this.weaponAttributeEditors.put("impact", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), impactEditBox));
+		this.weaponAttributeEditors.put("max_strikes", ParameterEditor.of((value) -> IntTag.valueOf(ParseUtil.parseOrGet(value.toString(), Integer::parseInt, 0)), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), maxStrikesEditBox));
+		this.weaponAttributeEditors.put("damage_bonus", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), damageBonusEditBox));
+		this.weaponAttributeEditors.put("speed_bonus", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), speedBonusEditBox));
+		this.armorAttributeEditors.put("stun_armor", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), stunArmorEditBox));
+		this.armorAttributeEditors.put("weight", ParameterEditor.of((value) -> DoubleTag.valueOf(ParseUtil.parseOrGet(value.toString(), Double::parseDouble, 0.0D)), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), weightEditBox));
 		
 		if (itemType == ItemType.WEAPON) {
 			this.stylesGrid = Grid.builder(this, parentScreen.getMinecraft())
@@ -293,24 +293,24 @@ public class WeaponAttributeScreen extends Screen {
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int yBegin = 32;
 		int yEnd = this.height - 45;
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
-		guiGraphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.125F, 0.125F, 0.125F, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		
-		guiGraphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-		guiGraphics.blit(Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.25F, 0.25F, 0.25F, 1.0F);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         
-        guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yBegin, this.width, yBegin + 4, -16777216, 0, 0);
-		guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yEnd, this.width, yEnd + 1, 0, -16777216, 0);
+        guiGraphics.fillGradient(0, yBegin, this.width, yBegin + 4, -16777216, 0);
+		guiGraphics.fillGradient(0, yEnd, this.width, yEnd + 1, 0, -16777216);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 }

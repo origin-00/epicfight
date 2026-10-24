@@ -1,0 +1,33 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": "gui",
+        "model": {
+          "type": "minecraft:model",
+          "model": "epicfight:item/diamond_greatsword_gui"
+        }
+      },
+      {
+        "when": "fixed",
+        "model": {
+          "type": "minecraft:model",
+          "model": "epicfight:item/diamond_greatsword_fixed"
+        }
+      },
+      {
+        "when": "ground",
+        "model": {
+          "type": "minecraft:model",
+          "model": "epicfight:item/diamond_greatsword_ground"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "epicfight:item/diamond_greatsword"
+    }
+  }
+}

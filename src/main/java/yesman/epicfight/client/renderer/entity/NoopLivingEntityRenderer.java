@@ -1,28 +1,34 @@
 package yesman.epicfight.client.renderer.entity;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider.Context;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
-import net.neoforged.neoforge.client.event.RenderLivingEvent;
-import net.neoforged.neoforge.common.NeoForge;
 
-public class NoopLivingEntityRenderer<T extends LivingEntity> extends LivingEntityRenderer<T, EntityModel<T>> {
+/// A living entity renderer without a vanilla model, for entities only Epic Fight renders.
+///
+/// Epic Fight takes over in the vanilla submit (see `MixinLivingEntityRendererSubmit`); without a
+/// render type vanilla submits nothing of its own.
+public class NoopLivingEntityRenderer<T extends LivingEntity> extends LivingEntityRenderer<T, LivingEntityRenderState, EntityModel<LivingEntityRenderState>> {
 	public NoopLivingEntityRenderer(Context context, float shadowRadius) {
 		super(context, null, shadowRadius);
 	}
-	
+
 	@Override
-	public void render(LivingEntity livingEntity, float yRot, float partialTicks, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight) {
-		NeoForge.EVENT_BUS.post(new RenderLivingEvent.Pre<T, EntityModel<T>>(livingEntity, this, partialTicks, poseStack, multiBufferSource, packedLight));
+	public LivingEntityRenderState createRenderState() {
+		return new LivingEntityRenderState();
 	}
 
 	@Override
-	public ResourceLocation getTextureLocation(T entity) {
+	protected RenderType getRenderType(LivingEntityRenderState state, boolean isBodyVisible, boolean forceTransparent, boolean appearGlowing) {
+		return null;
+	}
+
+	@Override
+	public Identifier getTextureLocation(LivingEntityRenderState state) {
 		return null;
 	}
 }

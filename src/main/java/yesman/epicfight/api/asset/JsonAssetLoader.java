@@ -10,7 +10,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import io.netty.util.internal.StringUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
@@ -62,10 +62,10 @@ public class JsonAssetLoader {
 
     // Used for deciding armature name, other resources are nullable
     @Nullable
-    private ResourceLocation resourceLocation;
+    private Identifier resourceLocation;
     private String filehash;
 
-    public JsonAssetLoader(ResourceManager resourceManager, ResourceLocation resourceLocation) throws AssetLoadingException {
+    public JsonAssetLoader(ResourceManager resourceManager, Identifier resourceLocation) throws AssetLoadingException {
         JsonReader jsonReader = null;
         this.resourceLocation = resourceLocation;
 
@@ -128,7 +128,7 @@ public class JsonAssetLoader {
         this.filehash = ParseUtil.getBytesSHA256Hash(this.rootJson.toString().getBytes());
     }
 
-    public JsonAssetLoader(InputStream inputstream, ResourceLocation resourceLocation) throws AssetLoadingException {
+    public JsonAssetLoader(InputStream inputstream, Identifier resourceLocation) throws AssetLoadingException {
         JsonReader jsonReader = null;
         this.resourceLocation = resourceLocation;
 
@@ -145,7 +145,7 @@ public class JsonAssetLoader {
         this.filehash = StringUtil.EMPTY_STRING;
     }
 
-    public JsonAssetLoader(JsonObject rootJson, ResourceLocation rl) {
+    public JsonAssetLoader(JsonObject rootJson, Identifier rl) {
         this.rootJson = rootJson;
         this.resourceLocation = rl;
         this.filehash = StringUtil.EMPTY_STRING;
@@ -175,8 +175,8 @@ public class JsonAssetLoader {
         return renderProperties.build();
     }
 
-    public ResourceLocation getParent() {
-        return this.rootJson.has("parent") ? ResourceLocation.parse(this.rootJson.get("parent").getAsString()) : null;
+    public Identifier getParent() {
+        return this.rootJson.has("parent") ? Identifier.parse(this.rootJson.get("parent").getAsString()) : null;
     }
 
     private static final float DEFAULT_PARTICLE_MASS = 0.16F;
@@ -255,7 +255,7 @@ public class JsonAssetLoader {
     }
 
     public <T extends ClassicMesh> T loadClassicMesh(MeshContructor<ClassicMesh.ClassicMeshPart, VertexBuilder, T> constructor) {
-        ResourceLocation parent = this.getParent();
+        Identifier parent = this.getParent();
 
         if (parent != null) {
             T mesh = Meshes.getOrCreate(parent, (jsonLoader) -> jsonLoader.loadClassicMesh(constructor)).get();
@@ -316,7 +316,7 @@ public class JsonAssetLoader {
     }
 
     public <T extends SkinnedMesh> T loadSkinnedMesh(MeshContructor<SkinnedMesh.SkinnedMeshPart, VertexBuilder, T> constructor) {
-        ResourceLocation parent = this.getParent();
+        Identifier parent = this.getParent();
 
         if (parent != null) {
             T mesh = Meshes.getOrCreate(parent, (jsonLoader) -> jsonLoader.loadSkinnedMesh(constructor)).get();
@@ -559,7 +559,7 @@ public class JsonAssetLoader {
         JsonArray array = this.rootJson.get("animation").getAsJsonArray();
         boolean action = animation instanceof MainFrameAnimation;
         boolean attack = animation instanceof AttackAnimation;
-        boolean noTransformData = !action && !attack && FMLEnvironment.dist == Dist.DEDICATED_SERVER;
+        boolean noTransformData = !action && !attack && FMLEnvironment.getDist() == Dist.DEDICATED_SERVER;
         boolean root = true;
         Armature armature = animation.getArmature().get();
         Set<String> allowedJoints = Sets.newLinkedHashSet();
@@ -580,7 +580,7 @@ public class JsonAssetLoader {
             JsonObject jObject = element.getAsJsonObject();
             String name = jObject.get("name").getAsString();
 
-            if (attack && FMLEnvironment.dist == Dist.DEDICATED_SERVER && !allowedJoints.contains(name)) {
+            if (attack && FMLEnvironment.getDist() == Dist.DEDICATED_SERVER && !allowedJoints.contains(name)) {
                 if (name.equals(COORD_BONE)) {
                     root = false;
                 }

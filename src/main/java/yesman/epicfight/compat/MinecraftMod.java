@@ -4,45 +4,34 @@ import net.neoforged.fml.ModList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import yesman.epicfight.EpicFight;
-import yesman.epicfight.compat.azurelib.AzureLibArmorCompat;
-import yesman.epicfight.compat.azurelib.AzureLibCompat;
-import yesman.epicfight.compat.betterthirdperson.BetterThirdPersonCompat;
-import yesman.epicfight.compat.curiosapi.CuriosCompat;
-import yesman.epicfight.compat.fgm.WildfireFGMCompat;
-import yesman.epicfight.compat.firstperson.FirstPersonCompat;
-import yesman.epicfight.compat.geckolib.GeckolibCompat;
-import yesman.epicfight.compat.iris.IRISCompat;
-import yesman.epicfight.compat.playeranimator.PlayerAnimatorCompat;
-import yesman.epicfight.compat.playerrevive.PlayerReviveCompat;
-import yesman.epicfight.compat.simplytooltips.SimplyTooltipsModule;
-import yesman.epicfight.compat.skinlayer3d.SkinLayer3DCompat;
-import yesman.epicfight.compat.vampirism.VampirismCompat;
-import yesman.epicfight.compat.werewolves.WerewolvesCompat;
 
 // List of mods with custom compatibility modules.
 // Only includes mods requiring manual registration via ICompatModule.
 // Mods with official API entry-points (e.g., Shoulder Surfing, Controlify, JEI, KubeJS) are excluded.
+//
+// 26.1.2 port: every module is null until the dependency has a 26.1.2 release and its module is ported
+// back into the build (see the compat exclusion in build.gradle.kts).
 public enum MinecraftMod {
-    VAMPIRISM("vampirism", false, VampirismCompat.class),
-    WEREWOLVES("werewolves", false, WerewolvesCompat.class),
-    CURIOS_API("curios", false, CuriosCompat.class),
-    GECKO_LIB("geckolib", true, GeckolibCompat.class),
-    AZURE_LIB("azurelib", true, AzureLibCompat.class),
-    AZURE_LIB_ARMOR("azurelibarmor", true, AzureLibArmorCompat.class),
-    FIRST_PERSON("firstperson", true, FirstPersonCompat.class),
-    SKIN_LAYERS_3D("skinlayers3d", true, SkinLayer3DCompat.class),
-    IRIS("iris", true, IRISCompat.class),
-    PLAYER_ANIMATOR("playeranimator", true, PlayerAnimatorCompat.class),
-    BETTER_THIRD_PERSON("betterthirdperson", true, BetterThirdPersonCompat.class),
-    PLAYER_REVIVE("playerrevive", true, PlayerReviveCompat.class),
-    WILDFIRES_GENDER_MOD("wildfire_gender", true, WildfireFGMCompat.class),
-    SIMPLY_TOOLTIPS("simplytooltips", true, SimplyTooltipsModule.class);
+    VAMPIRISM("vampirism", false, null),
+    WEREWOLVES("werewolves", false, null),
+    CURIOS_API("curios", false, null),
+    GECKO_LIB("geckolib", true, null),
+    AZURE_LIB("azurelib", true, null),
+    AZURE_LIB_ARMOR("azurelibarmor", true, null),
+    FIRST_PERSON("firstperson", true, null),
+    SKIN_LAYERS_3D("skinlayers3d", true, null),
+    IRIS("iris", true, null),
+    PLAYER_ANIMATOR("playeranimator", true, null),
+    BETTER_THIRD_PERSON("betterthirdperson", true, null),
+    PLAYER_REVIVE("playerrevive", true, null),
+    WILDFIRES_GENDER_MOD("wildfire_gender", true, null),
+    SIMPLY_TOOLTIPS("simplytooltips", true, null);
 
     private final @NotNull String modId;
     private final boolean isClientOnly;
-    private final @NotNull Class<? extends ICompatModule> compatibilityModule;
+    private final @Nullable Class<? extends ICompatModule> compatibilityModule;
 
-    MinecraftMod(@NotNull String modId, boolean isClientOnly, @NotNull Class<? extends ICompatModule> compatibilityModule) {
+    MinecraftMod(@NotNull String modId, boolean isClientOnly, @Nullable Class<? extends ICompatModule> compatibilityModule) {
         this.modId = modId;
         this.isClientOnly = isClientOnly;
         this.compatibilityModule = compatibilityModule;
@@ -100,7 +89,7 @@ public enum MinecraftMod {
         }
     }
 
-    public @NotNull Class<? extends ICompatModule> getCompatibilityModule() {
+    public @Nullable Class<? extends ICompatModule> getCompatibilityModule() {
         return compatibilityModule;
     }
 }

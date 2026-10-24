@@ -1,7 +1,7 @@
 package yesman.epicfight.api.event.types.player;
 
 import com.google.common.collect.Sets;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;

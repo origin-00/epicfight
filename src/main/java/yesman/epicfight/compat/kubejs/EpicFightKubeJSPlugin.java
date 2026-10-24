@@ -6,7 +6,7 @@ import dev.latvian.mods.kubejs.registry.BuilderTypeRegistry;
 import dev.latvian.mods.kubejs.script.BindingRegistry;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.script.TypeWrapperRegistry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import yesman.epicfight.client.ClientEngine;
@@ -56,10 +56,10 @@ public class EpicFightKubeJSPlugin implements KubeJSPlugin {
         typeWrappers.register(Skill.class, o -> {
             if (o instanceof Skill skill) return skill;
             if (o instanceof String) {
-                return EpicFightRegistries.SKILL.get(ResourceLocation.parse((String)o));
+                return EpicFightRegistries.SKILL.get(Identifier.parse((String)o));
             }
-            if (o instanceof ResourceLocation) {
-                return EpicFightRegistries.SKILL.get((ResourceLocation) o);
+            if (o instanceof Identifier) {
+                return EpicFightRegistries.SKILL.get((Identifier) o);
             }
             if (o instanceof DeferredHolder reg) {
                 return (Skill) reg.get();

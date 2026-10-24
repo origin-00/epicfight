@@ -177,7 +177,7 @@ public final class VanillaEntityEventHooks {
     /// @return whether cancel the taken damage
     public static boolean onDamageIncomes(LivingEntity entity, DamageSource damageSource, float amount) {
         // Let the event passes in the cases we don't want to handle without canceling it to avoid potential issue with other mods
-        if (entity.level().isClientSide() || entity.isInvulnerableTo(damageSource) || entity.invulnerableTime > 10 && amount <= entity.lastHurt || entity.getHealth() <= 0.0F) return false;
+        if (!(entity.level() instanceof ServerLevel serverLevel) || entity.isInvulnerableTo(serverLevel, damageSource) || entity.invulnerableTime > 10 && amount <= entity.lastHurt || entity.getHealth() <= 0.0F) return false;
 
         if (damageSource instanceof EpicFightDamageSource epicfightDamagesource && damageSource.getEntity() instanceof ServerPlayer serverplayer) {
             ServerPlayerPatch playerpatch = EpicFightCapabilities.getServerPlayerPatch(serverplayer);

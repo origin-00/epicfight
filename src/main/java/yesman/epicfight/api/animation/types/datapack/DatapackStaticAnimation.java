@@ -2,7 +2,7 @@ package yesman.epicfight.api.animation.types.datapack;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.LivingMotion;
@@ -20,12 +20,12 @@ import java.util.Map;
 
 public class DatapackStaticAnimation extends StaticAnimation implements DatapackAnimation<DatapackStaticAnimation> {
 	protected EditorAnimation fakeAnimation;
-	protected ResourceLocation registryName;
+	protected Identifier registryName;
 	
 	public DatapackStaticAnimation(float convertTime, boolean isRepeat, String path, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, isRepeat, path, armature);
 		
-		((DatapackAnimation<DatapackStaticAnimation>)this).setRegistryName(ResourceLocation.parse(path));
+		((DatapackAnimation<DatapackStaticAnimation>)this).setRegistryName(Identifier.parse(path));
 		this.accessor = this;
 	}
 	
@@ -56,12 +56,12 @@ public class DatapackStaticAnimation extends StaticAnimation implements Datapack
 	}
 
 	@Override
-	public void setRegistryName(ResourceLocation registryName) {
+	public void setRegistryName(Identifier registryName) {
 		this.registryName = registryName;
 	}
 	
 	@Override
-	public ResourceLocation registryName() {
+	public Identifier registryName() {
 		return this.registryName;
 	}
 

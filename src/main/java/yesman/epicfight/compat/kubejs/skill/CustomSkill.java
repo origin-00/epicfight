@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import yesman.epicfight.api.event.EntityEventListener;
@@ -49,8 +49,8 @@ public class CustomSkill extends Skill {
     private final Function<GetTooltipOnItem, List<Component>> getTooltipOnItem;
     private final Function<List<Object>, List<Object>> getTooltipArgsOfScreen;
 
-    private final ResourceLocation tab;
-    private ResourceLocation textureLocation = this.getSkillTexture();
+    private final Identifier tab;
+    private Identifier textureLocation = this.getSkillTexture();
 
 
     public CustomSkill(CustomSkillBuilder builder) {
@@ -216,7 +216,7 @@ public class CustomSkill extends Skill {
     }
 
     @Override
-    public ResourceLocation getSkillTexture() {
+    public Identifier getSkillTexture() {
         return textureLocation;
     }
 
@@ -236,7 +236,7 @@ public class CustomSkill extends Skill {
             - texture
             """)
     public static class CustomSkillBuilder extends BuilderBase<Skill> {
-        public ResourceLocation tab;
+        public Identifier tab;
         public SkillCategory category;
         public Skill.ActivateType activateType = Skill.ActivateType.ONE_SHOT;
         public Skill.Resource resource = Skill.Resource.NONE;
@@ -261,9 +261,9 @@ public class CustomSkill extends Skill {
         private Function<GetTooltipOnItem, List<Component>> getTooltipOnItem;
         private Function<List<Object>, List<Object>> getTooltipArgsOfScreen;
 
-        private ResourceLocation textureLocation;
+        private Identifier textureLocation;
 
-        public CustomSkillBuilder(ResourceLocation id) {
+        public CustomSkillBuilder(Identifier id) {
             super(id);
         }
 
@@ -272,7 +272,7 @@ public class CustomSkill extends Skill {
                 Optional.
                 The KubeJS tab is `'kubejs:kubejs'` and the Epic Fight tab is `epicfight:items`.
                 """)
-        public CustomSkillBuilder tab(ResourceLocation tab) {
+        public CustomSkillBuilder tab(Identifier tab) {
             this.tab = tab;
             return this;
         }
@@ -307,7 +307,7 @@ public class CustomSkill extends Skill {
                 Example: `minecraft:textures/block/stone.png`
                 Required.
                 """)
-        public CustomSkillBuilder texture(ResourceLocation textureLocation) {
+        public CustomSkillBuilder texture(Identifier textureLocation) {
             this.textureLocation = textureLocation;
             return this;
         }

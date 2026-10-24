@@ -1,5 +1,7 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -9,11 +11,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
@@ -51,9 +53,7 @@ public class LivingAnimationsScreen extends Screen {
 		super(Component.translatable("datapack_edit.weapon_type.living_animations"));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
 		this.rootTag = rootTag;
-		this.font = parentScreen.getMinecraft().font;
 		
 		this.modelPreviewer = new ModelPreviewer(106, 200, 60, 49, HorizontalSizing.LEFT_RIGHT, VerticalSizing.TOP_BOTTOM, Armatures.BIPED, Meshes.BIPED);
 		
@@ -174,7 +174,7 @@ public class LivingAnimationsScreen extends Screen {
 			List<ModifiablePair<String, String>> list = Lists.newArrayList();
 			
 			for (Map.Entry<String, Tag> entry$2 : ((CompoundTag)entry.getValue()).tags.entrySet()) {
-				list.add(ModifiablePair.of(entry$2.getKey(), entry$2.getValue().getAsString()));
+				list.add(ModifiablePair.of(entry$2.getKey(), entry$2.getValue().asString().orElse("")));
 			}
 			
 			this.styles.add(PackEntry.ofValue(entry.getKey(), list));
@@ -272,25 +272,25 @@ public class LivingAnimationsScreen extends Screen {
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int yBegin = 32;
 		int yEnd = this.height - 45;
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
-		guiGraphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.125F, 0.125F, 0.125F, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		
-		guiGraphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-		guiGraphics.blit(Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.25F, 0.25F, 0.25F, 1.0F);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         
-        guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yBegin, this.width, yBegin + 4, -16777216, 0, 0);
-		guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yEnd, this.width, yEnd + 1, 0, -16777216, 0);
+        guiGraphics.fillGradient(0, yBegin, this.width, yBegin + 4, -16777216, 0);
+		guiGraphics.fillGradient(0, yEnd, this.width, yEnd + 1, 0, -16777216);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	
 	private static final Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> LIVING_ANIMTIONS = Maps.newHashMap();

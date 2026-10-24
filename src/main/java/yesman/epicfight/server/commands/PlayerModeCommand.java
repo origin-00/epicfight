@@ -8,7 +8,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.PlayerMode;
@@ -20,7 +20,7 @@ import java.util.Locale;
 
 public class PlayerModeCommand {
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-		LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal("mode").requires((commandSourceStack) -> commandSourceStack.hasPermission(2));
+		LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal("mode").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
 		
 		for (PlayerMode mode : PlayerPatch.PlayerMode.values()) {
 			builder.then(Commands.literal(mode.name().toLowerCase(Locale.ROOT)).executes((command) -> {
@@ -55,7 +55,7 @@ public class PlayerModeCommand {
 		if (command.getEntity() == serverPlayer) {
 			command.sendSuccess(() -> Component.translatable("commands.gamemode.success.self", component), true);
 		} else {
-			if (command.getLevel().getGameRules().getBoolean(GameRules.RULE_SENDCOMMANDFEEDBACK)) {
+			if (command.getLevel().getGameRules().get(GameRules.SEND_COMMAND_FEEDBACK)) {
 				serverPlayer.sendSystemMessage(Component.translatable("gameMode.changed", component));
 			}
 			command.sendSuccess(() -> Component.translatable("commands.gamemode.success.other", serverPlayer.getDisplayName(), component), true);

@@ -7,7 +7,7 @@ import dev.latvian.mods.kubejs.typings.Info;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.client.events.engine.ControlEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.network.server.SPSkillFeedback;
@@ -122,7 +122,7 @@ public class CustomChargeableSkill extends CustomSkill implements ChargeableSkil
         private Consumer<PlayerPatch<?>> chargingTick;
         private String keyMapping;
 
-        public CustomChargeableSkillBuilder(ResourceLocation id) {
+        public CustomChargeableSkillBuilder(Identifier id) {
             super(id);
         }
 

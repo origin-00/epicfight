@@ -14,7 +14,7 @@ public class SkillCallbacks implements BakeCallback<Skill> {
 	@Override
 	public void onBake(Registry<Skill> registry) {
 		// dereferencing holder in skill instance
-		registry.holders().forEach(holder -> {
+		registry.listElements().forEach(holder -> {
 			holder.value().setHolder(holder);
 		});
 	}

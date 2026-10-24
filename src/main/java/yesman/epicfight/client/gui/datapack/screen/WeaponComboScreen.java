@@ -1,5 +1,8 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -7,11 +10,11 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -51,8 +54,6 @@ public class WeaponComboScreen extends Screen {
 	public WeaponComboScreen(Screen parentScreen, CompoundTag rootTag) {
 		super(Component.translatable("datapack_edit.weapon_type.combos"));
 		
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		this.parentScreen = parentScreen;
 		
 		this.inputComponentsList = new InputComponentList<>(this, 0, 0, 0, 20) {
@@ -73,19 +74,19 @@ public class WeaponComboScreen extends Screen {
 				
 				if (isMount) {
 					for (int i = 0; i < tagSize; i++) {
-						packImporter.newRow().newValue("combo_animation", DatapackEditScreen.animationByKey(tag.getString(i)));
+						packImporter.newRow().newValue("combo_animation", DatapackEditScreen.animationByKey(tag.getStringOr(i, "")));
 					}
 					
 					this.setDataBindingComponenets(new Object[] {packImporter});
 				} else {
 					for (int i = 0; i < tagSize - 2; i++) {
-						packImporter.newRow().newValue("combo_animation", DatapackEditScreen.animationByKey(tag.getString(i)));
+						packImporter.newRow().newValue("combo_animation", DatapackEditScreen.animationByKey(tag.getStringOr(i, "")));
 					}
 					
 					this.setDataBindingComponenets(new Object[] {
 						packImporter,
-						DatapackEditScreen.animationByKey(tag.getString(tagSize - 2)),
-						DatapackEditScreen.animationByKey(tag.getString(tagSize - 1))
+						DatapackEditScreen.animationByKey(tag.getStringOr(tagSize - 2, "")),
+						DatapackEditScreen.animationByKey(tag.getStringOr(tagSize - 1, ""))
 					});
 				}
 			}
@@ -185,7 +186,7 @@ public class WeaponComboScreen extends Screen {
 		
 		this.modelPreviewer = new ModelPreviewer(110, 200, 45, 49, HorizontalSizing.LEFT_RIGHT, VerticalSizing.TOP_BOTTOM, Armatures.BIPED, Meshes.BIPED);
 		
-		CompoundTag colliderTag = rootTag.getCompound("collider");
+		CompoundTag colliderTag = rootTag.getCompoundOrEmpty("collider");
 		
 		try {
 			Collider collider = ColliderPreset.deserializeSimpleCollider(colliderTag);
@@ -240,8 +241,8 @@ public class WeaponComboScreen extends Screen {
 		
 		Grid.PackImporter packImporter = new Grid.PackImporter();
 		
-		for (String style : this.rootTag.getAllKeys()) {
-			this.styles.add(PackEntry.of(style, () -> this.rootTag.getList(style, Tag.TAG_STRING)));
+		for (String style : this.rootTag.keySet()) {
+			this.styles.add(PackEntry.of(style, () -> this.rootTag.getListOrEmpty(style)));
 			
 			packImporter.newRow();
 			packImporter.newValue("style", Style.ENUM_MANAGER.get(style));
@@ -280,8 +281,8 @@ public class WeaponComboScreen extends Screen {
 			exit:
 			for (PackEntry<String, ListTag> entry : this.styles) {
 				for (Tag tag : entry.getValue()) {
-					if (DatapackEditScreen.animationByKey(tag.getAsString()) == null) {
-						animation = tag.getAsString();
+					if (DatapackEditScreen.animationByKey(tag.asString().orElse("")) == null) {
+						animation = tag.asString().orElse("");
 						style = entry.getKey();
 						allTagsNormal = false;
 						break exit;
@@ -331,38 +332,41 @@ public class WeaponComboScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-		if (this.modelPreviewer.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
+		if (this.modelPreviewer.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		if (this.inputComponentsList.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+		if (this.inputComponentsList.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int yBegin = 32;
 		int yEnd = this.height - 45;
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
-		guiGraphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.125F, 0.125F, 0.125F, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		
-		guiGraphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-		guiGraphics.blit(Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.25F, 0.25F, 0.25F, 1.0F);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         
-        guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yBegin, this.width, yBegin + 4, -16777216, 0, 0);
-		guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yEnd, this.width, yEnd + 1, 0, -16777216, 0);
+        guiGraphics.fillGradient(0, yBegin, this.width, yBegin + 4, -16777216, 0);
+		guiGraphics.fillGradient(0, yEnd, this.width, yEnd + 1, 0, -16777216);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	
 	private void reloadAnimationPlayer() {

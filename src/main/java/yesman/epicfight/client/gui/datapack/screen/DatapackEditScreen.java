@@ -1,5 +1,10 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import com.google.gson.JsonArray;
+import net.minecraft.server.packs.metadata.pack.PackFormat;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -12,10 +17,10 @@ import com.google.gson.stream.JsonReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.netty.util.internal.StringUtil;
 import net.minecraft.SharedConstants;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -33,7 +38,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
@@ -121,7 +126,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
             return workingPackScreen.getExtraOrBuiltInAnimation(path);
         }
 
-        return AnimationManager.byKey(ResourceLocation.parse(path));
+        return AnimationManager.byKey(Identifier.parse(path));
     }
 
     public static AssetAccessor<? extends SkinnedMesh> getMesh(String path) {
@@ -129,7 +134,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
             return workingPackScreen.getExtraOrBuiltInMesh(path);
         }
 
-        return Meshes.get(ResourceLocation.parse(path));
+        return Meshes.get(Identifier.parse(path));
     }
 
     public static AssetAccessor<? extends Armature> getArmature(String path) {
@@ -137,7 +142,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
             return workingPackScreen.getExtraOrBuiltInArmature(path);
         }
 
-        return Armatures.get(ResourceLocation.parse(path));
+        return Armatures.get(Identifier.parse(path));
     }
 
     public static Function<Item, ? extends CapabilityItem.Builder<?>> getWeaponType(String typeName) {
@@ -150,7 +155,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 
     @SuppressWarnings("unchecked")
     public <T extends StaticAnimation> AnimationAccessor<T> getExtraOrBuiltInAnimation(String path) throws ClassCastException {
-        ResourceLocation rl = ResourceLocation.parse(path);
+        Identifier rl = Identifier.parse(path);
 
         if (userAnimations.containsKey(rl)) {
             return (AnimationAccessor<T>)userAnimations.get(rl).getValue();
@@ -160,7 +165,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
     }
 
     public AssetAccessor<? extends SkinnedMesh> getExtraOrBuiltInMesh(String path) {
-        ResourceLocation rl = ResourceLocation.parse(path);
+        Identifier rl = Identifier.parse(path);
 
         if (workingPackScreen != null && workingPackScreen.userMeshes.containsKey(rl)) {
             return workingPackScreen.userMeshes.get(rl);
@@ -170,7 +175,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
     }
 
     public AssetAccessor<? extends Armature> getExtraOrBuiltInArmature(String path) {
-        ResourceLocation rl = ResourceLocation.parse(path);
+        Identifier rl = Identifier.parse(path);
 
         if (workingPackScreen != null && workingPackScreen.userArmatures.containsKey(rl)) {
             return workingPackScreen.userArmatures.get(rl);
@@ -180,7 +185,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
     }
 
     public Function<Item, ? extends CapabilityItem.Builder<?>> getExtraOrBuiltInWeaponType(String typeName) {
-        ResourceLocation typeId = ResourceLocation.parse(typeName);
+        Identifier typeId = Identifier.parse(typeName);
 
         if (userWeaponTypes.containsKey(typeId)) {
             return userWeaponTypes.get(typeId);
@@ -189,8 +194,8 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
         return WeaponTypeReloadListener.get(typeName);
     }
 	
-	public static Set<Map.Entry<ResourceLocation, Function<Item, ? extends CapabilityItem.Builder<?>>>> getSerializableWeaponTypes() {
-		return workingPackScreen.weaponTypeTab.packList.stream().reduce(Sets.<Map.Entry<ResourceLocation, Function<Item, ? extends CapabilityItem.Builder<?>>>>newHashSet(), (set, entry) -> {
+	public static Set<Map.Entry<Identifier, Function<Item, ? extends CapabilityItem.Builder<?>>>> getSerializableWeaponTypes() {
+		return workingPackScreen.weaponTypeTab.packList.stream().reduce(Sets.<Map.Entry<Identifier, Function<Item, ? extends CapabilityItem.Builder<?>>>>newHashSet(), (set, entry) -> {
 			try {
 				WeaponCapability.Builder builder = WeaponTypeReloadListener.deserializeWeaponCapabilityBuilder(entry.getKey(), entry.getValue(), workingPackScreen);
 				Function<Item, ? extends CapabilityItem.Builder<?>> provider = (itemstack) -> builder;
@@ -222,10 +227,10 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 	private final DatapackEditScreen.MobCapabilityTab mobCapabilityTab;
     private final SideNavigationBarOpener sideNavigationBarOpener;
 
-	private final Map<ResourceLocation, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> userAnimations = Maps.newLinkedHashMap();
-	private final Map<ResourceLocation, AssetAccessor<? extends SkinnedMesh>> userMeshes = Maps.newLinkedHashMap();
-	private final Map<ResourceLocation, AssetAccessor<? extends Armature>> userArmatures = Maps.newLinkedHashMap();
-	private final Map<ResourceLocation, Function<Item, ? extends CapabilityItem.Builder<?>>> userWeaponTypes = Maps.newLinkedHashMap();
+	private final Map<Identifier, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> userAnimations = Maps.newLinkedHashMap();
+	private final Map<Identifier, AssetAccessor<? extends SkinnedMesh>> userMeshes = Maps.newLinkedHashMap();
+	private final Map<Identifier, AssetAccessor<? extends Armature>> userArmatures = Maps.newLinkedHashMap();
+	private final Map<Identifier, Function<Item, ? extends CapabilityItem.Builder<?>>> userWeaponTypes = Maps.newLinkedHashMap();
 	
 	private final TabManager tabManager = new TabManager(this::addRenderableWidget, (p_267853_) -> {
 		this.removeWidget(p_267853_);
@@ -250,8 +255,6 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		super(Component.translatable(LangKeys.GUI_TITLE_DATAPACK_EDITOR));
 
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen == null ? Minecraft.getInstance() : parentScreen.getMinecraft();
-		this.font = this.minecraft.font;
 		
 		this.weaponTypeTab = new DatapackEditScreen.WeaponTypeTab();
 		this.itemCapabilityTab = new DatapackEditScreen.ItemCapabilityTab();
@@ -320,15 +323,20 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
 			JsonObject root = new JsonObject();
 			JsonObject pack = new JsonObject();
-			int datapackVersion = SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA);
-			int resourcepackVersion = SharedConstants.getCurrentVersion().getPackVersion(PackType.CLIENT_RESOURCES);
+			// Pack formats have a minor version since 1.21.9 and are declared as a min/max range.
+			PackFormat datapackVersion = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA);
+			PackFormat resourcepackVersion = SharedConstants.getCurrentVersion().packVersion(PackType.CLIENT_RESOURCES);
 			
-			if (datapackVersion != resourcepackVersion) {
-				EpicFightMod.LOGGER.warn(new StringBuilder("Pack version is not matching in ").append(SharedConstants.getCurrentVersion().getId()).toString());
+			if (!datapackVersion.equals(resourcepackVersion)) {
+				EpicFightMod.LOGGER.debug(new StringBuilder("Pack version is not matching in ").append(SharedConstants.getCurrentVersion().id()).toString());
 			}
 			
+			JsonArray format = new JsonArray();
+			format.add(datapackVersion.major());
+			format.add(datapackVersion.minor());
 			pack.addProperty("description", packName);
-			pack.addProperty("pack_format", datapackVersion);
+			pack.add("min_format", format);
+			pack.add("max_format", format.deepCopy());
 			root.add("pack", pack);
 			out.putNextEntry(zipEntry);
 			out.write(gson.toJson(root).getBytes());
@@ -373,7 +381,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 						for (Path path : filePath) {
 							try {
 								InputStream stream = Files.newInputStream(path);
-								ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(modid, path.getFileName().toString().replaceAll(".json", ""));
+								Identifier registryName = Identifier.fromNamespaceAndPath(modid, path.getFileName().toString().replaceAll(".json", ""));
 								
 								if (this.tabManager.getCurrentTab() == this.weaponTypeTab) {
 									this.weaponTypeTab.importJson(registryName, stream);
@@ -423,10 +431,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 	
 	@Override
 	protected void init() {
-		// Enable stencil buffer to render a grid inside the area
-		Minecraft.getInstance().getMainRenderTarget().enableStencil();
-
-        if (this.tabNavigationBar != null) this.removeWidget(this.tabNavigationBar);
+if (this.tabNavigationBar != null) this.removeWidget(this.tabNavigationBar);
         if (this.bottomButtons != null) this.bottomButtons.visitWidgets(this::removeWidget);
         if (this.sideNavigationBarOpener != null) this.removeWidget(this.sideNavigationBarOpener);
 
@@ -484,7 +489,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 	@Override
 	public void repositionElements() {
 		if (this.tabNavigationBar != null && this.bottomButtons != null) {
-			this.tabNavigationBar.setWidth(this.width);
+			this.tabNavigationBar.updateWidth(this.width);
 			this.tabNavigationBar.arrangeElements();
 			this.bottomButtons.arrangeElements();
 			FrameLayout.centerInRectangle(this.bottomButtons, 0, this.height - 36, this.width, 36);
@@ -517,19 +522,25 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 	}
 	
 	@Override
-	public boolean mouseClicked(double x, double y, int button) {
-		if (this.getFocused() != null && this.getFocused().mouseClicked(x, y, button)) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
+		int button = event.button();
+		if (this.getFocused() != null && this.getFocused().mouseClicked(event, doubleClick)) {
 			return true;
 		}
 		
-		return super.mouseClicked(x, y, button);
+		return super.mouseClicked(event, doubleClick);
 	}
 	
 	@Override
-	public boolean keyPressed(int keycode, int p_100876_, int p_100877_) {
-		if (this.tabNavigationBar.keyPressed(keycode)) {
+	public boolean keyPressed(KeyEvent event) {
+		int keycode = event.key();
+		int p_100876_ = event.scancode();
+		int p_100877_ = event.modifiers();
+		if (this.tabNavigationBar.keyPressed(event)) {
 			return true;
-		} else if (super.keyPressed(keycode, p_100876_, p_100877_)) {
+		} else if (super.keyPressed(event)) {
 			return true;
 		} else if (keycode != 257 && keycode != 335) {
 			return false;
@@ -539,9 +550,12 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
 		return this.getChildAt(mouseX, mouseY).filter((listener) -> {
-			return listener.mouseDragged(mouseX, mouseY, button, dx, dy);
+			return listener.mouseDragged(event, dx, dy);
 		}).isPresent();
 	}
 	
@@ -555,17 +569,17 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-		guiGraphics.blit(Screen.FOOTER_SEPARATOR, 0, Mth.roundToward(this.height - 36 - 2, 2), 0.0F, 0.0F, this.width, 2, 32, 2);
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		this.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.FOOTER_SEPARATOR, 0, Mth.roundToward(this.height - 36 - 2, 2), 0.0F, 0.0F, this.width, 2, 32, 2);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	
 	private <T> MessageScreen<T> createExportScreen() {
 		return new MessageScreen<>("", "Enter the pack title", this, null, 180, 70) {
 			@Override
 			protected void init() {
-				this.parentScreen.init(this.minecraft, this.width, this.height);
+				this.parentScreen.init(this.width, this.height);
 				int height = this.messageBoxHeight / 2;
 				
 				final EditBox titleEditBox = new EditBox(this.font, this.width / 2 - 72, this.height / 2 - 6, 144, 16, Component.literal("pack_title_input_box"));
@@ -588,7 +602,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					JsonReader jsonReader = new JsonReader(new InputStreamReader(stream.get(), StandardCharsets.UTF_8));
 					jsonReader.setLenient(true);
 					JsonObject jsonObject = Streams.parse(jsonReader).getAsJsonObject();
-					ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/", "").replaceAll(".json", ""));
+					Identifier rl = Identifier.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/", "").replaceAll(".json", ""));
 					JsonAssetLoader modelLoader = new JsonAssetLoader(jsonObject, resourceLocation);
 					SkinnedMesh mesh = null;
 					Armature armature = null;
@@ -623,8 +637,8 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					jsonReader.setLenient(true);
 					
 					JsonObject jsonObject = Streams.parse(jsonReader).getAsJsonObject();
-					ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/animations/", "").replaceAll(".json", ""));
-					ResourceLocation datapath = AnimationManager.getSubAnimationFileLocation(resourceLocation, AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
+					Identifier rl = Identifier.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/animations/", "").replaceAll(".json", ""));
+					Identifier datapath = AnimationManager.getSubAnimationFileLocation(resourceLocation, AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
 					IoSupplier<InputStream> streamSupplier = packResources.getResource(PackType.CLIENT_RESOURCES, datapath);
 					JsonElement constructorElement = jsonObject.getAsJsonObject().get("constructor");
 					
@@ -678,13 +692,13 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 	}
 	
 	private void exportUserData(ZipOutputStream out) throws Exception {
-		Map<ResourceLocation, JsonObject> models = Maps.newHashMap();
+		Map<Identifier, JsonObject> models = Maps.newHashMap();
 		
-		for (Map.Entry<ResourceLocation, AssetAccessor<? extends SkinnedMesh>> entry : this.userMeshes.entrySet()) {
+		for (Map.Entry<Identifier, AssetAccessor<? extends SkinnedMesh>> entry : this.userMeshes.entrySet()) {
 			models.put(entry.getKey(), entry.getValue().get().toJsonObject());
 		}
 		
-		for (Map.Entry<ResourceLocation, AssetAccessor<? extends Armature>> entry : this.userArmatures.entrySet()) {
+		for (Map.Entry<Identifier, AssetAccessor<? extends Armature>> entry : this.userArmatures.entrySet()) {
 			String exportPath = String.format("data/%s/animmodels/%s.json", entry.getKey().getNamespace(), entry.getKey().getPath());
 			ZipEntry zipEntry = new ZipEntry(exportPath);
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -701,7 +715,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			});
 		}
 		
-		for (Map.Entry<ResourceLocation, JsonObject> entry : models.entrySet()) {
+		for (Map.Entry<Identifier, JsonObject> entry : models.entrySet()) {
 			String exportPath = String.format("assets/%s/animmodels/%s.json", entry.getKey().getNamespace(), entry.getKey().getPath());
 			ZipEntry zipEntry = new ZipEntry(exportPath);
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -711,9 +725,9 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			out.closeEntry();
 		}
 		
-		for (Map.Entry<ResourceLocation, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> entry : this.userAnimations.entrySet()) {
+		for (Map.Entry<Identifier, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> entry : this.userAnimations.entrySet()) {
 			String exportPath = String.format("assets/%s/animmodels/animations/%s.json", entry.getKey().getNamespace(), entry.getKey().getPath());
-			ResourceLocation clientData = AnimationManager.getSubAnimationFileLocation(ResourceLocation.fromNamespaceAndPath(entry.getKey().getNamespace(), exportPath), AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
+			Identifier clientData = AnimationManager.getSubAnimationFileLocation(Identifier.fromNamespaceAndPath(entry.getKey().getNamespace(), exportPath), AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
 			ZipEntry asResource = new ZipEntry(exportPath);
 			ZipEntry asResourceClientData = new ZipEntry(clientData.getPath());
 			ZipEntry asData = new ZipEntry(String.format("data/%s/animmodels/animations/%s.json", entry.getKey().getNamespace(), entry.getKey().getPath()));
@@ -749,15 +763,15 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		});
 	}
 	
-	public Map<ResourceLocation, AssetAccessor<? extends SkinnedMesh>> getUserMeshes() {
+	public Map<Identifier, AssetAccessor<? extends SkinnedMesh>> getUserMeshes() {
 		return this.userMeshes;
 	}
 	
-	public Map<ResourceLocation, AssetAccessor<? extends Armature>> getUserArmatures() {
+	public Map<Identifier, AssetAccessor<? extends Armature>> getUserArmatures() {
 		return this.userArmatures;
 	}
 	
-	public Map<ResourceLocation, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> getUserAniamtions() {
+	public Map<Identifier, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> getUserAniamtions() {
 		return this.userAnimations;
 	}
 	
@@ -765,8 +779,8 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		protected Grid packListGrid;
 		protected InputComponentList<CompoundTag> inputComponentsList;
 		protected final Registry<T> registry;
-		protected final Set<ResourceLocation> namesSet = Sets.newHashSet();
-		protected final List<PackEntry<ResourceLocation, CompoundTag>> packList = Lists.newLinkedList();
+		protected final Set<Identifier> namesSet = Sets.newHashSet();
+		protected final List<PackEntry<Identifier, CompoundTag>> packList = Lists.newLinkedList();
 		protected final String directory;
 		
 		public DatapackTab(Component title, String directory, @Nullable Registry<T> registry) {
@@ -788,14 +802,14 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 									.rowpositionChanged(this::packGridRowpositionChanged)
 									.addColumn(Grid.editbox("pack_item")
 													.editWidgetCreated((editbox) -> editbox.setFilter(ParseUtil::canParseToResourceLocation))
-													.valueChanged((event) -> this.packList.get(event.rowposition).setPackKey(ResourceLocation.parse(event.postValue)))
+													.valueChanged((event) -> this.packList.get(event.rowposition).setPackKey(Identifier.parse(event.postValue)))
 									.defaultVal(EpicFightMod.prefix("")).editable(registry == null ? true : false).width(180))
 									.pressAdd((grid, button) -> {
 										if (registry != null) {
 											DatapackEditScreen.this.minecraft.setScreen(new SelectFromRegistryScreen<>(DatapackEditScreen.this, registry, (registryName, selItem) -> {
 												grid.setValueChangeEnabled(false);
 												int rowposition = grid.addRowWithDefaultValues("pack_item", registryName);
-												this.packList.add(rowposition, PackEntry.of(ResourceLocation.parse(registryName), CompoundTag::new));
+												this.packList.add(rowposition, PackEntry.of(Identifier.parse(registryName), CompoundTag::new));
 												grid.setGridFocus(rowposition, "pack_item");
 												grid.setValueChangeEnabled(true);
 											}, (registryName, selItem) -> {}, filter));
@@ -854,7 +868,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		public abstract void exportEntries(ZipOutputStream out) throws Exception;
 	}
 	
-	class WeaponTypeTab extends DatapackTab<ResourceLocation> {
+	class WeaponTypeTab extends DatapackTab<Identifier> {
 		private final ModelPreviewer modelPreviewer;
 		
 		public WeaponTypeTab() {
@@ -894,26 +908,26 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					
 					Grid.PackImporter packImporter = new Grid.PackImporter();
 					
-					for (String key : tag.getCompound("innate_skills").getAllKeys()) {
+					for (String key : tag.getCompoundOrEmpty("innate_skills").keySet()) {
 						packImporter.newRow();
 						packImporter.newValue("style", Style.ENUM_MANAGER.get(key));
-						packImporter.newValue("skill", SkillReloadListener.getSkill(tag.getCompound("innate_skills").getString(key)));
+						packImporter.newValue("skill", SkillReloadListener.getSkill(tag.getCompoundOrEmpty("innate_skills").getStringOr(key, "")));
 					}
 					
 					this.setDataBindingComponenets(new Object[] {
-						WeaponCategory.ENUM_MANAGER.get(tag.getString("category")),
-						BuiltInRegistries.PARTICLE_TYPE.get(ResourceLocation.parse(tag.getString("hit_particle"))),
-						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse(tag.getString("hit_sound"))),
-						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse(tag.getString("swing_sound"))),
+						WeaponCategory.ENUM_MANAGER.get(tag.getStringOr("category", "")),
+						BuiltInRegistries.PARTICLE_TYPE.get(Identifier.parse(tag.getStringOr("hit_particle", ""))),
+						BuiltInRegistries.SOUND_EVENT.get(Identifier.parse(tag.getStringOr("hit_sound", ""))),
+						BuiltInRegistries.SOUND_EVENT.get(Identifier.parse(tag.getStringOr("swing_sound", ""))),
 						tag.contains("usable_in_offhand") ? tag.getBoolean("usable_in_offhand") : true,
 						null,
-						ParseUtil.nullOrToString(colliderTag.get("number"), Tag::getAsString),
-						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
-						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
+						ParseUtil.nullOrToString(colliderTag.get("number"), ParseUtil::tagAsString),
+						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(0), ParseUtil::tagAsString)) : "",
+						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(1), ParseUtil::tagAsString)) : "",
+						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(2), ParseUtil::tagAsString)) : "",
+						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(0), ParseUtil::tagAsString)) : "",
+						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(1), ParseUtil::tagAsString)) : "",
+						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(2), ParseUtil::tagAsString)) : "",
 						packImporter
 					});
 				}
@@ -978,7 +992,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				
 				if (comp.contains("collider")) {
 					try {
-						collider = ColliderPreset.deserializeSimpleCollider(comp.getCompound("collider"));
+						collider = ColliderPreset.deserializeSimpleCollider(comp.getCompoundOrEmpty("collider"));
 					} catch (IllegalArgumentException e) {
 					}
 				}
@@ -1000,7 +1014,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			
 			colliderCenterX.setResponder((input) -> {
 				CompoundTag collider = ParseUtil.getOrDefaultTag(this.packList.get(this.packListGrid.getRowposition()).getValue(), "collider", new CompoundTag());
-				ListTag centerVec = collider.getList("center", Tag.TAG_DOUBLE);
+				ListTag centerVec = collider.getListOrEmpty("center");
 				
 				double i = StringUtil.isNullOrEmpty(input) ? 0 : ParseUtil.parseOrGet(input, Double::valueOf, 0.0D);
 				centerVec.remove(0);
@@ -1011,7 +1025,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			
 			colliderCenterY.setResponder((input) -> {
 				CompoundTag collider = ParseUtil.getOrDefaultTag(this.packList.get(this.packListGrid.getRowposition()).getValue(), "collider", new CompoundTag());
-				ListTag centerVec = collider.getList("center", Tag.TAG_DOUBLE);
+				ListTag centerVec = collider.getListOrEmpty("center");
 				
 				double i = StringUtil.isNullOrEmpty(input) ? 0 : ParseUtil.parseOrGet(input, Double::valueOf, 0.0D);
 				centerVec.remove(1);
@@ -1022,7 +1036,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			
 			colliderCenterZ.setResponder((input) -> {
 				CompoundTag collider = ParseUtil.getOrDefaultTag(this.packList.get(this.packListGrid.getRowposition()).getValue(), "collider", new CompoundTag());
-				ListTag centerVec = collider.getList("center", Tag.TAG_DOUBLE);
+				ListTag centerVec = collider.getListOrEmpty("center");
 				
 				double i = StringUtil.isNullOrEmpty(input) ? 0 : ParseUtil.parseOrGet(input, Double::valueOf, 0.0D);
 				centerVec.remove(2);
@@ -1033,7 +1047,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			
 			colliderSizeX.setResponder((input) -> {
 				CompoundTag collider = ParseUtil.getOrDefaultTag(this.packList.get(this.packListGrid.getRowposition()).getValue(), "collider", new CompoundTag());
-				ListTag centerVec = collider.getList("size", Tag.TAG_DOUBLE);
+				ListTag centerVec = collider.getListOrEmpty("size");
 				
 				double i = StringUtil.isNullOrEmpty(input) ? 0 : Double.valueOf(input);
 				centerVec.remove(0);
@@ -1044,7 +1058,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			
 			colliderSizeY.setResponder((input) -> {
 				CompoundTag collider = ParseUtil.getOrDefaultTag(this.packList.get(this.packListGrid.getRowposition()).getValue(), "collider", new CompoundTag());
-				ListTag centerVec = collider.getList("size", Tag.TAG_DOUBLE);
+				ListTag centerVec = collider.getListOrEmpty("size");
 				
 				double i = StringUtil.isNullOrEmpty(input) ? 0 : Double.valueOf(input);
 				centerVec.remove(1);
@@ -1055,7 +1069,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			
 			colliderSizeZ.setResponder((input) -> {
 				CompoundTag collider = ParseUtil.getOrDefaultTag(this.packList.get(this.packListGrid.getRowposition()).getValue(), "collider", new CompoundTag());
-				ListTag centerVec = collider.getList("size", Tag.TAG_DOUBLE);
+				ListTag centerVec = collider.getListOrEmpty("size");
 				
 				double i = StringUtil.isNullOrEmpty(input) ? 0 : Double.valueOf(input);
 				centerVec.remove(2);
@@ -1082,12 +1096,12 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 																									
 																									colliderCount.setValue(String.valueOf(colliderTag.getInt("number")));
 																									
-																									ListTag centerVec = colliderTag.getList("center", Tag.TAG_DOUBLE);
+																									ListTag centerVec = colliderTag.getListOrEmpty("center");
 																									colliderCenterX.setValue(String.valueOf(centerVec.getDouble(0)));
 																									colliderCenterY.setValue(String.valueOf(centerVec.getDouble(1)));
 																									colliderCenterZ.setValue(String.valueOf(centerVec.getDouble(2)));
 																									
-																									ListTag sizeVec = colliderTag.getList("size", Tag.TAG_DOUBLE);
+																									ListTag sizeVec = colliderTag.getListOrEmpty("size");
 																									colliderSizeX.setValue(String.valueOf(sizeVec.getDouble(0)));
 																									colliderSizeY.setValue(String.valueOf(sizeVec.getDouble(1)));
 																									colliderSizeZ.setValue(String.valueOf(sizeVec.getDouble(2)));
@@ -1195,7 +1209,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			
 			try {
 				CompoundTag tag = this.packList.get(rowposition).getValue();
-				Collider collider = ColliderPreset.deserializeSimpleCollider(tag.getCompound("collider"));
+				Collider collider = ColliderPreset.deserializeSimpleCollider(tag.getCompoundOrEmpty("collider"));
 				this.modelPreviewer.setCollider(collider);
 			} catch (IllegalArgumentException e) {
 				this.modelPreviewer.setCollider(null);
@@ -1204,7 +1218,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		
 		@Override
 		public void validateBeforeExport() {
-			for (PackEntry<ResourceLocation, CompoundTag> packEntry : this.packList) {
+			for (PackEntry<Identifier, CompoundTag> packEntry : this.packList) {
 				try {
 					WeaponTypeReloadListener.deserializeWeaponCapabilityBuilder(packEntry.getKey(), packEntry.getValue(), DatapackEditScreen.this);
 				} catch (Exception e) {
@@ -1219,7 +1233,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			packResources.getNamespaces(PackType.SERVER_DATA).stream().distinct().forEach((namespace) -> {
 				packResources.listResources(PackType.SERVER_DATA, namespace, this.directory, (resourceLocation, streamSupplier) -> {
 					try {
-						ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(this.directory + "/", "").replaceAll(".json", ""));
+						Identifier rl = Identifier.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(this.directory + "/", "").replaceAll(".json", ""));
 						this.importJson(rl, streamSupplier.get());
 					} catch (Exception e) {
 						EpicFightMod.LOGGER.info("Failed to import " + resourceLocation + ": " + e.getMessage());
@@ -1229,13 +1243,13 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			});
 		}
 		
-		public void importJson(ResourceLocation registryName, InputStream inputStream) throws Exception {
+		public void importJson(Identifier registryName, InputStream inputStream) throws Exception {
 			JsonReader jsonReader = new JsonReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 			
 			try {
 				jsonReader.setLenient(true);
 				JsonObject jsonObject = Streams.parse(jsonReader).getAsJsonObject();
-				CompoundTag compTag = TagParser.parseTag(jsonObject.toString());
+				CompoundTag compTag = TagParser.parseCompoundFully(jsonObject.toString());
 				
 				try {
 					WeaponCapability.Builder builder = WeaponTypeReloadListener.deserializeWeaponCapabilityBuilder(registryName, compTag, DatapackEditScreen.this);
@@ -1261,7 +1275,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		
 		@Override
 		public void exportEntries(ZipOutputStream out) throws Exception {
-			for (PackEntry<ResourceLocation, CompoundTag> packEntry : this.packList) {
+			for (PackEntry<Identifier, CompoundTag> packEntry : this.packList) {
 				try {
 					ZipEntry zipEntry = new ZipEntry(String.format("data/%s/" + this.directory + "/%s.json", packEntry.getKey().getNamespace(), packEntry.getKey().getPath()));
 					Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -1319,28 +1333,28 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					
 					this.inputComponentsList.setDataBindingComponenets(new Object[] {
 						itemType,
-						DatapackEditScreen.getWeaponType(tag.getString("type")),
+						DatapackEditScreen.getWeaponType(tag.getStringOr("type", "")),
 						null,
 						ParseUtil.nullParam(colliderTag.get("number")),
-						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
-						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
-						colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getList("color", Tag.TAG_INT).get(0), Tag::getAsString)) : "",
-						colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getList("color", Tag.TAG_INT).get(1), Tag::getAsString)) : "",
-						colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getList("color", Tag.TAG_INT).get(2), Tag::getAsString)) : "",
-						beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("begin_pos", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-						beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("begin_pos", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-						beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("begin_pos", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
-						endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("end_pos", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-						endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("end_pos", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-						endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("end_pos", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
+						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(0), ParseUtil::tagAsString)) : "",
+						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(1), ParseUtil::tagAsString)) : "",
+						centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(2), ParseUtil::tagAsString)) : "",
+						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(0), ParseUtil::tagAsString)) : "",
+						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(1), ParseUtil::tagAsString)) : "",
+						sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(2), ParseUtil::tagAsString)) : "",
+						colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getListOrEmpty("color").get(0), ParseUtil::tagAsString)) : "",
+						colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getListOrEmpty("color").get(1), ParseUtil::tagAsString)) : "",
+						colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getListOrEmpty("color").get(2), ParseUtil::tagAsString)) : "",
+						beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("begin_pos").get(0), ParseUtil::tagAsString)) : "",
+						beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("begin_pos").get(1), ParseUtil::tagAsString)) : "",
+						beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("begin_pos").get(2), ParseUtil::tagAsString)) : "",
+						endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("end_pos").get(0), ParseUtil::tagAsString)) : "",
+						endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("end_pos").get(1), ParseUtil::tagAsString)) : "",
+						endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("end_pos").get(2), ParseUtil::tagAsString)) : "",
 						ParseUtil.nullParam(trailTag.get("lifetime")),
 						ParseUtil.nullParam(trailTag.get("interpolations")),
 						ParseUtil.nullParam(trailTag.getString("texture_path")),
-						BuiltInRegistries.PARTICLE_TYPE.get(ResourceLocation.parse(trailTag.getString("particle_type")))
+						BuiltInRegistries.PARTICLE_TYPE.get(Identifier.parse(trailTag.getStringOr("particle_type", "")))
 					});
 					this.itemTypeCombo._setResponder(this.responder);
 				} else {
@@ -1359,7 +1373,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					ItemType itemType = null;
 					
 					try {
-						itemType = ItemType.valueOf(tag.getString("item_type"));
+						itemType = ItemType.valueOf(tag.getStringOr("item_type", ""));
 					} catch (IllegalArgumentException e) {
 					}
 					
@@ -1380,28 +1394,28 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 						
 						this.setDataBindingComponenets(new Object[] {
 							itemType,
-							DatapackEditScreen.getWeaponType(tag.getString("type")),
+							DatapackEditScreen.getWeaponType(tag.getStringOr("type", "")),
 							null,
 							ParseUtil.nullParam(colliderTag.get("number")),
-							centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-							centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-							centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
-							sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-							sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-							sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
-							colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getList("color", Tag.TAG_INT).get(0), Tag::getAsString)) : "",
-							colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getList("color", Tag.TAG_INT).get(1), Tag::getAsString)) : "",
-							colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getList("color", Tag.TAG_INT).get(2), Tag::getAsString)) : "",
-							beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("begin_pos", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-							beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("begin_pos", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-							beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("begin_pos", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
-							endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("end_pos", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-							endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("end_pos", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-							endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getList("end_pos", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
+							centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(0), ParseUtil::tagAsString)) : "",
+							centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(1), ParseUtil::tagAsString)) : "",
+							centerInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(2), ParseUtil::tagAsString)) : "",
+							sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(0), ParseUtil::tagAsString)) : "",
+							sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(1), ParseUtil::tagAsString)) : "",
+							sizeInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(2), ParseUtil::tagAsString)) : "",
+							colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getListOrEmpty("color").get(0), ParseUtil::tagAsString)) : "",
+							colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getListOrEmpty("color").get(1), ParseUtil::tagAsString)) : "",
+							colorInit ? ParseUtil.nullParam(ParseUtil.nullOrToString(trailTag.getListOrEmpty("color").get(2), ParseUtil::tagAsString)) : "",
+							beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("begin_pos").get(0), ParseUtil::tagAsString)) : "",
+							beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("begin_pos").get(1), ParseUtil::tagAsString)) : "",
+							beginInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("begin_pos").get(2), ParseUtil::tagAsString)) : "",
+							endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("end_pos").get(0), ParseUtil::tagAsString)) : "",
+							endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("end_pos").get(1), ParseUtil::tagAsString)) : "",
+							endInit ? ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(trailTag.getListOrEmpty("end_pos").get(2), ParseUtil::tagAsString)) : "",
 							ParseUtil.nullParam(trailTag.get("lifetime")),
 							ParseUtil.nullParam(trailTag.get("interpolations")),
 							ParseUtil.nullParam(trailTag.getString("texture_path")),
-							BuiltInRegistries.PARTICLE_TYPE.get(ResourceLocation.parse(trailTag.getString("particle_type")))
+							BuiltInRegistries.PARTICLE_TYPE.get(Identifier.parse(trailTag.getStringOr("particle_type", "")))
 						});
 						ItemCapabilityTab.this.itemTypeCombo._setResponder(ItemCapabilityTab.this.responder);
 					} else {
@@ -1443,7 +1457,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 																					currentTag.putString("type", pair.getFirst());
 																					
 																					if (pair.getSecond() != null) {
-																						CapabilityItem.Builder<?> builder = pair.getSecond().apply(this.registry.get(this.packList.get(this.packListGrid.getRowposition()).getKey()));
+																						CapabilityItem.Builder<?> builder = pair.getSecond().apply(this.registry.getValue(this.packList.get(this.packListGrid.getRowposition()).getKey()));
 																						
 																						if (builder instanceof WeaponCapability.Builder weaponBuilder) {
 																							this.modelPreviewer.clearAnimations();
@@ -1461,7 +1475,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 																							
 																							if (currentTag.contains("collider")) {
 																								try {
-																									ColliderPreset.deserializeSimpleCollider(currentTag.getCompound("collider"));
+																									ColliderPreset.deserializeSimpleCollider(currentTag.getCompoundOrEmpty("collider"));
 																									hasCustomCollider = true;
 																								} catch (IllegalArgumentException e) {
 																								}
@@ -1636,12 +1650,12 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 																										
 																										colliderCount.setValue(String.valueOf(colliderTag.getInt("number")));
 																										
-																										ListTag centerVec = colliderTag.getList("center", Tag.TAG_DOUBLE);
+																										ListTag centerVec = colliderTag.getListOrEmpty("center");
 																										colliderCenterX.setValue(String.valueOf(centerVec.getDouble(0)));
 																										colliderCenterY.setValue(String.valueOf(centerVec.getDouble(1)));
 																										colliderCenterZ.setValue(String.valueOf(centerVec.getDouble(2)));
 																										
-																										ListTag sizeVec = colliderTag.getList("size", Tag.TAG_DOUBLE);
+																										ListTag sizeVec = colliderTag.getListOrEmpty("size");
 																										colliderSizeX.setValue(String.valueOf(sizeVec.getDouble(0)));
 																										colliderSizeY.setValue(String.valueOf(sizeVec.getDouble(1)));
 																										colliderSizeZ.setValue(String.valueOf(sizeVec.getDouble(2)));
@@ -1691,7 +1705,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				final ColorPreviewWidget colorWidget = new ColorPreviewWidget(0, 12, 0, 12, HorizontalSizing.LEFT_WIDTH, null, Component.translatable("datapack_edit.item_capability.color"));
 				
 				colorR.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "color", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1708,7 +1722,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					this.modelPreviewer.setTrailInfo(trailInfo);
 				});
 				colorG.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "color", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1725,7 +1739,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					this.modelPreviewer.setTrailInfo(trailInfo);
 				});
 				colorB.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "color", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1761,7 +1775,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				final ResizableEditBox beginZ = new ResizableEditBox(font, 0, 35, 0, 15, Component.translatable("datapack_edit.item_capability.trail.begin_pos.z"), HorizontalSizing.LEFT_WIDTH, null);
 				
 				beginX.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "begin_pos", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1777,7 +1791,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					this.modelPreviewer.setTrailInfo(trailInfo);
 				});
 				beginY.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "begin_pos", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1793,7 +1807,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					this.modelPreviewer.setTrailInfo(trailInfo);
 				});
 				beginZ.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "begin_pos", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1827,7 +1841,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				final ResizableEditBox endZ = new ResizableEditBox(font, 0, 35, 0, 15, Component.translatable("datapack_edit.item_capability.trail.end_pos.z"), HorizontalSizing.LEFT_WIDTH, null);
 				
 				endX.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "end_pos", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1844,7 +1858,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					this.modelPreviewer.setTrailInfo(trailInfo);
 				});
 				endY.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "end_pos", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1861,7 +1875,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					this.modelPreviewer.setTrailInfo(trailInfo);
 				});
 				endZ.setResponder((input) -> {
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					ListTag list = ParseUtil.getOrDefaultTag(trailTag, "end_pos", new ListTag());
 					
 					if (list.isEmpty()) {
@@ -1896,7 +1910,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				
 				lifetime.setResponder((input) -> {
 					int i = StringUtil.isNullOrEmpty(input) ? 0 : Integer.valueOf(input);
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					trailTag.put("lifetime", IntTag.valueOf(i));
 					
 					TrailInfo trailInfo = TrailInfo.deserialize(trailTag);
@@ -1907,7 +1921,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				interpolation.setResponder((input) -> {
 					int i = StringUtil.isNullOrEmpty(input) ? 0 : Integer.valueOf(input);
 					
-					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompound("trail");
+					CompoundTag trailTag = this.packList.get(this.packListGrid.getRowposition()).getValue().getCompoundOrEmpty("trail");
 					trailTag.put("interpolations", IntTag.valueOf(i));
 					
 					TrailInfo trailInfo = TrailInfo.deserialize(trailTag);
@@ -1926,7 +1940,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				final ResizableEditBox texturePath = new ResizableEditBox(font, 0, 15, 0, 15, Component.translatable("datapack_edit.item_capability.trail.end_pos.z"), HorizontalSizing.LEFT_RIGHT, null);
 				texturePath.setResponder((input) -> {
 					CompoundTag trailTag = ParseUtil.getOrDefaultTag(this.packList.get(this.packListGrid.getRowposition()).getValue(), "trail", new CompoundTag()); 
-					trailTag.putString("texture_path", ResourceLocation.parse(input).toString());
+					trailTag.putString("texture_path", Identifier.parse(input).toString());
 					
 					TrailInfo trailInfo = TrailInfo.deserialize(trailTag);
 					this.modelPreviewer.setTrailInfo(trailInfo);
@@ -1977,16 +1991,16 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		public void packGridRowpositionChanged(int rowposition, Map<String, Object> values) {
 			CompoundTag tag = this.packList.get(rowposition).getValue();
 			this.inputComponentsList.importTag(tag);
-			ResourceLocation rl = ResourceLocation.parse(ParseUtil.nullParam(values.get("pack_item")));
+			Identifier rl = Identifier.parse(ParseUtil.nullParam(values.get("pack_item")));
 			
 			if (this.registry.containsKey(rl)) {
-				this.modelPreviewer.setItemToRender(this.registry.get(rl));
+				this.modelPreviewer.setItemToRender(this.registry.getValue(rl));
 			}
 			
-			Function<Item, ? extends CapabilityItem.Builder<?>> builderProvider = DatapackEditScreen.getWeaponType(tag.getString("type"));
+			Function<Item, ? extends CapabilityItem.Builder<?>> builderProvider = DatapackEditScreen.getWeaponType(tag.getStringOr("type", ""));
 			
 			if (builderProvider != null) {
-				CapabilityItem.Builder<?> builder = builderProvider.apply(this.registry.get(this.packList.get(rowposition).getKey()));
+				CapabilityItem.Builder<?> builder = builderProvider.apply(this.registry.getValue(this.packList.get(rowposition).getKey()));
 				
 				if (builder instanceof WeaponCapability.Builder weaponBuilder) {
 					this.modelPreviewer.clearAnimations();
@@ -2004,7 +2018,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					
 					if (tag.contains("collider")) {
 						try {
-							ColliderPreset.deserializeSimpleCollider(tag.getCompound("collider"));
+							ColliderPreset.deserializeSimpleCollider(tag.getCompoundOrEmpty("collider"));
 							hasCustomCollider = true;
 						} catch (IllegalArgumentException e) {
 						}
@@ -2019,14 +2033,14 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		
 		@Override
 		public void validateBeforeExport() {
-			for (PackEntry<ResourceLocation, CompoundTag> packEntry : this.packList) {
+			for (PackEntry<Identifier, CompoundTag> packEntry : this.packList) {
                 try {
                     if (!packEntry.getValue().contains("item_type")) {
                         throw new NoSuchElementException("Item type undefined!");
                     }
 
-                    Item item = BuiltInRegistries.ITEM.get(packEntry.getKey());
-                    ItemType itemType = ItemType.valueOf(packEntry.getValue().getString("item_type"));
+                    Item item = BuiltInRegistries.ITEM.getValue(packEntry.getKey());
+                    ItemType itemType = ItemType.valueOf(packEntry.getValue().getStringOr("item_type", ""));
 
                     if (itemType == ItemType.WEAPON && !packEntry.getValue().contains("type")) {
                         throw new IllegalStateException("Weapon type undefined!");
@@ -2053,13 +2067,13 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					}
 					
 					try {
-						ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(String.format("%s/%s/", this.directory, ItemType.WEAPON.directoryName), "")
+						Identifier registryName = Identifier.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(String.format("%s/%s/", this.directory, ItemType.WEAPON.directoryName), "")
 																													.replaceAll(String.format("%s/%s/", this.directory, ItemType.ARMOR.directoryName), "").replaceAll(".json", ""));
 						
 						ItemType itemType = resourceLocation.getPath().contains(ItemType.WEAPON.directoryName) ? ItemType.WEAPON : ItemType.ARMOR;
 						this.importJson(registryName, itemType, streamSupplier.get());
 						
-						ResourceLocation itemSkin = ResourceLocation.fromNamespaceAndPath(registryName.getNamespace(), "item_skins/" + registryName.getPath() + ".json");
+						Identifier itemSkin = Identifier.fromNamespaceAndPath(registryName.getNamespace(), "item_skins/" + registryName.getPath() + ".json");
 						IoSupplier<InputStream> itemSkinStreamSupplier = packResources.getResource(PackType.CLIENT_RESOURCES, itemSkin);
 						
 						if (itemSkinStreamSupplier != null) {
@@ -2071,7 +2085,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 								CompoundTag comp = null;
 								
 								try {
-									comp = TagParser.parseTag(Streams.parse(jsonReader).getAsJsonObject().toString());
+									comp = TagParser.parseCompoundFully(Streams.parse(jsonReader).getAsJsonObject().toString());
 								} finally {
 									jsonReader.close();
 								}
@@ -2087,13 +2101,13 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			});
 		}
 		
-		public void importJson(ResourceLocation registryName, ItemType itemType, InputStream inputStream) throws Exception {
+		public void importJson(Identifier registryName, ItemType itemType, InputStream inputStream) throws Exception {
 			JsonReader jsonReader = new JsonReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 			
 			try {
 				jsonReader.setLenient(true);
 				JsonObject jsonObject = Streams.parse(jsonReader).getAsJsonObject();
-				CompoundTag compTag = TagParser.parseTag(jsonObject.toString());
+				CompoundTag compTag = TagParser.parseCompoundFully(jsonObject.toString());
 				
 				if (itemType != null) {
 					compTag.putString("item_type", itemType.toString());
@@ -2101,15 +2115,15 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				
 				//Removal expected after 20.8.1.6
 				if (itemType == ItemType.WEAPON) {
-					if (compTag.contains("attributes", Tag.TAG_COMPOUND)) {
+					if (compTag.getCompound("attributes").isPresent()) {
 						final Map<String, ParameterEditor> weaponAttributeEditors = Maps.newLinkedHashMap();
-						weaponAttributeEditors.put("armor_negation", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), null));
-						weaponAttributeEditors.put("impact", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), null));
-						weaponAttributeEditors.put("max_strikes", ParameterEditor.of((value) -> IntTag.valueOf(Integer.parseInt(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), null));
-						weaponAttributeEditors.put("damage_bonus", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), null));
-						weaponAttributeEditors.put("speed_bonus", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), null));
+						weaponAttributeEditors.put("armor_negation", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), null));
+						weaponAttributeEditors.put("impact", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), null));
+						weaponAttributeEditors.put("max_strikes", ParameterEditor.of((value) -> IntTag.valueOf(Integer.parseInt(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), null));
+						weaponAttributeEditors.put("damage_bonus", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), null));
+						weaponAttributeEditors.put("speed_bonus", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), null));
 						
-						CompoundTag attrComp = compTag.getCompound("attributes");
+						CompoundTag attrComp = compTag.getCompoundOrEmpty("attributes");
 						
 						for (Map.Entry<String, Tag> e : attrComp.tags.entrySet()) {
 							CompoundTag comp = (CompoundTag)e.getValue();
@@ -2118,8 +2132,8 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 								if (attrEntry.getValue().getId() == Tag.TAG_STRING) {
 									ParameterEditor paramEditor = weaponAttributeEditors.get(attrEntry.getKey());
 									
-									if (ParseUtil.isParsable(attrEntry.getValue().getAsString(), Double::parseDouble)) {
-										comp.put(attrEntry.getKey(), paramEditor.toTag.apply(attrEntry.getValue().getAsString()));
+									if (ParseUtil.isParsable(attrEntry.getValue().asString().orElse(""), Double::parseDouble)) {
+										comp.put(attrEntry.getKey(), paramEditor.toTag.apply(attrEntry.getValue().asString().orElse("")));
 									} else {
 										comp.remove(attrEntry.getKey());
 									}
@@ -2128,19 +2142,19 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 						}
 					}
 				} else if (itemType == ItemType.ARMOR) {
-					if (compTag.contains("attributes", Tag.TAG_COMPOUND)) {
+					if (compTag.getCompound("attributes").isPresent()) {
 						final Map<String, ParameterEditor> armorAttributeEditors = Maps.newLinkedHashMap();
-						armorAttributeEditors.put("stun_armor", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), null));
-						armorAttributeEditors.put("weight", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), null));
+						armorAttributeEditors.put("stun_armor", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), null));
+						armorAttributeEditors.put("weight", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), null));
 						
-						CompoundTag comp = compTag.getCompound("attributes");
+						CompoundTag comp = compTag.getCompoundOrEmpty("attributes");
 						
 						for (Map.Entry<String, Tag> attrEntry : comp.tags.entrySet()) {
 							if (attrEntry.getValue().getId() == Tag.TAG_STRING) {
 								ParameterEditor paramEditor = armorAttributeEditors.get(attrEntry.getKey());
 								
-								if (ParseUtil.isParsable(attrEntry.getValue().getAsString(), Double::parseDouble)) {
-									comp.put(attrEntry.getKey(), paramEditor.toTag.apply(attrEntry.getValue().getAsString()));
+								if (ParseUtil.isParsable(attrEntry.getValue().asString().orElse(""), Double::parseDouble)) {
+									comp.put(attrEntry.getKey(), paramEditor.toTag.apply(attrEntry.getValue().asString().orElse("")));
 								} else {
 									comp.remove(attrEntry.getKey());
 								}
@@ -2166,8 +2180,8 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		
 		@Override
 		public void exportEntries(ZipOutputStream out) throws Exception {
-			for (PackEntry<ResourceLocation, CompoundTag> packEntry : this.packList) {
-				String sItemType = packEntry.getValue().getString("item_type");
+			for (PackEntry<Identifier, CompoundTag> packEntry : this.packList) {
+				String sItemType = packEntry.getValue().getStringOr("item_type", "");
 				
 				try {
 					ItemType itemType = ItemType.valueOf(sItemType);
@@ -2178,12 +2192,12 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					CompoundTag tag = packEntry.getValue();
 					
 					if (tag.contains("trail")) {
-						TrailInfo result = TrailInfo.ANIMATION_DEFAULT_TRAIL.overwrite(TrailInfo.deserialize(tag.getCompound("trail")));
+						TrailInfo result = TrailInfo.ANIMATION_DEFAULT_TRAIL.overwrite(TrailInfo.deserialize(tag.getCompoundOrEmpty("trail")));
 						
 						if (result.playable()) {
 							ZipEntry asItemSkin = new ZipEntry(String.format("assets/%s/item_skins/%s.json", packEntry.getKey().getNamespace(), packEntry.getKey().getPath()));
 							CompoundTag itemSkinsTag = new CompoundTag();
-							itemSkinsTag.put("trail", tag.getCompound("trail"));
+							itemSkinsTag.put("trail", tag.getCompoundOrEmpty("trail"));
 							
 							out.putNextEntry(asItemSkin);
 							out.write(gson.toJson(ParseUtil.convertToJsonObject(itemSkinsTag)).getBytes());
@@ -2195,7 +2209,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					
 					if (tag.contains("collider")) {
 						try {
-							ColliderPreset.deserializeSimpleCollider(tag.getCompound("collider"));
+							ColliderPreset.deserializeSimpleCollider(tag.getCompoundOrEmpty("collider"));
 						} catch (Exception e) {
 							tag.remove("collider");
 						}
@@ -2228,7 +2242,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 				tag.putString("preset", EntityType.getKey(entityType).toString());
 			}
 			
-			this.rearrangeComponents(false, entityType == null ? false : true, tag.getBoolean("isHumanoid"));
+			this.rearrangeComponents(false, entityType == null ? false : true, tag.getBooleanOr("isHumanoid", false));
 			
 			if (entityType == null) {
 				this.bindTag(tag);
@@ -2239,8 +2253,8 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		private final Consumer<Boolean> disableResponder = (value) -> {
 			CompoundTag tag = this.packList.get(this.packListGrid.getRowposition()).getValue();
 			tag.putBoolean("disabled", value);
-			boolean preset = tag.contains("preset", Tag.TAG_STRING) && !StringUtil.isNullOrEmpty(tag.getString("preset"));
-			boolean isHumanoid = tag.getBoolean("isHumanoid");
+			boolean preset = tag.getString("preset").isPresent() && !StringUtil.isNullOrEmpty(tag.getStringOr("preset", ""));
+			boolean isHumanoid = tag.getBooleanOr("isHumanoid", false);
 			
 			this.rearrangeComponents(value, preset, isHumanoid);
 			
@@ -2272,14 +2286,14 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			this.inputComponentsList = new InputComponentList<>(DatapackEditScreen.this, 0, 0, 0, 30) {
 				@Override
 				public void importTag(CompoundTag tag) {
-					boolean disabled = tag.getBoolean("disabled");
-					boolean preset = tag.contains("preset", Tag.TAG_STRING) && !StringUtil.isNullOrEmpty(tag.getString("preset"));
+					boolean disabled = tag.getBooleanOr("disabled", false);
+					boolean preset = tag.getString("preset").isPresent() && !StringUtil.isNullOrEmpty(tag.getStringOr("preset", ""));
 					
 					if (!tag.contains("isHumanoid")) {
 						tag.putBoolean("isHumanoid", false);
 					}
 					
-					boolean isHumanoid = tag.getBoolean("isHumanoid");
+					boolean isHumanoid = tag.getBooleanOr("isHumanoid", false);
 					
 					MobCapabilityTab.this.rearrangeComponents(disabled, preset, isHumanoid);
 					this.setComponentsActive(true);
@@ -2288,7 +2302,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 						MobCapabilityTab.this.presetCombo._setResponder(null);
 						
 						this.setDataBindingComponenets(new Object[] {
-							EntityType.byString(tag.getString("preset")).orElse(null)
+							EntityType.byString(tag.getStringOr("preset", "")).orElse(null)
 						});
 						
 						MobCapabilityTab.this.presetCombo._setResponder(MobCapabilityTab.this.presetResponder);
@@ -2355,12 +2369,12 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			scaleEditBox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsable(context, Double::parseDouble));
 			stunArmorBox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsableAllowingMinus(context, Double::parseDouble));
 			
-			this.attributeEditors.put("impact", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), impactEditBox));
-			this.attributeEditors.put("armor_negation", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), armorNegationEditBox));
-			this.attributeEditors.put("max_strikes", ParameterEditor.of((value) -> IntTag.valueOf(Integer.parseInt(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), maxStrikesEditBox));
-			this.attributeEditors.put("chasing_speed", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), chasingSpeedEditBox));
-			this.attributeEditors.put("scale", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), scaleEditBox));
-			this.attributeEditors.put("stun_armor", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.getAsString()), stunArmorBox));
+			this.attributeEditors.put("impact", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), impactEditBox));
+			this.attributeEditors.put("armor_negation", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), armorNegationEditBox));
+			this.attributeEditors.put("max_strikes", ParameterEditor.of((value) -> IntTag.valueOf(Integer.parseInt(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), maxStrikesEditBox));
+			this.attributeEditors.put("chasing_speed", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), chasingSpeedEditBox));
+			this.attributeEditors.put("scale", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), scaleEditBox));
+			this.attributeEditors.put("stun_armor", ParameterEditor.of((value) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(tag.asString().orElse("")), stunArmorBox));
 		}
 		
 		private void rearrangeComponents(boolean disable, boolean usePreset, boolean isHumanoid) {
@@ -2624,43 +2638,43 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			Grid.PackImporter livingmotionPackImporter = new Grid.PackImporter();
 			Grid.PackImporter stunPackImporter = new Grid.PackImporter();
 			
-			for (Map.Entry<String, Tag> attributesTag : tag.getCompound("attributes").tags.entrySet()) {
+			for (Map.Entry<String, Tag> attributesTag : tag.getCompoundOrEmpty("attributes").tags.entrySet()) {
 				ParameterEditor editor = this.attributeEditors.get(attributesTag.getKey());
 				
 				attributePackImporter.newRow();
 				attributePackImporter.newValue("attribute", editor);
-				attributePackImporter.newValue("amount", ParseUtil.valueOfOmittingType(attributesTag.getValue().getAsString()));
+				attributePackImporter.newValue("amount", ParseUtil.valueOfOmittingType(attributesTag.getValue().asString().orElse("")));
 			}
 			
-			for (Map.Entry<String, Tag> livingmotionTag : tag.getCompound("default_livingmotions").tags.entrySet()) {
+			for (Map.Entry<String, Tag> livingmotionTag : tag.getCompoundOrEmpty("default_livingmotions").tags.entrySet()) {
 				try {
 					LivingMotion livingMotion = LivingMotion.ENUM_MANAGER.get(livingmotionTag.getKey().toUpperCase(Locale.ROOT));
 					livingmotionPackImporter.newRow();
 					livingmotionPackImporter.newValue("living_motion", livingMotion);
-					livingmotionPackImporter.newValue("animation", DatapackEditScreen.animationByKey(livingmotionTag.getValue().getAsString()));
+					livingmotionPackImporter.newValue("animation", DatapackEditScreen.animationByKey(livingmotionTag.getValue().asString().orElse("")));
 				} finally {}
 			}
 			
-			for (Map.Entry<String, Tag> stunTag : tag.getCompound("stun_animations").tags.entrySet()) {
+			for (Map.Entry<String, Tag> stunTag : tag.getCompoundOrEmpty("stun_animations").tags.entrySet()) {
 				try {
 					StunType stunType = ParseUtil.enumValueOfOrNull(StunType.class, stunTag.getKey().toUpperCase(Locale.ROOT));
 					stunPackImporter.newRow();
 					stunPackImporter.newValue("stun_type", stunType);
-					stunPackImporter.newValue("animation", DatapackEditScreen.animationByKey(stunTag.getValue().getAsString()));
+					stunPackImporter.newValue("animation", DatapackEditScreen.animationByKey(stunTag.getValue().asString().orElse("")));
 				} finally {}
 			}
 			
 			this.inputComponentsList.setDataBindingComponenets(new Object[] {
 				false,
-				EntityType.byString(tag.getString("preset")).orElse(null),
-				DatapackEditScreen.getMesh(tag.getString("model")),
-				DatapackEditScreen.getArmature(tag.getString("armature")),
-				StringUtil.isNullOrEmpty(tag.getString("renderer")) ? null : ResourceLocation.parse(tag.getString("renderer")),
+				EntityType.byString(tag.getStringOr("preset", "")).orElse(null),
+				DatapackEditScreen.getMesh(tag.getStringOr("model", "")),
+				DatapackEditScreen.getArmature(tag.getStringOr("armature", "")),
+				StringUtil.isNullOrEmpty(tag.getStringOr("renderer", "")) ? null : Identifier.parse(tag.getStringOr("renderer", "")),
 				tag.getBoolean("isHumanoid"),
-				ParseUtil.nullOrApply(tag.get("faction"), (jsonElement) -> Faction.ENUM_MANAGER.getOrThrow(jsonElement.getAsString())),
-				BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse(tag.getString("swing_sound"))),
-				BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse(tag.getString("hit_sound"))),
-				BuiltInRegistries.PARTICLE_TYPE.get(ResourceLocation.parse(tag.getString("hit_particle"))),
+				ParseUtil.nullOrApply(tag.get("faction"), (jsonElement) -> Faction.ENUM_MANAGER.getOrThrow(jsonElement.asString().orElse(""))),
+				BuiltInRegistries.SOUND_EVENT.get(Identifier.parse(tag.getStringOr("swing_sound", ""))),
+				BuiltInRegistries.SOUND_EVENT.get(Identifier.parse(tag.getStringOr("hit_sound", ""))),
+				BuiltInRegistries.PARTICLE_TYPE.get(Identifier.parse(tag.getStringOr("hit_particle", ""))),
 				attributePackImporter,
 				livingmotionPackImporter,
 				stunPackImporter
@@ -2678,7 +2692,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		
 		@Override
 		public void validateBeforeExport() {
-			for (PackEntry<ResourceLocation, CompoundTag> packEntry : this.packList) {
+			for (PackEntry<Identifier, CompoundTag> packEntry : this.packList) {
 				try {
 					Optional<EntityType<?>> type = EntityType.byString(packEntry.getKey().toString());
 					
@@ -2698,7 +2712,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		public void importEntries(PackResources packResources) {
 			packResources.getNamespaces(PackType.SERVER_DATA).stream().distinct().forEach((namespace) -> {
 				packResources.listResources(PackType.SERVER_DATA, namespace, this.directory, (resourceLocation, streamSupplier) -> {
-					ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(String.format("%s/", this.directory), "").replaceAll(".json", ""));
+					Identifier rl = Identifier.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(String.format("%s/", this.directory), "").replaceAll(".json", ""));
 					
 					try {
 						this.importJson(rl, streamSupplier.get());
@@ -2710,7 +2724,7 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 			});
 		}
 		
-		public void importJson(ResourceLocation registryName, InputStream inputStream) throws Exception {
+		public void importJson(Identifier registryName, InputStream inputStream) throws Exception {
 			InputStreamReader reader = new InputStreamReader(inputStream);
 		    StringBuilder sb = new StringBuilder();
 		    Exception exception = null;
@@ -2720,10 +2734,10 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 					sb.append((char) data);
 				}
 				
-				CompoundTag compTag = TagParser.parseTag(sb.toString());
+				CompoundTag compTag = TagParser.parseCompoundFully(sb.toString());
 				
-				if (compTag.getBoolean("isHumanoid")) {
-					ListTag combatBehaviorList = compTag.getList("combat_behavior", Tag.TAG_COMPOUND);
+				if (compTag.getBooleanOr("isHumanoid", false)) {
+					ListTag combatBehaviorList = compTag.getListOrEmpty("combat_behavior");
 					
 					if (!combatBehaviorList.isEmpty()) {
 						compTag.remove("combat_behavior");
@@ -2746,23 +2760,23 @@ public class DatapackEditScreen extends Screen implements ExtraEntryProvider {
 		
 		@Override
 		public void exportEntries(ZipOutputStream out) throws Exception {
-			for (PackEntry<ResourceLocation, CompoundTag> packEntry : this.packList) {
+			for (PackEntry<Identifier, CompoundTag> packEntry : this.packList) {
 				try {
 					CompoundTag packCompound = packEntry.getValue();
 					
-					if (packCompound.getBoolean("disabled")) {
+					if (packCompound.getBooleanOr("disabled", false)) {
 						packCompound.tags.clear();
 						packCompound.putBoolean("disabled", true);
 					} else if (packCompound.contains("preset")) {
-						String preset = packCompound.getString("preset");
+						String preset = packCompound.getStringOr("preset", "");
 						packCompound.tags.clear();
 						packCompound.putString("preset", preset);
 					} else {
 						packCompound.remove("disabled");
 					}
 					
-					if (packCompound.getBoolean("isHumanoid")) {
-						ListTag humanoidCombatBehavior = packCompound.getList("combat_behavior_humanoid", Tag.TAG_COMPOUND);
+					if (packCompound.getBooleanOr("isHumanoid", false)) {
+						ListTag humanoidCombatBehavior = packCompound.getListOrEmpty("combat_behavior_humanoid");
 						packCompound.remove("combat_behavior_humanoid");
 						packCompound.put("combat_behavior", humanoidCombatBehavior);
 					}

@@ -1,6 +1,6 @@
 package yesman.epicfight.client.gui.widgets.common;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.AbstractWidget;
 
@@ -72,7 +72,7 @@ public interface ScrollableWidget {
      * Computes scroll position parameters and render
      * Developers should call this method instead of {@link #renderScroll} to get fully resolved position parameters
      */
-    default void computeScrollPositionAndRender(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    default void computeScrollPositionAndRender(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (!this.isScrollVisible()) return;
 
         AbstractWidget asWidget = this.asWidget();
@@ -86,25 +86,25 @@ public interface ScrollableWidget {
      * Renders the scroll with fully resolved location parameters
      * Developers should implement, but don't call this method directly
      */
-    void renderScroll(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, int minX, int minY, int maxX, int maxY);
+    void renderScroll(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick, int minX, int minY, int maxX, int maxY);
 
     /**
      * Apply scissor and move the widget components in y direction before render contents of the widget
      */
-    default void preRenderProcess(GuiGraphics guiGraphics) {
-        guiGraphics.pose().pushPose();
+    default void preRenderProcess(GuiGraphicsExtractor guiGraphics) {
+        guiGraphics.pose().pushMatrix();
         AbstractWidget asWidget = this.asWidget();
         int yTranslate = Math.round(this.getScrollPosition() / (float)asWidget.getHeight() * this.getMaxWidgetHeight());
-        guiGraphics.pose().translate(0, -yTranslate, 0);
+        guiGraphics.pose().translate(0F, (float)(-yTranslate));
         guiGraphics.enableScissor(asWidget.getX(), asWidget.getY(), asWidget.getX() + asWidget.getWidth(), asWidget.getY() + asWidget.getHeight());
     }
 
     /**
      * Remove translations and disable scissor
      */
-    default void postRenderProcess(GuiGraphics guiGraphics) {
+    default void postRenderProcess(GuiGraphicsExtractor guiGraphics) {
         guiGraphics.disableScissor();
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
     }
 
     /**

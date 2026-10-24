@@ -1,5 +1,8 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.MouseButtonEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -9,7 +12,7 @@ import com.google.common.collect.Maps;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -55,11 +58,14 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 	}
 	
 	@Override
-	public boolean mouseClicked(double x, double y, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
+		int button = event.button();
 		if (this.active && this.visible) {
 			
-			if (this.listOpened && this.comboItemList.mouseClicked(x, y, button)) {
-				if (x < this.comboItemList.getScrollbarPosition() || x > this.comboItemList.getScrollbarPosition() + 6) {
+			if (this.listOpened && this.comboItemList.mouseClicked(event, doubleClick)) {
+				if (x < this.comboItemList.scrollBarX() || x > this.comboItemList.scrollBarX() + 6) {
 					this.listOpened = false;
 				}
 				
@@ -67,11 +73,11 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 				
 				return true;
 			} else {
-				if (this.isValidClickButton(button)) {
-					boolean flag = this.clicked(x, y);
+				if (this.isValidClickButton(event.buttonInfo())) {
+					boolean flag = this.isInClickArea(x, y);
 					
 					if (flag) {
-						this.onClick(x, y);
+						this.onClick(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)), false);
 						return true;
 					}
 				}
@@ -93,16 +99,19 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+	public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
 		if (this.listOpened) {
-			return this.comboItemList.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+			return this.comboItemList.mouseDragged(event, deltaX, deltaY);
 		}
 		
 		return false;
 	}
 
-	@Override
-	protected boolean clicked(double x, double y) {
+	/// The click area (`AbstractWidget#clicked` before 1.21.9).
+	protected boolean isInClickArea(double x, double y) {
 		return this.active && this.visible && x >= (double)this._getX() && y >= (double) this._getY() && x < (double) (this._getX() + this.width) && y < (double) (this._getY() + this.height);
 	}
 	
@@ -155,7 +164,9 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 	}
 	
 	@Override
-	public void onClick(double x, double y) {
+	public void onClick(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
 		if (this.arrowClicked(x, y)) {
 			this.playDownSound(Minecraft.getInstance().getSoundManager());
 			this.listOpened = !this.listOpened;
@@ -174,7 +185,7 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 	}
 	
 	@Override
-	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+	public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		int outlineColor = this.isFocused() ? -1 : this.isActive() ? -6250336 : -12566463;
 		
 		guiGraphics.fill(this._getX() - 1, this._getY() - 1, this._getX() + this.width + 1, this._getY() + this.height + 1, outlineColor);
@@ -183,14 +194,14 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 		String correctedString = this.font.plainSubstrByWidth(this.comboItemList.getSelected() == null ? "" : this.comboItemList.getSelected().displayName, this.width - 10);
 		int fontColor = this.isActive() ? 16777215 : 4210752;
 		
-		guiGraphics.drawString(this.font, Component.literal(correctedString), this._getX() + 4, this._getY() + this.height / 2 - this.font.lineHeight / 2 + 1, fontColor, false);
-		guiGraphics.drawString(this.font, Component.literal("▼"), this._getX() + this.width - 8, this._getY() + this.height / 2 - this.font.lineHeight / 2 + 1, fontColor, false);
+		guiGraphics.text(this.font, Component.literal(correctedString), this._getX() + 4, this._getY() + this.height / 2 - this.font.lineHeight / 2 + 1, GuiColors.text(fontColor), false);
+		guiGraphics.text(this.font, Component.literal("▼"), this._getX() + this.width - 8, this._getY() + this.height / 2 - this.font.lineHeight / 2 + 1, GuiColors.text(fontColor), false);
 		
 		if (this.listOpened) {
-			guiGraphics.pose().pushPose();
-			guiGraphics.pose().translate(0, 0, 10);
-			this.comboItemList.render(guiGraphics, mouseX, mouseY, partialTicks);
-			guiGraphics.pose().popPose();
+			guiGraphics.pose().pushMatrix();
+			guiGraphics.pose().translate(0F, 0F);
+			this.comboItemList.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+			guiGraphics.pose().popMatrix();
 		}
 	}
 	
@@ -217,17 +228,16 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 	class ComboItemList extends ObjectSelectionList<ComboItemList.ComboItemEntry> {
 		private final Map<T, ComboItemEntry> entryMap = Maps.newHashMap();
 		
-		public ComboItemList(Minecraft minecraft, int maxRows, int itemHeight) {
-			super(minecraft, ComboBox.this.width, itemHeight * maxRows, 0, itemHeight);
-			this.setRenderHeader(false, 0);
+		public ComboItemList(Minecraft minecraft, int maxRows, int defaultEntryHeight) {
+			super(minecraft, ComboBox.this.width, defaultEntryHeight * maxRows, 0, defaultEntryHeight);
 		}
 		
 		@Override
-	    protected void renderListBackground(GuiGraphics guiGraphics) {
+	    protected void extractListBackground(GuiGraphicsExtractor guiGraphics) {
 	    }
 
 	    @Override
-	    protected void renderListSeparators(GuiGraphics guiGraphics) {
+	    protected void extractListSeparators(GuiGraphicsExtractor guiGraphics) {
 	    }
 		
 		public void addEntry(T item, String displayName) {
@@ -237,11 +247,11 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 		}
 		
 		@Override
-		public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 			guiGraphics.fill(this.getX() - 1, this.getY() - 1, this.getRight() + 1, this.getBottom() + 1, -1);
 			guiGraphics.fill(this.getX(), this.getY(), this.getRight(), this.getBottom(), -16777216);
 			
-			super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+			super.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 		}
 		
 		public void setSelected(T item) {
@@ -254,19 +264,15 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 		}
 		
 		@Override
-		protected int getScrollbarPosition() {
+		protected int scrollBarX() {
 			return this.getRight() - 6;
 		}
 		
 		@Override
-		public int getMaxScroll() {
-			return Math.max(0, this.getMaxPosition() - (this.getBottom() - this.getY()));
+		public int maxScrollAmount() {
+			return Math.max(0, this.contentHeight() - (this.getBottom() - this.getY()));
 		}
 		
-		@Override
-		protected int getRowTop(int row) {
-			return this.getY() + 2 - (int) this.getScrollAmount() + row * this.itemHeight;
-		}
 
 		class ComboItemEntry extends ObjectSelectionList.Entry<ComboItemList.ComboItemEntry> {
 			private final T item;
@@ -278,7 +284,10 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 			}
 			
 			@Override
-			public boolean mouseClicked(double mouseX, double mouseY, int button) {
+			public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+				double mouseX = event.x();
+				double mouseY = event.y();
+				int button = event.button();
 				if (button == 0) {
 					ComboItemList.this.setSelected(this);
 					
@@ -298,8 +307,12 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 			}
 			
 			@Override
-			public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
-				guiGraphics.drawString(ComboBox.this.font, this.displayName, left + 2, top + 1, 16777215, false);
+			public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
+				int top = this.getY();
+				int left = this.getX();
+				int width = this.getWidth();
+				int height = this.getContentHeight();
+				guiGraphics.text(ComboBox.this.font, this.displayName, left + 2, top + 1, GuiColors.text(16777215), false);
 			}
 			
 			public T getItem() {
@@ -438,7 +451,7 @@ public class ComboBox<T> extends AbstractWidget implements DataBindingComponent<
 	}
 
 	@Override
-	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+	public void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 }

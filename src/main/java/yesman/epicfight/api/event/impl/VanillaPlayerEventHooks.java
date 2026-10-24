@@ -11,7 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.level.storage.PlayerDataStorage;
 import yesman.epicfight.api.event.EpicFightEventHooks;
 import yesman.epicfight.api.event.types.player.StartUsingItemEvent;
@@ -143,7 +143,7 @@ public final class VanillaPlayerEventHooks {
 
             if (!playerpatch.getEntityState().canUseItem()) {
                 return true;
-            } else if (itemstack.getUseAnimation() == UseAnim.NONE || !playerpatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getStyle(playerpatch).canUseOffhand()) {
+            } else if (itemstack.getUseAnimation() == ItemUseAnimation.NONE || !playerpatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getStyle(playerpatch).canUseOffhand()) {
                 StartUsingItemEvent startUsingItemEvent = new StartUsingItemEvent(playerpatch);
                 EpicFightEventHooks.Player.USE_ITEM.postWithListener(startUsingItemEvent, playerpatch.getEventListener());
 

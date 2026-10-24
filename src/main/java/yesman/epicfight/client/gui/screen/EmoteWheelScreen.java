@@ -1,7 +1,8 @@
 package yesman.epicfight.client.gui.screen;
 
+import yesman.epicfight.client.gui.GuiInputs;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
@@ -30,7 +31,6 @@ public class EmoteWheelScreen extends Screen {
         super(Component.empty());
 
         // Load minecraft instance preemptively
-        this.minecraft = Minecraft.getInstance();
 
         this.emoteWheelTab = new EmoteWheelTab(
             this.minecraft.font,
@@ -77,20 +77,20 @@ public class EmoteWheelScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         for (Renderable renderable : this.renderables) {
             if (this.showUpAnimTime < ANIMATION_TIME && renderable != this.emoteWheelTab) {
                 continue;
             }
 
-            renderable.render(guiGraphics, mouseX, mouseY, partialTick);
+            renderable.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         float animationScale = MathUtils.bezierCurve(Math.min(this.showUpAnimTime + partialTick, ANIMATION_TIME) / ANIMATION_TIME);
         guiGraphics.fillGradient(0, 0, this.width, (int)(animationScale * (this.height / 3)), 0xFF0A0A0A, 0x00000000);
         guiGraphics.fillGradient(0, (int)(this.height - animationScale * (this.height / 3)), this.width, this.height, 0x00000000, 0xFF0A0A0A);
@@ -103,9 +103,9 @@ public class EmoteWheelScreen extends Screen {
         // event which is one-shot.
         if (this.shouldHoldToPresist && !InputManager.isActionPhysicallyActive(EpicFightInputAction.OPEN_EMOTE_WHEEL_SCREEN)) {
             if (this.emoteWheelTab.isHoveringValidEmoteButton()) {
-                this.emoteWheelTab.getHoveringWheel().onPress();
+                this.emoteWheelTab.getHoveringWheel().onPress(GuiInputs.PROGRAMMATIC);
             } else if (this.emoteWheelTab.getFocused() instanceof EmoteWheelTab.WheelPage wheelTab && wheelTab.getFocusedWheelButton() != null) {
-                wheelTab.getFocusedWheelButton().onPress();
+                wheelTab.getFocusedWheelButton().onPress(GuiInputs.PROGRAMMATIC);
             }
 
             this.onClose();

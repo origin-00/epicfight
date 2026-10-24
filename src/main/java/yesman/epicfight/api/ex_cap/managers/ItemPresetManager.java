@@ -4,7 +4,7 @@ import com.google.common.collect.Maps;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.ApiStatus;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.EpicFight;
 import yesman.epicfight.api.ex_cap.data.modifier.WeaponModifier;
 import yesman.epicfight.api.ex_cap.modules.core.events.ExCapBuilderCreationEvent;
@@ -19,9 +19,9 @@ import java.util.function.Function;
 
 @ApiStatus.Experimental
 public class ItemPresetManager {
-    private static final Map<ResourceLocation, CapabilityItem.Builder<?>> BUILDERS = Maps.newHashMap();
+    private static final Map<Identifier, CapabilityItem.Builder<?>> BUILDERS = Maps.newHashMap();
 
-    public static CapabilityItem.Builder<?> get(ResourceLocation id) {
+    public static CapabilityItem.Builder<?> get(Identifier id) {
         return BUILDERS.get(id);
     }
 
@@ -35,21 +35,21 @@ public class ItemPresetManager {
     public static void acceptEvent(@Deprecated ExCapBuilderCreationEvent event) {
         BUILDERS.clear();
         for (var entry : EpicFightRegistries.BUILDERS.entrySet()) {
-            entry.getValue().identifier(entry.getKey().location());
-            EpicFight.LOGGER.info("Pulling {} from register", entry.getKey().location());
+            entry.getValue().identifier(entry.getKey().identifier());
+            EpicFight.LOGGER.info("Pulling {} from register", entry.getKey().identifier());
             if (entry.getValue() instanceof WeaponCapability.Builder builder)
             {
                 builder.exportBuiltMovesets();
                 builder.exportBuiltConditionals();
             }
-            ExCapManager.addAcceptor(entry.getKey().location());
-            BUILDERS.put(entry.getKey().location(), entry.getValue());
+            ExCapManager.addAcceptor(entry.getKey().identifier());
+            BUILDERS.put(entry.getKey().identifier(), entry.getValue());
         }
         BUILDERS.putAll(event.getBuilders());
         BUILDERS.values().forEach( builder -> {
             if (builder instanceof WeaponCapability.Builder weaponBuilder)
             {
-                EpicFightRegistries.WEAPON_DATA.holders().forEach(
+                EpicFightRegistries.WEAPON_DATA.listElements().forEach(
                         weaponBuilder::registerCustomData
                 );
             }
@@ -57,12 +57,12 @@ public class ItemPresetManager {
     }
 
     @ApiStatus.Internal
-    public static void export(Map<ResourceLocation, Function<Item, ? extends CapabilityItem.Builder<?>>> event)
+    public static void export(Map<Identifier, Function<Item, ? extends CapabilityItem.Builder<?>>> event)
     {
         BUILDERS.forEach((entry, builder) -> event.put(entry, item -> WeaponCapabilityPresets.registerPreset(builder, item)));
     }
 
-    public static void add(ResourceLocation id, CompoundTag cTag)
+    public static void add(Identifier id, CompoundTag cTag)
     {
         //TODO: Implement
     }

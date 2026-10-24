@@ -1,32 +1,27 @@
 package yesman.epicfight.client.renderer;
 
-import java.io.IOException;
-
-import javax.annotation.Nullable;
-
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 
-import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterShadersEvent;
-import yesman.epicfight.main.EpicFightMod;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.EpicFight;
 
-@EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT)
-public class EpicFightShaders {
-	public static ShaderInstance positionColorNormalShader;
+/// Epic Fight's own shaders. Since 1.21.5 a shader is referenced by a [RenderPipeline] (which also
+/// fixes its vertex format and render state) instead of being loaded as a `ShaderInstance`.
+public final class EpicFightShaders {
+	private EpicFightShaders() {}
 	
-	@Nullable
-	public static ShaderInstance getPositionColorNormalShader() {
-		return positionColorNormalShader;
-	}
-	
-	@SubscribeEvent
-	public static void registerShadersEvent(RegisterShadersEvent event) throws IOException {
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), EpicFightMod.identifier("solid_model"), DefaultVertexFormat.POSITION_COLOR_NORMAL), reloadedShader -> {
-			positionColorNormalShader = reloadedShader;
-		});
-	}
+	/// Lit, vertex-colored triangles (`epicfight:core/solid_model`) for the model previews.
+	public static final RenderPipeline SOLID_MODEL = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_LIGHT_DIR_SNIPPET)
+		.withLocation(EpicFight.identifier("pipeline/solid_model"))
+		.withVertexShader(EpicFight.identifier("core/solid_model"))
+		.withFragmentShader(EpicFight.identifier("core/solid_model"))
+		.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+		.withVertexFormat(DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.TRIANGLES)
+		.withDepthStencilState(DepthStencilState.DEFAULT)
+		.build();
 }

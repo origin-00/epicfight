@@ -1,14 +1,14 @@
 package yesman.epicfight.platform.neoforge;
 
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.jetbrains.annotations.NotNull;
 import yesman.epicfight.platform.ModPlatform;
 
 public final class NeoForgeModPlatform implements ModPlatform {
     @Override
     public boolean isDevelopmentEnvironment() {
-        return !FMLLoader.isProduction();
+        return !FMLEnvironment.isProduction();
     }
 
     @Override

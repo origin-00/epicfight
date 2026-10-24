@@ -561,9 +561,9 @@ public class MathUtils {
      * @param position		    a source vector to transform
      */
     public static Vec2 worldToScreenCoord(Matrix4f projectionMatrix, Camera camera, Vec3 position) {
-        Vector4f relativeCamera = new Vector4f((float)camera.getPosition().x() - (float)position.x(), (float)camera.getPosition().y() - (float)position.y(), (float)camera.getPosition().z() - (float)position.z(), 1.0F);
-        relativeCamera.rotate(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
-        relativeCamera.rotate(Axis.XP.rotationDegrees(camera.getXRot()));
+        Vector4f relativeCamera = new Vector4f((float)camera.position().x() - (float)position.x(), (float)camera.position().y() - (float)position.y(), (float)camera.position().z() - (float)position.z(), 1.0F);
+        relativeCamera.rotate(Axis.YP.rotationDegrees(camera.yRot() + 180.0F));
+        relativeCamera.rotate(Axis.XP.rotationDegrees(camera.xRot()));
         relativeCamera.mul(projectionMatrix);
 
         float depth = relativeCamera.w;

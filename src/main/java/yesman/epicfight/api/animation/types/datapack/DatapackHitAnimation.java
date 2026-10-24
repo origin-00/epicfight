@@ -2,7 +2,7 @@ package yesman.epicfight.api.animation.types.datapack;
 
 import com.google.gson.JsonArray;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.types.HitAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -12,12 +12,12 @@ import yesman.epicfight.api.model.Armature;
 public class DatapackHitAnimation extends HitAnimation implements DatapackAnimation<DatapackHitAnimation> {
 	protected AnimationClip clip;
 	protected EditorAnimation fakeAnimation;
-	protected ResourceLocation registryName;
+	protected Identifier registryName;
 	
 	public DatapackHitAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, path, armature);
 		
-		((DatapackAnimation<DatapackHitAnimation>)this).setRegistryName(ResourceLocation.parse(path));
+		((DatapackAnimation<DatapackHitAnimation>)this).setRegistryName(Identifier.parse(path));
 		this.accessor = this;
 	}
 	
@@ -60,12 +60,12 @@ public class DatapackHitAnimation extends HitAnimation implements DatapackAnimat
 	}
 
 	@Override
-	public void setRegistryName(ResourceLocation registryName) {
+	public void setRegistryName(Identifier registryName) {
 		this.registryName = registryName;
 	}
 	
 	@Override
-	public ResourceLocation registryName() {
+	public Identifier registryName() {
 		return this.registryName;
 	}
 

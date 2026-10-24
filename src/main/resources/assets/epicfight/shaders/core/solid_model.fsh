@@ -1,7 +1,6 @@
-#version 150
+#version 330
 
 in vec4 vertexColor;
-in vec4 normal;
 
 out vec4 fragColor;
 

@@ -1,7 +1,7 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 
@@ -141,8 +141,8 @@ public class ResizableEditBox extends EditBox implements DataBindingComponent<St
 	}
 	
 	@Override
-	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+	public void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 
 	@Override

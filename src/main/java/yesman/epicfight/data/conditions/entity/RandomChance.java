@@ -27,7 +27,7 @@ public class RandomChance extends EntityPatchCondition {
 	
 	@Override
 	public RandomChance read(CompoundTag tag) {
-		this.chance = this.assertTag("chance", "decimal", tag, NumericTag.class, CompoundTag::getDouble);
+		this.chance = this.assertTag("chance", "decimal", tag, NumericTag.class, (compoundTag, key) -> compoundTag.getDoubleOr(key, 0.0D));
 		return this;
 	}
 	
@@ -50,6 +50,6 @@ public class RandomChance extends EntityPatchCondition {
 		ResizableEditBox editbox = new ResizableEditBox(screen.getMinecraft().font, 0, 0, 0, 0, Component.literal("chance"), null, null);
 		editbox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsable(context, Double::parseDouble));
 		
-		return List.of(ParameterEditor.of((value) -> ParseUtil.parseOrGet(value.toString(), (v) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), StringTag.valueOf("")), (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, Tag::getAsString)), editbox));
+		return List.of(ParameterEditor.of((value) -> ParseUtil.parseOrGet(value.toString(), (v) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), StringTag.valueOf("")), (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, ParseUtil::tagAsString)), editbox));
 	}
 }

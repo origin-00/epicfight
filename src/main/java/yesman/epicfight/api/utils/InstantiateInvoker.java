@@ -4,7 +4,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -41,7 +41,7 @@ public class InstantiateInvoker {
 		registerReturnTypeMapper(Armature.class, AssetAccessor.class);
 		
 		registerKeyword(String.class, (s) -> s);
-		registerKeyword(Collider.class, (s) -> ColliderPreset.get(ResourceLocation.parse(s)));
+		registerKeyword(Collider.class, (s) -> ColliderPreset.get(Identifier.parse(s)));
 		registerKeyword(Joint.class, (s) -> {
 			String[] armature$joint = s.split("\\.");
 			AssetAccessor<? extends Armature> armature = getArmature(armature$joint[0]);
@@ -53,9 +53,9 @@ public class InstantiateInvoker {
 	
 	private static AssetAccessor<? extends Armature> getArmature(String id) {
 		if (EpicFightSharedConstants.isPhysicalClient()) {
-			return DatapackEditScreen.getCurrentScreen() != null ? DatapackEditScreen.getArmature(id) : Armatures.getOrCreate(ResourceLocation.parse(id), Armature::new);
+			return DatapackEditScreen.getCurrentScreen() != null ? DatapackEditScreen.getArmature(id) : Armatures.getOrCreate(Identifier.parse(id), Armature::new);
 		} else {
-			return Armatures.getOrCreate(ResourceLocation.parse(id), Armature::new);
+			return Armatures.getOrCreate(Identifier.parse(id), Armature::new);
 		}
 	}
 	

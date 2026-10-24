@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.game.ClientboundRespawnPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import yesman.epicfight.api.client.camera.EpicFightCameraAPI;
 import yesman.epicfight.api.data.reloader.ItemCapabilityReloadListener;
 import yesman.epicfight.api.event.EpicFightEventHooks;
@@ -37,7 +37,7 @@ public final class VanillaGeneralClientEventHooks {
         if (playerpatch != null) {
             if (!playerpatch.getEntityState().canUseItem()) {
                 return true;
-            } else if (playerpatch.getOriginal().getOffhandItem().getUseAnimation() == UseAnim.NONE) {
+            } else if (playerpatch.getOriginal().getOffhandItem().getUseAnimation() == ItemUseAnimation.NONE) {
                 StartUsingItemEvent startUsingItemEvent = new StartUsingItemEvent(playerpatch);
                 EpicFightEventHooks.Player.USE_ITEM.postWithListener(startUsingItemEvent, playerpatch.getEventListener());
 
@@ -91,7 +91,7 @@ public final class VanillaGeneralClientEventHooks {
 
         EpicFightGameRules.GAME_RULES.values().forEach(gamerule -> {
             Object val = gamerule.getRuleValue(oldPlayer.level());
-            ((EpicFightGameRules.ConfigurableGameRule<Object, ?, ?>)gamerule).setRuleValue(newPlayer.level(), val);
+            ((EpicFightGameRules.ConfigurableGameRule<Object, ?>)gamerule).setRuleValue(newPlayer.level(), val);
         });
 
         ControlEngine.getInstance().reloadPlayerPatch(newCap);

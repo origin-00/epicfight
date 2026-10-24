@@ -11,7 +11,8 @@ import yesman.epicfight.world.level.block.FractureBlock;
 public final class EpicFightBlocks {
 	private EpicFightBlocks() {}
 	
-	public static final DeferredRegister<Block> REGISTRY = DeferredRegister.create(Registries.BLOCK, EpicFightMod.MODID);
+	// Blocks need their id in their properties since 1.21.2, which DeferredRegister.Blocks sets.
+	public static final DeferredRegister.Blocks REGISTRY = DeferredRegister.createBlocks(EpicFightMod.MODID);
 	
-	public static final DeferredHolder<Block, FractureBlock> FRACTURE = REGISTRY.register("fracture_block", () -> new FractureBlock(BlockBehaviour.Properties.of()));
+	public static final DeferredHolder<Block, FractureBlock> FRACTURE = REGISTRY.registerBlock("fracture_block", FractureBlock::new);
 }

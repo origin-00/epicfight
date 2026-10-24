@@ -2,7 +2,7 @@ package yesman.epicfight.registry.deferred;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import yesman.epicfight.registry.EpicFightRegistries;
 import yesman.epicfight.registry.deferred.holders.DeferredCustomData;
@@ -31,7 +31,7 @@ public final class CustomDataRegister extends DeferredRegister<CustomData<?>> {
         this.register(name, data);
         ResourceKey<CustomData<?>> key = ResourceKey.create(
                 this.getRegistryKey(),
-                ResourceLocation.fromNamespaceAndPath(this.getNamespace(), name)
+                Identifier.fromNamespaceAndPath(this.getNamespace(), name)
         );
 
         return new DeferredCustomData<>(key);

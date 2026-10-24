@@ -11,8 +11,8 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.WitherSkull;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.hurtingprojectile.WitherSkull;
 
 public final class EpicFightDamageSources {
 	private EpicFightDamageSources() {}
@@ -54,6 +54,6 @@ public final class EpicFightDamageSources {
 	}
 	
 	private static Holder<DamageType> getDamageTypeHolder(Entity entity, ResourceKey<DamageType> damageTypeKey) {
-		return entity.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(damageTypeKey);
+		return entity.level().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(damageTypeKey);
 	}
 }

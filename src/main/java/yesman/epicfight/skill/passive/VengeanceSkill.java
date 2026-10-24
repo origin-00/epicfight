@@ -1,6 +1,8 @@
 package yesman.epicfight.skill.passive;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,7 +37,7 @@ public class VengeanceSkill extends PassiveSkill {
     @Override
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
-        this.damageBonus = parameters.getFloat("damage_bonus");
+        this.damageBonus = parameters.getFloatOr("damage_bonus", 0.0F);
     }
 
     @Override
@@ -195,15 +197,15 @@ public class VengeanceSkill extends PassiveSkill {
     }
 
     @Override @ClientOnly
-    public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphics guiGraphics, float x, float y, float partialTick) {
-        guiGraphics.blit(this.getSkillTexture(), (int)x, (int)y, 24, 24, 0, 0, 1, 1, 1, 1);
+    public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphicsExtractor guiGraphics, float x, float y, float partialTick) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.getSkillTexture(), (int)x, (int)y, 0, 0, 24, 24, 1, 1, 1, 1);
 
         if (container.isActivated()) {
             float f = Math.round(this.damageBonus * 100.0F * container.getDurationRatio(1.0F));
-            guiGraphics.drawString(gui.getFont(), ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format(f) + "%", x + 6, y + 8, 16777215, true);
+            guiGraphics.text(gui.getFont(), ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format(f) + "%", (int)(x + 6), (int)(y + 8), GuiColors.text(16777215), true);
         } else if (canResetTarget(container)) {
             int seconds = 4 - ((container.getExecutor().getOriginal().tickCount - container.getDataManager().getDataValue(EpicFightSkillDataKeys.TICK_RECORD)) - 80) / 20;
-            guiGraphics.drawString(gui.getFont(), String.valueOf(seconds), x + 6, y + 8, 16777215, true);
+            guiGraphics.text(gui.getFont(), String.valueOf(seconds), (int)(x + 6), (int)(y + 8), GuiColors.text(16777215), true);
         }
     }
 

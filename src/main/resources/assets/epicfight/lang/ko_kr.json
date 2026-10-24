@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "고유 스킬을 보려면 [%s]를 누르십시오",
 	"key.epicfight.gui": "Epic Fight 사용자 인터페이스",
 	"key.epicfight.combat": "Epic Fight 전투",
+	"key.category.epicfight.combat": "Epic Fight 전투",
+	"key.category.epicfight.gui": "Epic Fight 사용자 인터페이스",
 	"key.epicfight.show_tooltip": "무기 고유스킬 툴팁 보기",
 	"key.epicfight.switch_mode": "전투/채광 모드 변경",
 	"key.epicfight.attack": "기본 공격",

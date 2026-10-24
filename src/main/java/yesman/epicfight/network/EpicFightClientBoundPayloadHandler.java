@@ -4,10 +4,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.client.animation.ClientAnimator;
@@ -95,10 +96,8 @@ public interface EpicFightClientBoundPayloadHandler {
 		});
 	}
 	
-	@SuppressWarnings("unchecked")
 	static void handleChangeGameRule(final SPChangeGamerule data, final IPayloadContext context) {
-		GameRules.Value<?> ruleValue = context.player().level().getGameRules().getRule(data.keyValuePair().gamerule().getRuleKey());
-		((BiConsumer<GameRules.Value<?>, Object>)data.keyValuePair().gamerule().getRuleType().setRule()).accept(ruleValue, data.keyValuePair().value());
+		data.keyValuePair().gamerule().setRuleValue(context.player().level(), data.keyValuePair().value());
 	}
 	
 	static void handleChangeLivingMotion(final SPChangeLivingMotion data, final IPayloadContext context) {
@@ -328,10 +327,13 @@ public interface EpicFightClientBoundPayloadHandler {
 		Entity entity = context.player().level().getEntity(data.entityId());
 		
 		if (entity instanceof LivingEntity livingentity) {
-			livingentity.lerpX = data.position().x;
-			livingentity.lerpY = data.position().y;
-			livingentity.lerpZ = data.position().z;
-			livingentity.lerpSteps = data.lerpSteps();
+			// The public lerp fields became an InterpolationHandler in 1.21.5. Interpolate to the
+			// synced position over the requested steps, keeping the current rotation target, then
+			// restore the living-entity default of 3 steps for vanilla movement packets.
+			InterpolationHandler interpolation = livingentity.getInterpolation();
+			interpolation.setInterpolationLength(data.lerpSteps());
+			interpolation.interpolateTo(data.position(), interpolation.yRot(), interpolation.xRot());
+			interpolation.setInterpolationLength(3);
 		}
 	}
 	

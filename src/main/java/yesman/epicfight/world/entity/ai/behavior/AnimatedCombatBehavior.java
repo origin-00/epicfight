@@ -64,7 +64,7 @@ public class AnimatedCombatBehavior<T extends MobPatch<?>> extends Behavior<Mob>
 	private boolean isHoldingRangeWeapon(Mob mob) {
 		return mob.isHolding((stack) -> {
 			Item item = stack.getItem();
-			return item instanceof ProjectileWeaponItem && mob.canFireProjectileWeapon((ProjectileWeaponItem) item);
+			return item instanceof ProjectileWeaponItem && mob.canUseNonMeleeWeapon(stack);
 		});
 	}
 	

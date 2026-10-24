@@ -28,7 +28,7 @@ public class KnockdownWakeupSkill extends DodgeSkill {
 		
 		final MovementDirection movementDirection = MovementDirection.fromInputState(InputManager.getInputState(localPlayer.input));
         final int horizon = movementDirection.horizontal();
-        final float yRot = Minecraft.getInstance().gameRenderer.getMainCamera().getYRot();
+        final float yRot = Minecraft.getInstance().gameRenderer.getMainCamera().yRot();
 		
 		arguments.putInt("direction", horizon >= 0 ? 0 : 1);
 		arguments.putFloat("yRot", yRot);

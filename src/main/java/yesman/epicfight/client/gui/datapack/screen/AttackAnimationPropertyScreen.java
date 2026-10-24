@@ -1,5 +1,8 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.List;
 import java.util.Locale;
 
@@ -8,14 +11,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.types.datapack.EditorAnimation;
@@ -50,8 +53,6 @@ public class AttackAnimationPropertyScreen extends Screen {
 		super(Component.translatable("datapack_edit.import_animation.client_data"));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = this.minecraft.font;
 		
 		this.animation = animation;
 		this.modelPlayer = modelPlayer;
@@ -294,38 +295,41 @@ public class AttackAnimationPropertyScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-		if (this.inputComponentsList.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
+		if (this.inputComponentsList.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractBackground(guiGraphics, mouseX, mouseY, partialTicks);
 		
 		int yBegin = 32;
 		int yEnd = this.height - 45;
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
-		ResourceLocation backgroundTexture = this.minecraft.level == null ? MENU_BACKGROUND : INWORLD_MENU_BACKGROUND;
+		Identifier backgroundTexture = this.minecraft.level == null ? MENU_BACKGROUND : INWORLD_MENU_BACKGROUND;
 		
-		guiGraphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
-        guiGraphics.blit(backgroundTexture, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.125F, 0.125F, 0.125F, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, backgroundTexture, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		
-		guiGraphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-		guiGraphics.blit(backgroundTexture, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
-        guiGraphics.blit(backgroundTexture, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.25F, 0.25F, 0.25F, 1.0F);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, backgroundTexture, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, backgroundTexture, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         
-        guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yBegin, this.width, yBegin + 4, -16777216, 0, 0);
-		guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yEnd, this.width, yEnd + 1, 0, -16777216, 0);
+        guiGraphics.fillGradient(0, yBegin, this.width, yBegin + 4, -16777216, 0);
+		guiGraphics.fillGradient(0, yEnd, this.width, yEnd + 1, 0, -16777216);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 	
 	public enum LayerOptions {

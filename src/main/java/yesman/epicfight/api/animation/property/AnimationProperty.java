@@ -14,7 +14,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
@@ -136,12 +136,12 @@ public abstract class AnimationProperty<T> {
 		/**
 		 * Defines static animations as link animation when the animation is followed by a specific animation
 		 */
-		public static final StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> TRANSITION_ANIMATIONS_FROM = new StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> ();
+		public static final StaticAnimationProperty<Map<Identifier, AnimationAccessor<? extends StaticAnimation>>> TRANSITION_ANIMATIONS_FROM = new StaticAnimationProperty<Map<Identifier, AnimationAccessor<? extends StaticAnimation>>> ();
 		
 		/**
 		 * Defines static animations as link animation when the animation is following a specific animation
 		 */
-		public static final StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> TRANSITION_ANIMATIONS_TO = new StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> ();
+		public static final StaticAnimationProperty<Map<Identifier, AnimationAccessor<? extends StaticAnimation>>> TRANSITION_ANIMATIONS_TO = new StaticAnimationProperty<Map<Identifier, AnimationAccessor<? extends StaticAnimation>>> ();
 		
 		/**
 		 * Disable physics while playing animation

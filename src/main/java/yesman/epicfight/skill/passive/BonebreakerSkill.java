@@ -1,6 +1,8 @@
 package yesman.epicfight.skill.passive;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
@@ -33,8 +35,8 @@ public class BonebreakerSkill extends PassiveSkill {
 	@Override
 	public void loadDatapackParameters(CompoundTag parameters) {
 		super.loadDatapackParameters(parameters);
-		this.damageBonus = parameters.getFloat("damage_bonus");
-		this.maxDamageBonusStacks = parameters.getInt("max_damage_bonus_stacks");
+		this.damageBonus = parameters.getFloatOr("damage_bonus", 0.0F);
+		this.maxDamageBonusStacks = parameters.getIntOr("max_damage_bonus_stacks", 0);
 	}
 
     @Override
@@ -133,9 +135,9 @@ public class BonebreakerSkill extends PassiveSkill {
 	}
 	
 	@Override @ClientOnly
-	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphics guiGraphics, float x, float y, float partialTick) {
-		guiGraphics.blit(this.getSkillTexture(), (int)x, (int)y, 24, 24, 0, 0, 1, 1, 1, 1);
-		guiGraphics.drawString(gui.getFont(), String.valueOf(container.getDataManager().getDataValue(EpicFightSkillDataKeys.STACKS)), x + 10, y + 10, 16777215, true);
+	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphicsExtractor guiGraphics, float x, float y, float partialTick) {
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.getSkillTexture(), (int)x, (int)y, 0, 0, 24, 24, 1, 1, 1, 1);
+		guiGraphics.text(gui.getFont(), String.valueOf(container.getDataManager().getDataValue(EpicFightSkillDataKeys.STACKS)), (int)(x + 10), (int)(y + 10), GuiColors.text(16777215), true);
 	}
 	
 	@Override @ClientOnly

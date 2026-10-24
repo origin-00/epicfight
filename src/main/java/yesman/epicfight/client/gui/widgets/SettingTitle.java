@@ -1,17 +1,20 @@
 package yesman.epicfight.client.gui.widgets;
 
+import yesman.epicfight.client.gui.render.ColoredQuadRenderState;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.navigation.CommonInputs;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
 import yesman.epicfight.client.gui.widgets.common.AnchoredWidget;
 import yesman.epicfight.client.gui.widgets.common.PressableWidget;
@@ -59,7 +62,7 @@ public class SettingTitle extends AbstractWidget implements AnchoredWidget, Pres
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         SettingTitle hoveringTitle = this.hoveringWidgetProvider.get();
 
         if (this.isActive() && this.isHovered() && hoveringTitle != this) {
@@ -80,8 +83,8 @@ public class SettingTitle extends AbstractWidget implements AnchoredWidget, Pres
             }
         }
 
-        guiGraphics.pose().translate(this.getX(), this.getY(), partialTick);
-        guiGraphics.pose().translate(-this.getX(), -this.getY(), partialTick);
+        guiGraphics.pose().translate((float)(this.getX()), (float)(this.getY()));
+        guiGraphics.pose().translate((float)(-this.getX()), (float)(-this.getY()));
 
         int leftGradientStart = this.getX() + 10;
         int leftGradientEnd = this.getX() + 20;
@@ -97,7 +100,7 @@ public class SettingTitle extends AbstractWidget implements AnchoredWidget, Pres
         guiGraphics.fill(rightGradientEnd, yStart, this.getX() + this.getWidth(), yEnd, color);
 
         String correctedString = this.font.plainSubstrByWidth(this.getMessage().getString(), this.getWidth() - 20);
-        guiGraphics.drawString(this.font, correctedString, leftGradientEnd, this.getY() + this.height / 2 - this.font.lineHeight / 2, color, false);
+        guiGraphics.text(this.font, correctedString, leftGradientEnd, this.getY() + this.height / 2 - this.font.lineHeight / 2, GuiColors.text(color), false);
     }
 
     @Override
@@ -106,9 +109,12 @@ public class SettingTitle extends AbstractWidget implements AnchoredWidget, Pres
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
         if (this.active && this.visible) {
-            if (CommonInputs.selected(keyCode)) {
+            if (new KeyEvent(keyCode, 0, 0).isSelection()) {
                 this.onPressed();
                 return true;
             } else {
@@ -120,10 +126,13 @@ public class SettingTitle extends AbstractWidget implements AnchoredWidget, Pres
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (this.active && this.visible) {
-            if (this.isValidClickButton(button)) {
-                boolean flag = this.clicked(mouseX, mouseY);
+            if (this.isValidClickButton(event.buttonInfo())) {
+                boolean flag = this.isMouseOver(mouseX, mouseY);
                 if (flag) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
                     this.onPressed();
@@ -149,24 +158,9 @@ public class SettingTitle extends AbstractWidget implements AnchoredWidget, Pres
         this.tooltipMessageSetter.accept(this.tooltip);
     }
 
-    /// Since [GuiGraphics#fillGradient] only draws the gradient direction from top to bottom we created this method to draw gradient from left to right
-    private static void fillGradientLeftToRight(GuiGraphics guiGraphics, int x1, int y1, int x2, int y2, int pColorFrom, int pColorTo) {
-        VertexConsumer consumer = guiGraphics.bufferSource().getBuffer(RenderType.gui());
-
-        float f = FastColor.ARGB32.alpha(pColorFrom) / 255.0F;
-        float f1 = FastColor.ARGB32.red(pColorFrom) / 255.0F;
-        float f2 = FastColor.ARGB32.green(pColorFrom) / 255.0F;
-        float f3 = FastColor.ARGB32.blue(pColorFrom) / 255.0F;
-        float f4 = FastColor.ARGB32.alpha(pColorTo) / 255.0F;
-        float f5 = FastColor.ARGB32.red(pColorTo) / 255.0F;
-        float f6 = FastColor.ARGB32.green(pColorTo) / 255.0F;
-        float f7 = FastColor.ARGB32.blue(pColorTo) / 255.0F;
-        Matrix4f matrix4f = guiGraphics.pose().last().pose();
-
-        consumer.addVertex(matrix4f, x1, y1, 0).setColor(f1, f2, f3, f);
-        consumer.addVertex(matrix4f, x1, y2, 0).setColor(f1, f2, f3, f);
-        consumer.addVertex(matrix4f, x2, y2, 0).setColor(f5, f6, f7, f4);
-        consumer.addVertex(matrix4f, x2, y1, 0).setColor(f5, f6, f7, f4);
+    /// Since [GuiGraphicsExtractor#fillGradient] only draws the gradient direction from top to bottom we created this method to draw gradient from left to right
+    private static void fillGradientLeftToRight(GuiGraphicsExtractor guiGraphics, int x1, int y1, int x2, int y2, int pColorFrom, int pColorTo) {
+        ColoredQuadRenderState.horizontalGradient(guiGraphics, x1, y1, x2, y2, pColorFrom, pColorTo);
     }
 
     /// ***************************************************************

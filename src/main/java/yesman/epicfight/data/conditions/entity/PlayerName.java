@@ -21,7 +21,7 @@ public class PlayerName extends EntityPatchCondition {
 	
 	@Override
 	public PlayerName read(CompoundTag tag) {
-		this.name = this.assertTag("identifier", "string", tag, StringTag.class, CompoundTag::getString);
+		this.name = this.assertTag("identifier", "string", tag, StringTag.class, (compoundTag, key) -> compoundTag.getStringOr(key, ""));
 		return this;
 	}
 	
@@ -46,6 +46,6 @@ public class PlayerName extends EntityPatchCondition {
     @OnlyIn(Dist.CLIENT) // TODO: Remove OnlyIn annotation and completely decouple the widget provider code
 	public List<ParameterEditor> getAcceptingParameters(Screen screen) {
 		ResizableEditBox editbox = new ResizableEditBox(screen.getMinecraft().font, 0, 0, 0, 0, Component.literal("identifier"), null, null);
-		return List.of(ParameterEditor.of((name) -> StringTag.valueOf(name.toString()), (tag) -> ParseUtil.nullOrToString(tag, Tag::getAsString), editbox));
+		return List.of(ParameterEditor.of((name) -> StringTag.valueOf(name.toString()), (tag) -> ParseUtil.nullOrToString(tag, ParseUtil::tagAsString), editbox));
 	}
 }

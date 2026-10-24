@@ -1,8 +1,9 @@
 package yesman.epicfight.main;
 
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
@@ -24,15 +25,14 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
-import net.sweenus.simplytooltips.api.TooltipProviderRegistry;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import yesman.epicfight.EpicFight;
@@ -64,12 +64,8 @@ import yesman.epicfight.client.gui.widgets.ColorDeterminator;
 import yesman.epicfight.client.gui.widgets.common.WidgetTheme;
 import yesman.epicfight.client.input.EpicFightKeyMappings;
 import yesman.epicfight.client.online.cosmetics.Emote;
-import yesman.epicfight.client.renderer.patched.item.EpicFightItemProperties;
-import yesman.epicfight.client.renderer.shader.compute.loader.ComputeShaderProvider;
 import yesman.epicfight.compat.ICompatModule;
 import yesman.epicfight.compat.MinecraftMod;
-import yesman.epicfight.compat.mcreator.MCreatorPlayerAnimationsCompat;
-import yesman.epicfight.compat.simplytooltips.EpicFightTooltipProvider;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.config.CommonConfig;
 import yesman.epicfight.config.ServerConfig;
@@ -172,7 +168,6 @@ public class EpicFightMod {
 
     public EpicFightMod(IEventBus modEventBus, ModContainer modContainer) {
 		ModPlatformProvider.initialize(new NeoForgeModPlatform());
-		TooltipProviderRegistry.register(new EpicFightTooltipProvider(), 2);
     	if (EpicFightSharedConstants.isPhysicalClient()) {
 			EpicFightClient.initialize(new NeoForgeClientModPlatform(modEventBus));
 			// TODO: (MULTI_LOADER) EpicFightKeyMappings must be in common and not neoforge,
@@ -202,6 +197,7 @@ public class EpicFightMod {
 		modEventBus.addListener(this::registerCapabilities);
 
     	NeoForge.EVENT_BUS.addListener(this::command);
+    	NeoForge.EVENT_BUS.addListener(EpicFightGameRules::onGameRuleChanged);
         NeoForge.EVENT_BUS.addListener(this::addReloadListnerEvent);
 
     	LivingMotion.ENUM_MANAGER.registerEnumCls(EpicFightMod.MODID, LivingMotions.class);
@@ -220,9 +216,6 @@ public class EpicFightMod {
         }
     	EpicFightRegistries.DEFERRED_REGISTRIES.forEach(deferredRegistry -> deferredRegistry.register(modEventBus));
 
-        if (EpicFightSharedConstants.isPhysicalClient()) {
-            modEventBus.addListener(ComputeShaderProvider::epicfight$registerComputeShaders);
-        }
         loadModCompatibilityModules(modEventBus);
 
 	}
@@ -233,6 +226,7 @@ public class EpicFightMod {
                 // Includes all mods on client. Skips client-only mods on server
                 .filter(mod -> isClientSide || !mod.isClientOnly())
                 .map(MinecraftMod::getCompatibilityModule)
+                .filter(Objects::nonNull)
                 .toList();
     }
 
@@ -243,18 +237,7 @@ public class EpicFightMod {
             ICompatModule.loadCompatModule(modEventBus, module);
         }
 
-        if (isClientSide) {
-            if (ModList.get().getModFiles().stream().anyMatch(modFile -> {
-                try {
-                    Path dataPath = modFile.getFile().findResource("data");
-                    return Files.exists(dataPath) && Files.list(dataPath).anyMatch(namespace -> Files.exists(namespace.resolve("bedrock_animations")));
-                } catch (Exception e) {
-                    return false;
-                }
-            })) {
-                ICompatModule.loadCompatModule(modEventBus, MCreatorPlayerAnimationsCompat.class);
-            }
-        }
+        // 26.1.2 port: the MCreator bedrock-animation compat module is disabled until it is ported.
     }
 
     /**
@@ -287,7 +270,6 @@ public class EpicFightMod {
 		event.enqueueWork(EpicFightPotions::addRecipes);
 		event.enqueueWork(EpicFightCapabilities.ITEM_CAPABILITY_PROVIDER::registerWeaponTypesByClass);
 		event.enqueueWork(EpicFightCapabilities.ENTITY_PATCH_PROVIDER::registerVanillaEntityPatches);
-		event.enqueueWork(EpicFightGameRules::registerGameRules);
 		event.enqueueWork(WeaponTypeReloadListener::registerDefaultWeaponTypes);
 		event.enqueueWork(EpicFightMobEffects::addOffhandModifier);
 		event.enqueueWork(EpicFightExtensibleEnums::initExtensibleEnums);
@@ -310,33 +292,29 @@ public class EpicFightMod {
     }
 
 	public void addPackFindersEvent(AddPackFindersEvent event) {
-		if (event.getPackType() == PackType.CLIENT_RESOURCES) {
-            Path resourcePath = ModList.get().getModFileById(EpicFightMod.MODID).getFile().findResource("packs/epicfight_legacy");
-
-            PackLocationInfo packLocation = new PackLocationInfo("epicfight_legacy", Component.translatable("pack.epicfight_legacy.title"), PackSource.BUILT_IN, Optional.empty());
-            Pack.ResourcesSupplier resourcesSupplier = new PathPackResources.PathResourcesSupplier(resourcePath);
-
-            Pack pack = Pack.readMetaAndCreate(packLocation, resourcesSupplier, PackType.CLIENT_RESOURCES, new PackSelectionConfig(false, Pack.Position.TOP, false));
-
-            if (pack != null) {
-                event.addRepositorySource(source -> source.accept(pack));
-            }
-        }
+		event.addPackFinders(
+			  EpicFight.identifier("packs/epicfight_legacy")
+			, PackType.CLIENT_RESOURCES
+			, Component.translatable("pack.epicfight_legacy.title")
+			, PackSource.BUILT_IN
+			, false
+			, Pack.Position.TOP
+		);
     }
 
-	private void addReloadListnerEvent(final AddReloadListenerEvent event) {
-		event.addListener(new ColliderPreset());
-		event.addListener(new SkillReloadListener());
+	private void addReloadListnerEvent(final AddServerReloadListenersEvent event) {
+		event.addListener(EpicFightMod.identifier("collider_preset"), new ColliderPreset());
+		event.addListener(EpicFightMod.identifier("skill_parameters"), new SkillReloadListener());
 		//ExCap ------------------------------------
-		event.addListener(new ItemPresetReloadListener());
-		event.addListener(new WeaponModifierReloadListener());
-		event.addListener(new ConditionalReloadListener());
-        event.addListener(new MovesetReloadListener());
+		event.addListener(EpicFightMod.identifier("excap_item_presets"), new ItemPresetReloadListener());
+		event.addListener(EpicFightMod.identifier("excap_weapon_modifiers"), new WeaponModifierReloadListener());
+		event.addListener(EpicFightMod.identifier("excap_conditionals"), new ConditionalReloadListener());
+        event.addListener(EpicFightMod.identifier("excap_movesets"), new MovesetReloadListener());
 		// -----------------------------------------
-		event.addListener(new WeaponTypeReloadListener());
-		event.addListener(new ItemKeywordReloadListener());
-		event.addListener(new ItemCapabilityReloadListener());
-		event.addListener(new MobPatchReloadListener());
+		event.addListener(EpicFightMod.identifier("weapon_types"), new WeaponTypeReloadListener());
+		event.addListener(EpicFightMod.identifier("item_keywords"), new ItemKeywordReloadListener());
+		event.addListener(EpicFightMod.identifier("item_capabilities"), new ItemCapabilityReloadListener());
+		event.addListener(EpicFightMod.identifier("mob_patches"), new MobPatchReloadListener());
 	}
 
     private void addDatapackRegistryEvent(DataPackRegistryEvent.NewRegistry event) {
@@ -353,11 +331,10 @@ public class EpicFightMod {
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
-        	event.enqueueWork(ComputeShaderProvider::checkIfSupports);
     		event.enqueueWork(CommonEntityPatchProvider.ClientModule::registerClientPlayerPatches);
-    		event.enqueueWork(SkillBookScreen::registerIconItems);
-    		event.enqueueWork(EpicFightItemProperties::registerItemProperties);
-    		event.enqueueWork(() -> {
+    		// The default item preferences read item data components, which are only bound once a
+    		// world's data packs are loaded (26.1): fill them on joining a world.
+    		NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn loggingIn) -> {
     			if (ClientConfig.combatCategorizedItems.isEmpty() && ClientConfig.miningCategorizedItems.isEmpty()) {
     				ItemsPreferenceScreen.resetItems();
     			}
@@ -365,19 +342,20 @@ public class EpicFightMod {
         }
 
         @SubscribeEvent
-        public static void registerResourcepackReloadListnerEvent(final RegisterClientReloadListenersEvent event) {
-    		event.registerReloadListener(new JointMaskReloadListener());
-    		event.registerReloadListener(Meshes.INSTANCE);
-    		event.registerReloadListener(AnimationManager.getInstance());
-    		event.registerReloadListener(ItemSkinsReloadListener.INSTANCE);
+        public static void registerResourcepackReloadListnerEvent(final AddClientReloadListenersEvent event) {
+    		event.addListener(EpicFightMod.identifier("joint_masks"), new JointMaskReloadListener());
+    		event.addListener(EpicFightMod.identifier("meshes"), Meshes.INSTANCE);
+    		event.addListener(EpicFightMod.identifier("animations"), AnimationManager.getInstance());
+    		event.addListener(EpicFightMod.identifier("item_skins"), ItemSkinsReloadListener.INSTANCE);
     	}
     }
 
 	@EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.DEDICATED_SERVER)
     public static class ServerForgeEvents {
 		@SubscribeEvent(priority = EventPriority.HIGHEST)
-		public static void addReloadListnerEvent(final AddReloadListenerEvent event) {
-			event.addListener(AnimationManager.getInstance());
+		public static void addReloadListnerEvent(final AddServerReloadListenersEvent event) {
+			// Registered first (highest priority) so animations load before the listeners that use them.
+			event.addListener(EpicFightMod.identifier("animations"), AnimationManager.getInstance());
 		}
     }
 
@@ -387,7 +365,7 @@ public class EpicFightMod {
 		EpicFightRegistries.SKILL.keySet().stream().map(id -> id.getNamespace()).distinct().forEach((modid) -> {
 			ModList.get().getModContainerById(modid).flatMap(modcontainer -> modcontainer.getCustomExtension(EpicFightExtensions.class)).ifPresentOrElse(extension -> {
 				if (extension.skillBookCreativeTab().get() == event.getTab()) {
-					EpicFightRegistries.SKILL.holders()
+					EpicFightRegistries.SKILL.listElements()
 						.filter(skill ->
 							skill.value().getCategory().learnable() &&
 							skill.value().getCreativeTab() == null &&
@@ -400,7 +378,7 @@ public class EpicFightMod {
 				}
 			}, () -> {
 				if (event.getTab() == EpicFightCreativeTabs.ITEMS.get()) {
-					EpicFightRegistries.SKILL.holders()
+					EpicFightRegistries.SKILL.listElements()
 						.filter(skill ->
 							skill.value().getCategory().learnable() &&
 							skill.value().getCreativeTab() == null &&
@@ -414,7 +392,7 @@ public class EpicFightMod {
 			});
 		});
 
-		EpicFightRegistries.SKILL.holders()
+		EpicFightRegistries.SKILL.listElements()
 			.filter(skill ->
 				skill.value().getCategory().learnable() &&
 				skill.value().getCreativeTab() == event.getTab()
@@ -427,13 +405,13 @@ public class EpicFightMod {
 
 	/// @deprecated Use [yesman.epicfight.EpicFight#identifier(String)] instead
 	@Deprecated(forRemoval = true)
-	public static @NotNull ResourceLocation identifier(@NotNull String path) {
+	public static @NotNull Identifier identifier(@NotNull String path) {
         return EpicFight.identifier(path);
 	}
 
-	/// @deprecated Use [#identifier(String)] instead. [Mojang renamed `ResourceLocation` to `Identifier` in 1.21.11](https://neoforged.net/news/21.11release/#renaming-of-resourcelocation-to-identifier).
+	/// @deprecated Use [#identifier(String)] instead. [Mojang renamed `Identifier` to `Identifier` in 1.21.11](https://neoforged.net/news/21.11release/#renaming-of-resourcelocation-to-identifier).
 	@Deprecated(forRemoval = true)
-	public static @NotNull ResourceLocation rl(@NotNull String path) {
+	public static @NotNull Identifier rl(@NotNull String path) {
 		return identifier(path);
 	}
 }

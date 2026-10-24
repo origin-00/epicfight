@@ -1,5 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon;
 
+import net.minecraft.server.level.ServerLevel;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import net.minecraft.core.BlockPos;
@@ -11,7 +12,7 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.enderdragon.phases.DragonPhaseInstance;
 import net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.level.pathfinder.Path;
@@ -50,7 +51,7 @@ public class DragonGroundBattlePhase extends PatchedDragonPhase {
 	}
 	
 	@Override
-	public void doServerTick() {
+	public void doServerTick(ServerLevel level) {
 		LivingEntity target = this.dragon.getTarget();
 		
 		if (target != null) {

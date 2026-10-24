@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -26,10 +25,7 @@ public class RenderShield extends RenderItemBase {
 		poseStack.pushPose();
 		MathUtils.mulStack(poseStack, modelMatrix);
 		ItemDisplayContext transformType = (hand == InteractionHand.MAIN_HAND) ? ItemDisplayContext.THIRD_PERSON_RIGHT_HAND : ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
-		BakedModel model = itemRenderer.getItemModelShaper().getItemModel(itemstack);
-		
-		// Used render method from item renderer directly for compatibility with modded shields
-		itemRenderer.render(itemstack, transformType, !(hand == InteractionHand.MAIN_HAND), poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, model);
+		submitItem(entitypatch.getOriginal(), itemstack, transformType, poseStack, buffer, packedLight);
 		poseStack.popPose();
 	}
 }

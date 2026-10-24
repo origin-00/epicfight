@@ -47,9 +47,9 @@ public class PhantomAscentSkill extends Skill {
     @Override
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
-        this.extraJumps = parameters.getInt("extra_jumps");
+        this.extraJumps = parameters.getIntOr("extra_jumps", 0);
         this.consumption = 0.2F;
-        this.jumpPower = parameters.getDouble("jump_power");
+        this.jumpPower = parameters.getDoubleOr("jump_power", 0.0D);
     }
 
     @Override

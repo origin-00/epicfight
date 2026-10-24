@@ -95,7 +95,7 @@ public class DemolitionLeapSkill extends Skill implements ChargeableSkill {
 	
 	@Override
 	public void executeOnClient(SkillContainer container, CompoundTag arguments) {
-		int ticks = arguments.getInt("rawChargingTicks");
+		int ticks = arguments.getIntOr("rawChargingTicks", 0);
 		int modifiedTicks = (int)(7.4668F * Math.log10(ticks + 1.0F) / Math.log10(2));
 		Vec3f jumpDirection = new Vec3f(0, modifiedTicks * 0.05F, 0);
         EpicFightCameraAPI cameraApi = EpicFightCameraAPI.getInstance();
@@ -133,7 +133,7 @@ public class DemolitionLeapSkill extends Skill implements ChargeableSkill {
 
 			LevelUtil.circleSlamFracture(null, container.getExecutor().getOriginal().level(), container.getExecutor().getOriginal().position().subtract(0, 1, 0), accumulatedTicks * 0.05D, true, false, false);
 			Vec3 entityEyepos = container.getExecutor().getOriginal().getEyePosition();
-			EpicFightParticles.AIR_BURST.get().spawnParticleWithArgument(container.getServerExecutor().getOriginal().serverLevel(), entityEyepos.x, entityEyepos.y, entityEyepos.z, 0.0D, 0.0D, 2 + 0.05D * container.getExecutor().getAccumulatedChargeTicks());
+			EpicFightParticles.AIR_BURST.get().spawnParticleWithArgument(container.getServerExecutor().getOriginal().level(), entityEyepos.x, entityEyepos.y, entityEyepos.z, 0.0D, 0.0D, 2 + 0.05D * container.getExecutor().getAccumulatedChargeTicks());
 
 			container.getExecutor().playAnimationSynchronized(this.shootAnimation, 0.0F);
 			feedback.arguments().putInt("rawChargingTicks", accumulatedTicks);

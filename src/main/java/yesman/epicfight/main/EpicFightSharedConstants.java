@@ -20,7 +20,7 @@ public class EpicFightSharedConstants {
 	public static final float EXECUTION_DAMAGE = 2147483647F;
 	
 	// Environment varables
-	public static final boolean IS_DEV_ENV = !FMLEnvironment.production;
+	public static final boolean IS_DEV_ENV = !FMLEnvironment.isProduction();
 
     // Public server domain in AWS
     public static final String PUBLIC_SERVER_DOMAIN = "https://epic-fight.com";
@@ -40,7 +40,7 @@ public class EpicFightSharedConstants {
 	}
 	
 	public static boolean isPhysicalClient() {
-		return FMLEnvironment.dist == Dist.CLIENT;
+		return FMLEnvironment.getDist() == Dist.CLIENT;
 	}
 
     /**

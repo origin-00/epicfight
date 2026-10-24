@@ -1,7 +1,7 @@
 package yesman.epicfight.skill;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.utils.ExtensibleEnum;
 import yesman.epicfight.api.utils.ExtensibleEnumManager;
 import yesman.epicfight.api.utils.ParseUtil;
@@ -9,7 +9,7 @@ import yesman.epicfight.client.gui.screen.SkillEditScreen;
 import yesman.epicfight.main.EpicFightMod;
 
 public interface SkillCategory extends ExtensibleEnum {
-    ResourceLocation DEFAULT_BOOK_ICON = EpicFightMod.identifier("skillbook");
+    Identifier DEFAULT_BOOK_ICON = EpicFightMod.identifier("skillbook");
 	
 	ExtensibleEnumManager<SkillCategory> ENUM_MANAGER = new ExtensibleEnumManager<> ("skill_category");
 	
@@ -29,7 +29,7 @@ public interface SkillCategory extends ExtensibleEnum {
     }
 
 	/// Texture location of the Skill book icon in inventory UI
-	default ResourceLocation bookIcon() {
+	default Identifier bookIcon() {
 		return DEFAULT_BOOK_ICON;
 	}
 }

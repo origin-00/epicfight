@@ -1,8 +1,11 @@
 package yesman.epicfight.client.gui.screen.config;
 
+import yesman.epicfight.client.gui.GuiInputs;
+import net.minecraft.client.input.MouseButtonEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import com.google.common.collect.Sets;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
@@ -13,6 +16,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.*;
+import yesman.epicfight.world.item.VanillaItemKinds;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.screen.config.ItemsPreferenceScreen.ItemList.ItemEntry;
 import yesman.epicfight.config.ClientConfig;
@@ -31,7 +35,6 @@ public class ItemsPreferenceScreen extends Screen {
 	private static final Set<Class<? extends Item>> TOOL_CATEGORIZED_ITEM_CLASSES = new HashSet<> ();
 	
 	static {
-		WEAPON_CATEGORIZED_ITEM_CLASSES.add(SwordItem.class);
 		WEAPON_CATEGORIZED_ITEM_CLASSES.add(WeaponItem.class);
 		WEAPON_CATEGORIZED_ITEM_CLASSES.add(BowItem.class);
 		WEAPON_CATEGORIZED_ITEM_CLASSES.add(CrossbowItem.class);
@@ -39,7 +42,6 @@ public class ItemsPreferenceScreen extends Screen {
 		
 		TOOL_CATEGORIZED_ITEM_CLASSES.add(AxeItem.class);
 		TOOL_CATEGORIZED_ITEM_CLASSES.add(HoeItem.class);
-		TOOL_CATEGORIZED_ITEM_CLASSES.add(PickaxeItem.class);
 		TOOL_CATEGORIZED_ITEM_CLASSES.add(ShovelItem.class);
 	}
 	
@@ -71,6 +73,14 @@ public class ItemsPreferenceScreen extends Screen {
 			}
 			
 			itemClass = itemClass.getSuperclass();
+		}
+		
+		// Swords and pickaxes have had no class of their own since 1.21.2.
+		if (!foundMatchingClass && VanillaItemKinds.isSword(item)) {
+			isweapon = true;
+			foundMatchingClass = true;
+		} else if (!foundMatchingClass && VanillaItemKinds.isDigger(item)) {
+			foundMatchingClass = true;
 		}
 		
 		if (!foundMatchingClass) {
@@ -114,7 +124,6 @@ public class ItemsPreferenceScreen extends Screen {
 		super(Component.translatable(LangKeys.GUI_TITLE_SETTINGS_CONTROL_ITEM_CATEGORY));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
 
 		BuiltInRegistries.ITEM.forEach(item -> {
 			if (ClientConfig.combatCategorizedItems.contains(item)) {
@@ -166,11 +175,11 @@ public class ItemsPreferenceScreen extends Screen {
 	@Override
 	protected void init() {
         this.combatPreferredItems.resize(200, this.height);
-        this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.getScrollAmount());
+        this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.scrollAmount());
         this.combatPreferredItems.setX(this.width / 2 - 204);
 
         this.miningPreferredItems.resize(200, this.height);
-        this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.getScrollAmount());
+        this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.scrollAmount());
 		this.miningPreferredItems.setX(this.width / 2 + 4);
 
 		this.addRenderableWidget(this.combatPreferredItems);
@@ -181,8 +190,8 @@ public class ItemsPreferenceScreen extends Screen {
 		keywordEditBox.setResponder(keyword -> {
 			this.combatPreferredItems.filter(keyword);
 			this.miningPreferredItems.filter(keyword);
-			this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.getScrollAmount());
-			this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.getScrollAmount());
+			this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.scrollAmount());
+			this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.scrollAmount());
 		});
 		
 		this.addRenderableWidget(keywordEditBox);
@@ -204,8 +213,8 @@ public class ItemsPreferenceScreen extends Screen {
 						return false;
 					});
 					
-					this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.getScrollAmount());
-					this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.getScrollAmount());
+					this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.scrollAmount());
+					this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.scrollAmount());
 				}
 			)
 			.bounds(this.width / 2 - 92, this.height - 52, 15, 19)
@@ -229,8 +238,8 @@ public class ItemsPreferenceScreen extends Screen {
 						return false;
 					});
 					
-					this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.getScrollAmount());
-					this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.getScrollAmount());
+					this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.scrollAmount());
+					this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.scrollAmount());
 				}
 			)
 			.bounds(this.width / 2 + 77, this.height - 52, 15, 19)
@@ -288,16 +297,16 @@ public class ItemsPreferenceScreen extends Screen {
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		this.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
 		
-		this.combatPreferredItems.render(guiGraphics, mouseX, mouseY, partialTick);
-		this.miningPreferredItems.render(guiGraphics, mouseX, mouseY, partialTick);
+		this.combatPreferredItems.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+		this.miningPreferredItems.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 		
-		guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 16, 16777215);
-		guiGraphics.drawCenteredString(this.font, SWAP_ALL, this.width / 2 - 130, this.height - 45, 16777215);
+		guiGraphics.centeredText(this.font, this.title, this.width / 2, 16, GuiColors.text(16777215));
+		guiGraphics.centeredText(this.font, SWAP_ALL, this.width / 2 - 130, this.height - 45, GuiColors.text(16777215));
 	}
 
 	@Override
@@ -311,14 +320,16 @@ public class ItemsPreferenceScreen extends Screen {
 		private final Supplier<ItemList> opponent;
 		private final boolean left;
 		
+		/// Selection lists lost their header in 1.21.9: the list starts below the title instead.
+		private static final int HEADER_HEIGHT = (int)(9.0F * 1.5F);
+		
 		public ItemList(int width, int height, boolean left, MutableComponent title, Component tooltip, Supplier<ItemList> opponent) {
-			super(ItemsPreferenceScreen.this.minecraft, width, height - 87, 32, 22);
+			super(ItemsPreferenceScreen.this.minecraft, width, height - 87 - HEADER_HEIGHT, 32 + HEADER_HEIGHT, 22);
 			
 			this.title = title.withStyle(ChatFormatting.UNDERLINE);
 			this.tooltip = tooltip;
 			this.opponent = opponent;
 			this.left = left;
-			this.setRenderHeader(true, (int)(9.0F * 1.5F));
 			
 			if (this.getSelected() != null) {
 				this.centerScrollOn(this.getSelected());
@@ -326,15 +337,14 @@ public class ItemsPreferenceScreen extends Screen {
 		}
 		
 		public void resize(int width, int height) {
-			this.setY(32);
-			this.setHeight(height - 87);
+			this.setY(32 + HEADER_HEIGHT);
+			this.setHeight(height - 87 - HEADER_HEIGHT);
 			this.setX(0);
 			this.setWidth(width);
 		}
 		
-		@Override
-		protected void renderHeader(GuiGraphics guiGraphics, int x, int y) {
-			guiGraphics.drawString(this.minecraft.font, this.title, x + this.width / 2 - this.minecraft.font.width(this.title) / 2, Math.min(this.getY() + 3, y), 16777215, false);
+		private int headerY() {
+			return this.getY() - HEADER_HEIGHT + 3;
 		}
 		
 		@Override
@@ -343,22 +353,21 @@ public class ItemsPreferenceScreen extends Screen {
 		}
 		
 		@Override
-		protected int getScrollbarPosition() {
+		protected int scrollBarX() {
 			return this.getRight() - 6;
 		}
 		
 		@Override
-		public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-			super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+		public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+			super.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTick);
 			
 			int width = this.minecraft.font.width(this.title);
-			int x = this.getRowLeft();
-			int y = this.getY() + 4 - (int)this.getScrollAmount();
-			x = x + this.width / 2 - width / 2;
-			y = Math.min(this.getY() + 3, y);
+			int x = this.getX() + this.width / 2 - width / 2;
+			int y = this.headerY();
+			guiGraphics.text(this.minecraft.font, this.title, x, y, GuiColors.text(16777215), false);
 			
 			if (x < mouseX && y < mouseY && mouseX < (x + width) && mouseY < (y + 15)) {
-				ItemsPreferenceScreen.this.setTooltipForNextRenderPass(this.tooltip);
+				guiGraphics.setTooltipForNextFrame(this.minecraft.font, this.tooltip, mouseX, mouseY);
 			}
 		}
 		
@@ -407,7 +416,7 @@ public class ItemsPreferenceScreen extends Screen {
 					Component.literal(left ? ">" : "<"),
 					(button) -> {
 						ItemList.this.removeEntry(this);
-						ItemList.this.setScrollAmount(ItemList.this.getScrollAmount());
+						ItemList.this.setScrollAmount(ItemList.this.scrollAmount());
 						ItemList.this.opponent.get().createOpponent(this);
 						
 						if (left) {
@@ -424,10 +433,14 @@ public class ItemsPreferenceScreen extends Screen {
 			}
 			
 			@Override
-			public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+			public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+				int top = this.getY();
+				int left = this.getX();
+				int width = this.getWidth();
+				int height = this.getContentHeight();
 				try {
 					if (!UNRENDERABLE_ITEMS.contains(this.itemStack.getItem())) {
-						guiGraphics.renderItem(this.itemStack, left + 4, top + 1);
+						guiGraphics.item(this.itemStack, left + 4, top + 1);
 					}
 				} catch (Exception e) {
 					UNRENDERABLE_ITEMS.add(this.itemStack.getItem());
@@ -435,18 +448,21 @@ public class ItemsPreferenceScreen extends Screen {
 				
 				this.switchButton.setX(left + 170);
 				this.switchButton.setY(top - 1);
-				this.switchButton.render(guiGraphics, mouseX, mouseY, partialTick);
+				this.switchButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 				
 				Component component = this.itemStack.getHoverName();
-				guiGraphics.drawString(ItemList.this.minecraft.font, component, left + 30, top + 5, 16777215, false);
+				guiGraphics.text(ItemList.this.minecraft.font, component, left + 30, top + 5, GuiColors.text(16777215), false);
 			}
 			
 			@Override
-			public boolean mouseClicked(double mouseX, double mouseY, int button) {
+			public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+				double mouseX = event.x();
+				double mouseY = event.y();
+				int button = event.button();
 				if (button == 0) {
 					if (this.switchButton.isMouseOver(mouseX, mouseY)) {
 						this.switchButton.playDownSound(ItemsPreferenceScreen.this.minecraft.getSoundManager());
-						this.switchButton.onPress();
+						this.switchButton.onPress(GuiInputs.PROGRAMMATIC);
 					}
 					
 					ItemList.this.setSelected(this);

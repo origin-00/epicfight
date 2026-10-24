@@ -11,7 +11,7 @@ import com.mojang.datafixers.util.Function8;
 import com.mojang.datafixers.util.Function9;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
@@ -19,7 +19,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.Utf8String;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.api.animation.AnimationManager;
@@ -140,7 +140,7 @@ public interface ByteBufCodecsExtends {
 		@Override
 		public EpicFightGameRules.KeyValuePair decode(ByteBuf buffer) {
 			String ruleName = Utf8String.read(buffer, 32767);
-			ConfigurableGameRule<Object, ?, ?> gamerule = (ConfigurableGameRule<Object, ?, ?>)EpicFightGameRules.GAME_RULES.get(ruleName);
+			ConfigurableGameRule<Object, ?> gamerule = (ConfigurableGameRule<Object, ?>)EpicFightGameRules.GAME_RULES.get(ruleName);
 			Object value = gamerule.getRuleType().codec().decode(buffer);
 			
 			return new EpicFightGameRules.KeyValuePair(gamerule, value);
@@ -204,15 +204,15 @@ public interface ByteBufCodecsExtends {
 		return new StreamCodec<FriendlyByteBuf, TagKey<T>> () {
 			@Override
 			public TagKey<T> decode(FriendlyByteBuf buffer) {
-				ResourceLocation registry = buffer.readResourceLocation();
-				ResourceLocation tagName = buffer.readResourceLocation();
+				Identifier registry = buffer.readIdentifier();
+				Identifier tagName = buffer.readIdentifier();
 				return TagKey.create(ResourceKey.createRegistryKey(registry), tagName);
 			}
 			
 			@Override
 			public void encode(FriendlyByteBuf buffer, TagKey<T> tagKey) {
-				buffer.writeResourceLocation(tagKey.registry().location());
-				buffer.writeResourceLocation(tagKey.location());
+				buffer.writeIdentifier(tagKey.registry().identifier());
+				buffer.writeIdentifier(tagKey.location());
 			}
 		};
 	}

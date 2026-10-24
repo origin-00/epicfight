@@ -3,6 +3,7 @@ package yesman.epicfight.world.entity;
 import java.util.Collections;
 import java.util.List;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -15,7 +16,6 @@ import yesman.epicfight.registry.entries.EpicFightEntityTypes;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class DodgeLocationIndicator extends LivingEntity {
-	private static final List<ItemStack> EMPTY_LIST = Collections.emptyList();
 	private LivingEntityPatch<?> entitypatch;
 	
 	public DodgeLocationIndicator(EntityType<? extends LivingEntity> type, Level level) {
@@ -43,11 +43,7 @@ public class DodgeLocationIndicator extends LivingEntity {
 	}
 	
 	@Override
-	public boolean hurt(DamageSource damageSource, float amount) {
-		if (this.level().isClientSide()) {
-			return false;
-		}
-		
+	public boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
 		if (!DodgeAnimation.DODGEABLE_SOURCE_VALIDATOR.apply(damageSource).dealtDamage()) {
 			this.entitypatch.onDodgeSuccess(damageSource, this.getBoundingBox().getCenter());
 		}
@@ -57,21 +53,6 @@ public class DodgeLocationIndicator extends LivingEntity {
 		return false;
 	}
 	
-	@Override
-	public Iterable<ItemStack> getArmorSlots() {
-		return EMPTY_LIST;
-	}
-
-	@Override
-	public ItemStack getItemBySlot(EquipmentSlot p_21127_) {
-		return ItemStack.EMPTY;
-	}
-
-	@Override
-	public void setItemSlot(EquipmentSlot p_21036_, ItemStack p_21037_) {
-		
-	}
-
 	@Override
 	public HumanoidArm getMainArm() {
 		return HumanoidArm.RIGHT;

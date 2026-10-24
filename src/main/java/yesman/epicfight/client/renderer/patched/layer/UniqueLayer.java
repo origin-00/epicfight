@@ -1,5 +1,6 @@
 package yesman.epicfight.client.renderer.patched.layer;
 
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.EntityModel;
@@ -9,12 +10,12 @@ import net.minecraft.world.entity.LivingEntity;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
-public abstract class UniqueLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>> extends PatchedLayer<E, T, M, RenderLayer<E, M>> {
+public abstract class UniqueLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<?>> extends PatchedLayer<E, T, M, RenderLayer<?, ?>> {
 	// parameter vanillaLayer is always null
 	@Override
-	protected void renderLayer(T entitypatch, E entityliving, RenderLayer<E, M> vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
-		this.renderLayer(entitypatch, entityliving, poseStack, buffer, packedLight, poses, bob, yRot, xRot, partialTicks);
+	protected void renderLayer(T entitypatch, E entityliving, RenderLayer<?, ?> vanillaLayer, LivingEntityRenderState renderState, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
+		this.renderLayer(entitypatch, entityliving, renderState, poseStack, buffer, packedLight, poses, bob, yRot, xRot, partialTicks);
 	}
 	
-	protected abstract void renderLayer(T entitypatch, E entityliving, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks);
+	protected abstract void renderLayer(T entitypatch, E entityliving, LivingEntityRenderState renderState, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks);
 }

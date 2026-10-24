@@ -21,7 +21,7 @@ public class CatharsisSkill extends PassiveSkill {
 	@Override
 	public void loadDatapackParameters(CompoundTag parameters) {
 		super.loadDatapackParameters(parameters);
-		this.regenBonus = parameters.getFloat("regen_bonus");
+		this.regenBonus = parameters.getFloatOr("regen_bonus", 0.0F);
 	}
 
     @Override
@@ -36,7 +36,7 @@ public class CatharsisSkill extends PassiveSkill {
                 if (innateSkillContainer.getSkill() != null && innateSkillContainer.getStack() < innateSkillContainer.getSkill().getMaxStack()) {
                     ServerPlayer serverplayer = container.getServerExecutor().getOriginal();
                     container.getExecutor().playSound(EpicFightSounds.CATHARSIS.get(), 1.0F, 1.0F, 1.0F);
-                    serverplayer.serverLevel().sendParticles(EpicFightParticles.CATHARSIS.get(), serverplayer.getX(), serverplayer.getEyeY(), serverplayer.getZ(), 0, 0.0D, 0.0D, 0.0D, 0.0D);
+                    serverplayer.level().sendParticles(EpicFightParticles.CATHARSIS.get(), serverplayer.getX(), serverplayer.getEyeY(), serverplayer.getZ(), 0, 0.0D, 0.0D, 0.0D, 0.0D);
 
                     float damage = (float)serverplayer.getAttributeValue(Attributes.ATTACK_DAMAGE);
                     innateSkillContainer.getSkill().setConsumptionSynchronize(innateSkillContainer, innateSkillContainer.getResource() + damage + this.consumption * this.regenBonus);

@@ -263,6 +263,8 @@
 
 	"key.epicfight.gui": "Epic Fight GUI",
 	"key.epicfight.combat": "Epic Fight 戦闘",
+	"key.category.epicfight.combat": "Epic Fight 戦闘",
+	"key.category.epicfight.gui": "Epic Fight GUI",
 	"key.epicfight.show_tooltip": "武器の固有スキルのツールチップを表示",
 	"key.epicfight.switch_mode": "戦闘/採掘モードの切り替え",
 	"key.epicfight.attack": "攻撃",

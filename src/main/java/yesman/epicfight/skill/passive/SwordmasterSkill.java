@@ -66,7 +66,7 @@ public class SwordmasterSkill extends PassiveSkill {
     @Override
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
-        this.speedBonus = parameters.getFloat("speed_bonus");
+        this.speedBonus = parameters.getFloatOr("speed_bonus", 0.0F);
     }
 
     @Override

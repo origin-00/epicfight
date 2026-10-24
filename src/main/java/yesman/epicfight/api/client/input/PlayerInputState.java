@@ -1,6 +1,7 @@
 package yesman.epicfight.api.client.input;
 
-import net.minecraft.client.player.Input;
+import net.minecraft.world.entity.player.Input;
+import net.minecraft.client.player.ClientInput;
 import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,12 +18,16 @@ public record PlayerInputState(
         boolean jumping,
         boolean sneaking
 ) {
-    public static PlayerInputState fromVanillaInput(Input input) {
+    /// Since 1.21.2 the vanilla input is a [ClientInput]: impulses in its move vector, keys in an
+    /// immutable [Input] record.
+    public static PlayerInputState fromVanillaInput(ClientInput input) {
+        Input keys = input.keyPresses;
+        Vec2 moveVector = input.getMoveVector();
         return new PlayerInputState(
-                input.leftImpulse, input.forwardImpulse,
-                input.up, input.down,
-                input.left, input.right,
-                input.jumping, input.shiftKeyDown
+                moveVector.x, moveVector.y,
+                keys.forward(), keys.backward(),
+                keys.left(), keys.right(),
+                keys.jump(), keys.shift()
         );
     }
 
@@ -32,15 +37,9 @@ public record PlayerInputState(
     ///
     /// @param updated the new input state to apply
     /// @param input   the existing vanilla Input instance to update
-    public static Input applyToVanillaInput(@NotNull PlayerInputState updated, @NotNull Input input) {
-        if (input.leftImpulse != updated.leftImpulse()) input.leftImpulse = updated.leftImpulse();
-        if (input.forwardImpulse != updated.forwardImpulse()) input.forwardImpulse = updated.forwardImpulse();
-        if (input.up != updated.up()) input.up = updated.up();
-        if (input.down != updated.down()) input.down = updated.down();
-        if (input.left != updated.left()) input.left = updated.left();
-        if (input.right != updated.right()) input.right = updated.right();
-        if (input.jumping != updated.jumping()) input.jumping = updated.jumping();
-        if (input.shiftKeyDown != updated.sneaking()) input.shiftKeyDown = updated.sneaking();
+    public static ClientInput applyToVanillaInput(@NotNull PlayerInputState updated, @NotNull ClientInput input) {
+        input.moveVector = new Vec2(updated.leftImpulse(), updated.forwardImpulse());
+        input.keyPresses = new Input(updated.up(), updated.down(), updated.left(), updated.right(), updated.jumping(), updated.sneaking(), input.keyPresses.sprint());
         return input;
     }
 

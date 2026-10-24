@@ -2,19 +2,19 @@ package yesman.epicfight.api.animation.types;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 
 public class DirectStaticAnimation extends StaticAnimation implements AnimationAccessor<DirectStaticAnimation> {
-	private ResourceLocation registryName;
+	private Identifier registryName;
 	
 	public DirectStaticAnimation() {
 		this.accessor = this;
 	}
 	
-	public DirectStaticAnimation(float transitionTime, boolean isRepeat, ResourceLocation registryName, AssetAccessor<? extends Armature> armature) {
+	public DirectStaticAnimation(float transitionTime, boolean isRepeat, Identifier registryName, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, isRepeat, registryName.toString(), armature);
 		
 		this.registryName = registryName;
@@ -23,10 +23,10 @@ public class DirectStaticAnimation extends StaticAnimation implements AnimationA
 	
 	/* Multilayer, Pov animation Constructor */
 	@ApiStatus.Internal
-	public DirectStaticAnimation(ResourceLocation baseAnimPath, float transitionTime, boolean repeatPlay, String registryName, AssetAccessor<? extends Armature> armature) {
+	public DirectStaticAnimation(Identifier baseAnimPath, float transitionTime, boolean repeatPlay, String registryName, AssetAccessor<? extends Armature> armature) {
 		super(baseAnimPath, transitionTime, repeatPlay, registryName, armature);
 		
-		this.registryName = ResourceLocation.parse(registryName);
+		this.registryName = Identifier.parse(registryName);
 	}
 	
 	@Override
@@ -41,7 +41,7 @@ public class DirectStaticAnimation extends StaticAnimation implements AnimationA
 	}
 	
 	@Override
-	public ResourceLocation registryName() {
+	public Identifier registryName() {
 		return this.registryName;
 	}
 

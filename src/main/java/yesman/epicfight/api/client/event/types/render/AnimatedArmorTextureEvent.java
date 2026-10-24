@@ -1,7 +1,7 @@
 package yesman.epicfight.api.client.event.types.render;
 
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -13,7 +13,7 @@ public class AnimatedArmorTextureEvent extends Event {
     private final ItemStack itemstack;
     private final EquipmentSlot equipmentSlot;
     private final HumanoidModel<?> originalModel;
-    private ResourceLocation resultLocation;
+    private Identifier resultLocation;
     
 	public AnimatedArmorTextureEvent(LivingEntity livingentity, ItemStack itemstack, EquipmentSlot equipmentSlot, HumanoidModel<?> originalModel) {
 		this.livingentity = livingentity;
@@ -22,11 +22,11 @@ public class AnimatedArmorTextureEvent extends Event {
         this.originalModel = originalModel;
 	}
 	
-	public ResourceLocation getResultLocation() {
+	public Identifier getResultLocation() {
 		return this.resultLocation;
 	}
 	
-	public void setResultLocation(ResourceLocation resultLocation) {
+	public void setResultLocation(Identifier resultLocation) {
 		if (this.resultLocation != null) {
 			EpicFightMod.LOGGER.debug("AnimatedArmorTextureEvent: You've overriden the existing texutre location " + this.resultLocation);
 		}

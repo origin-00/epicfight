@@ -3,23 +3,16 @@ package yesman.epicfight.data.tags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.tags.ItemTagsProvider;
-import net.minecraft.data.tags.TagsProvider;
+import net.neoforged.neoforge.common.data.ItemTagsProvider;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.level.block.Block;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.registry.entries.EpicFightItems;
 
 import java.util.concurrent.CompletableFuture;
 
 public class EpicFightItemTagsProvider extends ItemTagsProvider {
-	public EpicFightItemTagsProvider(
-		PackOutput output,
-        CompletableFuture<HolderLookup.Provider> lookupProvider,
-        CompletableFuture<TagsProvider.TagLookup<Block>> blockTags,
-        @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper
-	) {
-		super(output, lookupProvider, blockTags, EpicFightMod.MODID, existingFileHelper);
+	public EpicFightItemTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+		super(output, lookupProvider, EpicFightMod.MODID);
 	}
 	
 	@Override

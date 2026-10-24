@@ -26,7 +26,7 @@ import java.util.function.Function;
 
 public interface Condition<T> {
 	default Condition<T> read(JsonElement json) throws CommandSyntaxException {
-		return this.read(TagParser.parseTag(json.toString()));
+		return this.read(TagParser.parseCompoundFully(json.toString()));
 	}
 	
 	Condition<T> read(CompoundTag tag) throws IllegalArgumentException;
@@ -52,7 +52,7 @@ public interface Condition<T> {
 			throw new IllegalArgumentException(MessageFormat.format("{0} condition error: {1} not specified!", this.getClass().getSimpleName(), key));
 		}
 		
-		String enumString = this.assertTag(key, "string", compound, StringTag.class, CompoundTag::getString).toUpperCase(Locale.ROOT);
+		String enumString = this.assertTag(key, "string", compound, StringTag.class, (compoundTag, tagKey) -> compoundTag.getStringOr(tagKey, "")).toUpperCase(Locale.ROOT);
 		
 		try {
 			return Enum.valueOf(enumCls, enumString);
@@ -66,7 +66,7 @@ public interface Condition<T> {
 			throw new IllegalArgumentException(MessageFormat.format("{0} condition error: {1} not specified!", this.getClass().getSimpleName(), key));
 		}
 		
-		String enumString = this.assertTag(key, "string", compound, StringTag.class, CompoundTag::getString).toLowerCase(Locale.ROOT);
+		String enumString = this.assertTag(key, "string", compound, StringTag.class, (compoundTag, tagKey) -> compoundTag.getStringOr(tagKey, "")).toLowerCase(Locale.ROOT);
 		
 		try {
 			return extendableEnumManager.getOrThrow(enumString);

@@ -1,7 +1,7 @@
 package yesman.epicfight.skill;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.main.EpicFightMod;
 
 import static yesman.epicfight.generated.LangKeys.*;
@@ -24,7 +24,7 @@ public enum SkillCategories implements SkillCategory {
     final boolean modifiable;
     final int id;
     final Component translationKey;
-    final ResourceLocation bookIcon;
+    final Identifier bookIcon;
 
 	SkillCategories(boolean shouldSave, boolean shouldSyncronizedAllPlayers, boolean modifiable, String translationKey) {
 		this.shouldSave = shouldSave;
@@ -35,7 +35,7 @@ public enum SkillCategories implements SkillCategory {
         this.bookIcon = SkillCategory.DEFAULT_BOOK_ICON;
 	}
 
-	SkillCategories(boolean shouldSave, boolean shouldSyncronizedAllPlayers, boolean modifiable, String translationKey, ResourceLocation bookIcon) {
+	SkillCategories(boolean shouldSave, boolean shouldSyncronizedAllPlayers, boolean modifiable, String translationKey, Identifier bookIcon) {
 		this.shouldSave = shouldSave;
 		this.shouldSyncronize = shouldSyncronizedAllPlayers;
 		this.modifiable = modifiable;
@@ -70,7 +70,7 @@ public enum SkillCategories implements SkillCategory {
     }
 
 	@Override
-	public ResourceLocation bookIcon() {
+	public Identifier bookIcon() {
 		return this.bookIcon;
 	}
 }

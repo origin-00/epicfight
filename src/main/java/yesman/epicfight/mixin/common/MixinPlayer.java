@@ -18,7 +18,7 @@ public abstract class MixinPlayer {
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/damagesource/CombatTracker;recordDamage(Lnet/minecraft/world/damagesource/DamageSource;F)V"
 		),
-		method = "actuallyHurt(Lnet/minecraft/world/damagesource/DamageSource;F)V"
+		method = "actuallyHurt(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)V"
 	)
 	private void epicfight$recordDamage(CombatTracker self, DamageSource damagesource, float damage, Operation<Void> operation) {
 		EpicFightCapabilities.getUnparameterizedEntityPatch(damagesource.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
@@ -33,7 +33,8 @@ public abstract class MixinPlayer {
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/player/Player;getYRot()F"
         ),
-        method = "serverAiStep()V"
+        // The head rotation sync moved from Player#serverAiStep to Player#aiStep (1.21.2).
+        method = "aiStep()V"
     )
     private float epicfight$serverAiStep(Player player, Operation<Void> originalOperation) {
         if (player.isLocalPlayer()) {

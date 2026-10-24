@@ -1,6 +1,6 @@
 package yesman.epicfight.client.renderer.patched.entity;
 
-import net.minecraft.client.model.VexModel;
+import net.minecraft.client.model.monster.vex.VexModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.VexRenderer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;

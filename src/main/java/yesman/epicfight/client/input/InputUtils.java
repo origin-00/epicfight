@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
-import net.minecraft.client.player.Input;
+import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.neoforged.neoforge.client.ClientHooks;
@@ -66,10 +66,13 @@ public final class InputUtils {
         return true;
     }
 
-    /// Currently, this calls [Input#tick] without performing any additional logic.
-    /// This abstraction was introduced to allow calling it without depending on the vanilla Minecraft [Input],
+    /// Currently, this calls [net.minecraft.client.player.ClientInput#tick] without performing any additional logic.
+    /// This abstraction was introduced to allow calling it without depending on the vanilla Minecraft input,
     /// enabling Epic Fight to introduce changes in future updates if necessary to support controllers.
+    ///
+    /// Since 1.21.2 the input no longer applies the sneaking slowdown itself (the player does, in
+    /// `LocalPlayer#modifyInput`), so `isSneaking` and `sneakingSpeedMultiplier` are unused.
     public static void sneakingTick(@NotNull LocalPlayer player, boolean isSneaking, float sneakingSpeedMultiplier) {
-        player.input.tick(isSneaking, sneakingSpeedMultiplier);
+        player.input.tick();
     }
 }

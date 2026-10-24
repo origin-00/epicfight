@@ -1,5 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon;
 
+import net.minecraft.server.level.ServerLevel;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -27,7 +28,7 @@ public class DragonFlyingPhase extends PatchedDragonPhase {
 	}
 	
 	@Override
-	public void doServerTick() {
+	public void doServerTick(ServerLevel level) {
 		double d0 = this.targetLocation == null ? 0.0D : this.targetLocation.distanceToSqr(this.dragon.getX(), this.dragon.getY(), this.dragon.getZ());
 		
 		if (d0 < 100.0D || d0 > 22500.0D || this.dragon.horizontalCollision || this.dragon.verticalCollision && this.dragon.getDragonFight() != null) {

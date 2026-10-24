@@ -11,9 +11,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.client.*;
@@ -229,26 +229,20 @@ public class EpicFightNetworkManager {
 	    	.playBidirectional(
 	    		  ManagedCustomPacketPayload.BI_DIRECTIONAL_MODIFY_ANIMATION_VARIABLE
 	    		, BiDirectionalAnimationVariable.STREAM_CODEC
-	    		, new DirectionalPayloadHandler<> (
-	    			  EpicFightClientBoundPayloadHandler::handleAnimationVariablePacket
-	    			, EpicFightServerBoundPayloadHandler::handleAnimationVariablePacket
-	    		)
+	    		, EpicFightServerBoundPayloadHandler::handleAnimationVariablePacket
+	    		, EpicFightClientBoundPayloadHandler::handleAnimationVariablePacket
 	    	)
 	    	.playBidirectional(
     			  ManagedCustomPacketPayload.BI_DIRECTIONAL_SYNC_ANIMATION_POSITION
   	    		, BiDirectionalSyncAnimationPositionPacket.STREAM_CODEC
-  	    		, new DirectionalPayloadHandler<> (
-  	    			  EpicFightClientBoundPayloadHandler::handleSyncAnimationPosition
-  	    			, EpicFightServerBoundPayloadHandler::handleSyncAnimationPosition
-  	    		)
+  	    		, EpicFightServerBoundPayloadHandler::handleSyncAnimationPosition
+	    		, EpicFightClientBoundPayloadHandler::handleSyncAnimationPosition
 	    	)
             .playBidirectional(
                   ManagedCustomPacketPayload.BI_DIRECTIONAL_SYNC_EMOTE_SLOTS
                 , BiDirectionalSyncEmoteSlots.STREAM_CODEC
-                , new DirectionalPayloadHandler<> (
-                      EpicFightClientBoundPayloadHandler::handleSyncEmoteSlot
-                    , EpicFightServerBoundPayloadHandler::handleSyncEmoteSlot
-                )
+                , EpicFightServerBoundPayloadHandler::handleSyncEmoteSlot
+	    		, EpicFightClientBoundPayloadHandler::handleSyncEmoteSlot
             )
 	    ;
 	}
@@ -261,7 +255,7 @@ public class EpicFightNetworkManager {
 	}
 	
 	public static void sendToServer(CustomPacketPayload message, CustomPacketPayload... others) {
-		PacketDistributor.sendToServer(message, others);
+		ClientPacketDistributor.sendToServer(message, others);
 	}
 	
 	public static void sendToAll(CustomPacketPayload message, CustomPacketPayload... others) {

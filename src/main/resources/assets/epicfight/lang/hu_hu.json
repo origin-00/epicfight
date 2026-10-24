@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	"key.epicfight.gui": "EpicFight GUI",
 	"key.epicfight.combat": "Epic Fight Harc",
+	"key.category.epicfight.combat": "Epic Fight Harc",
+	"key.category.epicfight.gui": "EpicFight GUI",
 	"key.epicfight.show_tooltip": "Fegyver Beépített Képességének Mutatása",
 	"key.epicfight.switch_mode": "Váltás Harc/Bányász Módba",
 	"key.epicfight.attack": "Attack",

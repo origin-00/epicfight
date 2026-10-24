@@ -29,7 +29,7 @@ public class EnduranceSkill extends PassiveSkill {
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
 
-        this.staminaRatio = parameters.getFloat("stamina_ratio");
+        this.staminaRatio = parameters.getFloatOr("stamina_ratio", 0.0F);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class EnduranceSkill extends PassiveSkill {
     public void executeOnServer(SkillContainer container, CompoundTag arguments) {
         super.executeOnServer(container, arguments);
 
-        float staminaConsume = arguments.getFloat("staminaConsumption");
+        float staminaConsume = arguments.getFloatOr("staminaConsumption", 0.0F);
         container.getExecutor().setMaxStunShield(staminaConsume);
         container.getExecutor().setStunShield(staminaConsume);
 

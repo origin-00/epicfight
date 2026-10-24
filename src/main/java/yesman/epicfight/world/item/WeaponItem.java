@@ -1,39 +1,33 @@
 package yesman.epicfight.world.item;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.item.ItemInstance;
+import net.minecraft.world.item.component.Tool;
+import net.minecraft.world.item.component.Weapon;
+import net.neoforged.neoforge.common.ItemAbilities;
+import net.neoforged.neoforge.common.ItemAbility;
+
+import java.util.List;
 
 public class WeaponItem extends Item {
     public WeaponItem(Item.Properties properties) {
         super(properties);
     }
     
-    /**
-     * Below code are copies from {@link SwordItem.class} to share the common properties of swords
-     */
-    @Override
-    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
-        return !player.isCreative();
+    /// Gives an item the common sword behavior that used to be overridden from `SwordItem`:
+    /// one durability point per hit, and no block breaking in creative mode.
+    ///
+    /// Since 1.21.2 both are data components rather than overridable methods. Items built through
+    /// [Item.Properties#sword] already have them; this is for weapons that are not.
+    public static Item.Properties swordBehavior(Item.Properties properties) {
+        return properties
+            .component(DataComponents.WEAPON, new Weapon(1))
+            .component(DataComponents.TOOL, new Tool(List.of(), 1.0F, 2, false));
     }
 
     @Override
-    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        return true;
-    }
-
-    @Override
-    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        stack.hurtAndBreak(1, attacker, EquipmentSlot.MAINHAND);
-    }
-
-    @Override
-    public boolean canPerformAction(ItemStack stack, net.neoforged.neoforge.common.ItemAbility itemAbility) {
-        return net.neoforged.neoforge.common.ItemAbilities.DEFAULT_SWORD_ACTIONS.contains(itemAbility);
+    public boolean canPerformAction(ItemInstance stack, ItemAbility itemAbility) {
+        return itemAbility == ItemAbilities.SWORD_SWEEP;
     }
 }

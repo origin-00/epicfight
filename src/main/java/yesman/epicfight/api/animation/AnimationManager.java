@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
-public class AnimationManager extends SimplePreparableReloadListener<List<ResourceLocation>> {
+public class AnimationManager extends SimplePreparableReloadListener<List<Identifier>> {
 	private static final AnimationManager INSTANCE = new AnimationManager();
 	private static ResourceManager serverResourceManager = null;
     private static final Gson GSON = new GsonBuilder().create();
@@ -61,7 +61,7 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 	}
 	
 	private final Map<Integer, AnimationAccessor<? extends StaticAnimation>> animationById = new HashMap<> ();
-	private final Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>> animationByName = new HashMap<> ();
+	private final Map<Identifier, AnimationAccessor<? extends StaticAnimation>> animationByName = new HashMap<> ();
 	private final Map<AnimationAccessor<? extends StaticAnimation>, StaticAnimation> animations = new HashMap<> ();
 	private final Map<AnimationAccessor<? extends StaticAnimation>, String> resourcepackAnimationCommands = new HashMap<> ();
 
@@ -80,10 +80,10 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 	}
 	
 	public static <T extends StaticAnimation> AnimationAccessor<T> byKey(String registryName) {
-		return byKey(ResourceLocation.parse(registryName));
+		return byKey(Identifier.parse(registryName));
 	}
 	
-	public static <T extends StaticAnimation> AnimationAccessor<T> byKey(ResourceLocation registryName) {
+	public static <T extends StaticAnimation> AnimationAccessor<T> byKey(Identifier registryName) {
 		return (AnimationAccessor<T>)getInstance().animationByName.get(registryName);
 	}
 	
@@ -92,12 +92,12 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 	}
 
     /// Use the transient accessor when you need to get accessors before animations are loaded, especailly a data pack loading stage
-    public static <T extends StaticAnimation> AnimationAccessor<T> trasientAccessor(ResourceLocation registryName) {
+    public static <T extends StaticAnimation> AnimationAccessor<T> trasientAccessor(Identifier registryName) {
         return new TransientAnimationAccessor<> (registryName);
     }
 
-	public Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>> getAnimations(Predicate<AssetAccessor<? extends StaticAnimation>> filter) {
-		Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>> filteredItems =
+	public Map<Identifier, AnimationAccessor<? extends StaticAnimation>> getAnimations(Predicate<AssetAccessor<? extends StaticAnimation>> filter) {
+		Map<Identifier, AnimationAccessor<? extends StaticAnimation>> filteredItems =
 			this.animationByName.entrySet().stream()
 				.filter(entry -> filter.test(entry.getValue()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -120,8 +120,8 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 	}
 	
 	public static void readAnimationProperties(StaticAnimation animation) {
-		ResourceLocation dataLocation = getSubAnimationFileLocation(animation.getLocation(), AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
-		ResourceLocation povLocation = getSubAnimationFileLocation(animation.getLocation(), AnimationSubFileReader.SUBFILE_POV_ANIMATION);
+		Identifier dataLocation = getSubAnimationFileLocation(animation.getLocation(), AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
+		Identifier povLocation = getSubAnimationFileLocation(animation.getLocation(), AnimationSubFileReader.SUBFILE_POV_ANIMATION);
 		
 		getAnimationResourceManager().getResource(dataLocation).ifPresent((rs) -> {
 			AnimationSubFileReader.readAndApply(animation, rs, AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
@@ -133,7 +133,7 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 	}
 
 	@Override
-	protected @NotNull List<ResourceLocation> prepare(@NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerIn) {
+	protected @NotNull List<Identifier> prepare(@NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerIn) {
 		if (!EpicFightSharedConstants.isPhysicalClient() && serverResourceManager == null) {
 			serverResourceManager = resourceManager;
 		}
@@ -143,22 +143,22 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 		this.animationByName.entrySet().removeIf(entry -> !entry.getValue().inRegistry());
 		this.resourcepackAnimationCommands.clear();
 
-        List<ResourceLocation> directories = new ArrayList<> ();
+        List<Identifier> directories = new ArrayList<> ();
         scanDirectoryNames(resourceManager, directories);
 
 		return directories;
 	}
 
-    private static void scanDirectoryNames(ResourceManager resourceManager, List<ResourceLocation> output) {
+    private static void scanDirectoryNames(ResourceManager resourceManager, List<Identifier> output) {
         FileToIdConverter filetoidconverter = FileToIdConverter.json(DIRECTORY);
         filetoidconverter.listMatchingResources(resourceManager).keySet().stream().map(AnimationManager::pathToId).forEach(output::add);
     }
 
 	@Override
-	protected void apply(List<ResourceLocation> objects, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerIn) {
+	protected void apply(List<Identifier> objects, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerIn) {
 		Armatures.reload(resourceManager);
 
-		Set<ResourceLocation> registeredAnimation =
+		Set<Identifier> registeredAnimation =
             this.animationById.values().stream()
                 .reduce(
                     new HashSet<> (),
@@ -181,7 +181,7 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
         // Reads from /assets folder in physical client, /datapack in physical server.
         objects.stream()
             .filter(animId -> !registeredAnimation.contains(animId) && !animId.getPath().contains("/data/") && !animId.getPath().contains("/pov/"))
-			.sorted(Comparator.comparing(ResourceLocation::toString))
+			.sorted(Comparator.comparing(Identifier::toString))
 			.forEach(animId -> {
                 Optional<Resource> resource = resourceManager.getResource(idToPath(animId));
 
@@ -236,24 +236,24 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
             });
 	}
 	
-	public static ResourceLocation getSubAnimationFileLocation(ResourceLocation location, AnimationSubFileReader.SubFileType<?> subFileType) {
+	public static Identifier getSubAnimationFileLocation(Identifier location, AnimationSubFileReader.SubFileType<?> subFileType) {
 		int splitIdx = location.getPath().lastIndexOf('/');
 		
 		if (splitIdx < 0) {
 			splitIdx = 0;
 		}
 		
-		return ResourceLocation.fromNamespaceAndPath(location.getNamespace(), String.format("%s/" + subFileType.getDirectory() + "%s", location.getPath().substring(0, splitIdx), location.getPath().substring(splitIdx)));
+		return Identifier.fromNamespaceAndPath(location.getNamespace(), String.format("%s/" + subFileType.getDirectory() + "%s", location.getPath().substring(0, splitIdx), location.getPath().substring(splitIdx)));
 	}
 
     /// Converts animation id, acquired by [StaticAnimation#getRegistryName], to animation resource path acquired by [StaticAnimation#getLocation]
-    public static ResourceLocation idToPath(ResourceLocation rl) {
-        return rl.getPath().matches(DIRECTORY + "/.*\\.json") ? rl : ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), DIRECTORY + "/" + rl.getPath() + ".json");
+    public static Identifier idToPath(Identifier rl) {
+        return rl.getPath().matches(DIRECTORY + "/.*\\.json") ? rl : Identifier.fromNamespaceAndPath(rl.getNamespace(), DIRECTORY + "/" + rl.getPath() + ".json");
     }
 
     /// Converts animation resource path, acquired by [StaticAnimation#getLocation], to animation id acquired by [StaticAnimation#getRegistryName]
-    public static ResourceLocation pathToId(ResourceLocation rl) {
-        return ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), rl.getPath().replace(DIRECTORY + "/", "").replace(".json", ""));
+    public static Identifier pathToId(Identifier rl) {
+        return Identifier.fromNamespaceAndPath(rl.getNamespace(), rl.getPath().replace(DIRECTORY + "/", "").replace(".json", ""));
     }
 
 	public static void setServerResourceManager(ResourceManager pResourceManager) {
@@ -284,9 +284,9 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 	public void processServerPacket(SPDatapackSync packet, boolean mandatoryPack) {
 		if (mandatoryPack) {
 			for (CompoundTag tag : packet.tags()) {
-				String invocationCommand = tag.getString("invoke_command");
-				ResourceLocation registryName = ResourceLocation.parse(tag.getString("registry_name"));
-				int id = tag.getInt("id");
+				String invocationCommand = tag.getStringOr("invoke_command", "");
+				Identifier registryName = Identifier.parse(tag.getStringOr("registry_name", ""));
+				int id = tag.getIntOr("id", 0);
 						
 				if (this.animationByName.containsKey(registryName)) {
 					continue;
@@ -371,7 +371,7 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 	 * User-animation loader
 	 **************************************************/
 	@SuppressWarnings({ "deprecation" })
-	private void readResourcepackAnimation(ResourceLocation rl, JsonObject json) throws Exception {
+	private void readResourcepackAnimation(Identifier rl, JsonObject json) throws Exception {
 		JsonElement constructorElement = json.get("constructor");
 		
 		if (constructorElement == null) {
@@ -420,7 +420,7 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 		}
 	}
 
-    public record TransientAnimationAccessor<A extends StaticAnimation> (ResourceLocation registryName) implements AnimationAccessor<A> {
+    public record TransientAnimationAccessor<A extends StaticAnimation> (Identifier registryName) implements AnimationAccessor<A> {
         @Override
         public A get() {
             return (A)INSTANCE.animationByName.get(registryName).get();
@@ -437,8 +437,8 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
         }
     }
 
-	public record AnimationAccessorImpl<A extends StaticAnimation> (ResourceLocation registryName, int id, boolean inRegistry, Function<AnimationAccessor<A>, A> onLoad) implements AnimationAccessor<A> {
-		private static <A extends StaticAnimation> AnimationAccessor<A> create(ResourceLocation registryName, int id, boolean inRegistry, Function<AnimationAccessor<A>, A> onLoad) {
+	public record AnimationAccessorImpl<A extends StaticAnimation> (Identifier registryName, int id, boolean inRegistry, Function<AnimationAccessor<A>, A> onLoad) implements AnimationAccessor<A> {
+		private static <A extends StaticAnimation> AnimationAccessor<A> create(Identifier registryName, int id, boolean inRegistry, Function<AnimationAccessor<A>, A> onLoad) {
 			return new AnimationAccessorImpl<A> (registryName, id, inRegistry, onLoad);
 		}
 		
@@ -466,7 +466,7 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 				return true;
 			} else if (obj instanceof AnimationAccessor<?> animationAccessor) {
 				return this.registryName.equals(animationAccessor.registryName());
-			} else if (obj instanceof ResourceLocation rl) {
+			} else if (obj instanceof Identifier rl) {
 				return this.registryName.equals(rl);
 			} else if (obj instanceof String name) {
 				return this.registryName.toString().equals(name);
@@ -496,7 +496,7 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Resour
 	
 	public record AnimationBuilder(String namespace, Consumer<AnimationBuilder> task) {
 		public <T extends StaticAnimation> AnimationManager.AnimationAccessor<T> nextAccessor(String id, Function<AnimationManager.AnimationAccessor<T>, T> onLoad) {
-			AnimationAccessor<T> accessor = AnimationAccessorImpl.create(ResourceLocation.fromNamespaceAndPath(this.namespace, id), INSTANCE.animations.size() + 1, true, onLoad);
+			AnimationAccessor<T> accessor = AnimationAccessorImpl.create(Identifier.fromNamespaceAndPath(this.namespace, id), INSTANCE.animations.size() + 1, true, onLoad);
 			
 			INSTANCE.animationById.put(accessor.id(), accessor);
 			INSTANCE.animationByName.put(accessor.registryName(), accessor);

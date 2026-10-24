@@ -1,5 +1,6 @@
 package yesman.epicfight.gameasset;
 
+import net.minecraft.world.entity.EntitySpawnReason;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.IntIntPair;
 import net.minecraft.core.BlockPos;
@@ -19,9 +20,9 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.DragonFireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.DragonFireball;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -30,7 +31,7 @@ import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.NeoForgeConfig;
+import net.neoforged.neoforge.common.config.NeoForgeServerConfig;
 import net.neoforged.neoforge.event.EventHooks;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -1521,7 +1522,7 @@ public class Animations {
                         }
 
                         DragonFireball dragonfireball = new DragonFireball(original.level(), original, new Vec3(dx, dy, dz));
-                        dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
+                        dragonfireball.snapTo(d6, d7, d8, 0.0F, 0.0F);
                         original.level().addFreshEntity(dragonfireball);
                     }, Side.SERVER))
                 );
@@ -1904,7 +1905,7 @@ public class Animations {
                                         }
                                     });
 
-                                    Level.ExplosionInteraction explosion$blockinteraction = EventHooks.canEntityGrief(witherboss.level(), witherboss) ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.NONE;
+                                    Level.ExplosionInteraction explosion$blockinteraction = (witherboss.level() instanceof ServerLevel serverLevel && EventHooks.canEntityGrief(serverLevel, witherboss)) ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.NONE;
                                     witherboss.level().explode(witherboss, hitLocation.x, hitLocation.y, hitLocation.z, 0.0F, false, explosion$blockinteraction);
                                 }
                             }
@@ -2351,13 +2352,13 @@ public class Animations {
                 while (count < i && count < list.size()) {
                     Entity e = list.get(count++);
                     BlockPos blockpos = e.blockPosition();
-                    LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level);
+                    LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.TRIGGERED);
                     lightningbolt.setVisualOnly(true);
-                    lightningbolt.moveTo(Vec3.atBottomCenterOf(blockpos));
+                    lightningbolt.snapTo(Vec3.atBottomCenterOf(blockpos));
                     lightningbolt.setDamage(0.0F);
                     lightningbolt.setCause(entitypatch instanceof ServerPlayerPatch serverPlayerPatch ? serverPlayerPatch.getOriginal() : null);
 
-                    DamageSource dmgSource = new DamageSource(e.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.LIGHTNING_BOLT), entitypatch.getOriginal());
+                    DamageSource dmgSource = new DamageSource(e.level().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageTypes.LIGHTNING_BOLT), entitypatch.getOriginal());
                     EpicFightDamageSource damageSource = attackAnimation.getEpicFightDamageSource(dmgSource, entitypatch, e, phase).setUsedItem(entitypatch.getOriginal().getItemInHand(InteractionHand.MAIN_HAND));
                     e.hurt(damageSource, total);
                     e.thunderHit(level, lightningbolt);
@@ -2366,8 +2367,8 @@ public class Animations {
                 }
 
                 if (count > 0) {
-                    if (level.getGameRules().getBoolean(GameRules.RULE_WEATHER_CYCLE) && level.random.nextFloat() < 0.08F && level.getThunderLevel(1.0F) < 1.0F) {
-                        level.setWeatherParameters(0, Mth.randomBetweenInclusive(level.random, 12000, 180000), true, true);
+                    if (level.getGameRules().get(GameRules.ADVANCE_WEATHER) && level.getRandom().nextFloat() < 0.08F && level.getThunderLevel(1.0F) < 1.0F) {
+                        level.getServer().setWeatherParameters(0, Mth.randomBetweenInclusive(level.getRandom(), 12000, 180000), true, true);
                     }
 
                     original.playSound(SoundEvents.TRIDENT_THUNDER.value(), 5.0F, 1.0F);
@@ -2418,7 +2419,7 @@ public class Animations {
                 direction = Direction.UP;
             }
 
-            if (NeoForgeConfig.SERVER.fullBoundingBoxLadders.get()) {
+            if (NeoForgeServerConfig.INSTANCE.fullBoundingBoxLadders.get()) {
                 if (bs.isLadder(level, bp, original)) {
                     if (bs.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
                         direction = bs.getValue(BlockStateProperties.HORIZONTAL_FACING);

@@ -7,12 +7,12 @@ import de.teamlapen.werewolves.client.render.layer.HumanWerewolfLayer;
 import de.teamlapen.werewolves.entities.player.werewolf.WerewolfPlayer;
 import de.teamlapen.werewolves.util.Helper;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.neoforged.bus.api.IEventBus;
 import yesman.epicfight.api.client.event.EpicFightClientEventHooks;
@@ -115,7 +115,7 @@ public class WerewolvesCompat implements ICompatModule {
 			}
 			
 			Helper.asIWerewolf(entityliving).filter(werewolf -> werewolf.getForm() == WerewolfForm.HUMAN).ifPresent(werewolf -> {
-	            ResourceLocation texture = accessor.getTextures().get(werewolf.getSkinType() % accessor.getTextures().size());
+	            Identifier texture = accessor.getTextures().get(werewolf.getSkinType() % accessor.getTextures().size());
 	            RenderType rendertype = EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(texture));
 	            mesh.draw(poseStack, buffer, rendertype, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, LivingEntityRenderer.getOverlayCoords(entityliving, 0.0F), entitypatch.getArmature(), poses);
 	        });

@@ -1,6 +1,6 @@
 package yesman.epicfight.skill;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import yesman.epicfight.api.event.EpicFightEventHooks;
 import yesman.epicfight.api.event.types.registry.SkillBuilderModificationEvent;
@@ -13,7 +13,7 @@ import java.util.function.Function;
 @SuppressWarnings("unchecked")
 public class SkillBuilder<B extends SkillBuilder<?>> {
 	protected final Function<B, ? extends Skill> constructor;
-	protected ResourceLocation registryName;
+	protected Identifier registryName;
 	protected CreativeModeTab tab;
 	protected SkillCategory category;
 	protected ActivateType activateType = ActivateType.ONE_SHOT;
@@ -23,7 +23,7 @@ public class SkillBuilder<B extends SkillBuilder<?>> {
 		this.constructor = constructor;
 	}
 	
-	public B setRegistryName(ResourceLocation registryName) {
+	public B setRegistryName(Identifier registryName) {
 		this.registryName = registryName;
 		return (B)this;
 	}
@@ -51,7 +51,7 @@ public class SkillBuilder<B extends SkillBuilder<?>> {
 		return (B)this;
 	}
 
-	public <T extends Skill> T build(ResourceLocation key) {
+	public <T extends Skill> T build(Identifier key) {
 		this.setRegistryName(key);
 
         SkillBuilderModificationEvent builderModificationEvent = new SkillBuilderModificationEvent(key, this);

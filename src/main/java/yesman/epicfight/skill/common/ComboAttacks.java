@@ -83,8 +83,8 @@ public class ComboAttacks extends Skill {
     @Override
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
-        this.dashAttackConsumption = parameters.getFloat("dash_attack_consumption");
-        this.airAttackConsumption = parameters.getFloat("air_attack_consumption");
+        this.dashAttackConsumption = parameters.getFloatOr("dash_attack_consumption", 0.0F);
+        this.airAttackConsumption = parameters.getFloatOr("air_attack_consumption", 0.0F);
     }
 
     @Override

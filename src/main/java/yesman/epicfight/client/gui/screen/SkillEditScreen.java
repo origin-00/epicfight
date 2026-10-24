@@ -1,14 +1,18 @@
 package yesman.epicfight.client.gui.screen;
 
+import yesman.epicfight.client.gui.GuiInputs;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -31,11 +35,11 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class SkillEditScreen extends Screen {
-    public static final ResourceLocation EMPTY_SKILL_SLOT_ICON = EpicFightMod.identifier("textures/gui/empty.png");
-    public static final ResourceLocation SCROLL_ARROW_UP = EpicFightMod.identifier("textures/gui/scroll_arrow_up.png");
-    public static final ResourceLocation SCROLL_ARROW_DOWN = EpicFightMod.identifier("textures/gui/scroll_arrow_down.png");
+    public static final Identifier EMPTY_SKILL_SLOT_ICON = EpicFightMod.identifier("textures/gui/empty.png");
+    public static final Identifier SCROLL_ARROW_UP = EpicFightMod.identifier("textures/gui/scroll_arrow_up.png");
+    public static final Identifier SCROLL_ARROW_DOWN = EpicFightMod.identifier("textures/gui/scroll_arrow_down.png");
 
-    private static final ResourceLocation SKILL_EDIT_UI = EpicFightMod.identifier("textures/gui/screen/skill_edit.png");
+    private static final Identifier SKILL_EDIT_UI = EpicFightMod.identifier("textures/gui/screen/skill_edit.png");
     private static final MutableComponent NO_SKILLS = Component.translatable(LangKeys.GUI_MESSAGE_SKILL_EDIT_NO_SKILLS);
 
     private static final int MAX_SKILL_OPTIONS_ROWS = 6;
@@ -182,37 +186,37 @@ public class SkillEditScreen extends Screen {
 
         if (this.selectedSlotButton != null) {
             this.selectedSlotButton = this.slotButtons.get(this.selectedSlotButton.skillContainer.getSlot());
-            this.selectedSlotButton.onPress();
+            this.selectedSlotButton.onPress(GuiInputs.PROGRAMMATIC);
         }
     }
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         if (this.canScroll()) {
             int scrollPosition = (int)(140 * (this.start / (float)(this.equipSkillButtons.size() - MAX_SKILL_OPTIONS_ROWS)));
-            guiGraphics.blit(SKILL_EDIT_UI, this.width / 2 + 80, this.height / 2 - 80 + scrollPosition, 12, 15, 231, 2, 12, 15, 256, 256);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SKILL_EDIT_UI, this.width / 2 + 80, this.height / 2 - 80 + scrollPosition, 231, 2, 12, 15, 12, 15, 256, 256);
         }
 
         int maxShowingButtons = Math.min(this.equipSkillButtons.size(), MAX_SKILL_OPTIONS_ROWS);
 
         for (int i = this.start; i < maxShowingButtons + this.start; ++i) {
-            this.equipSkillButtons.get(i).render(guiGraphics, mouseX, mouseY, partialTick);
+            this.equipSkillButtons.get(i).extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
 
         for (SlotButton sb : this.slotButtons.values()) {
-            sb.render(guiGraphics, mouseX, mouseY, partialTick);
+            sb.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
 
-        if (this.up != null) this.up.render(guiGraphics, mouseX, mouseY, partialTick);
-        if (this.down != null) this.down.render(guiGraphics, mouseX, mouseY, partialTick);
+        if (this.up != null) this.up.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+        if (this.down != null) this.down.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
         if (this.slotButtons.isEmpty()) {
             int lineHeight = 0;
 
             for (FormattedCharSequence s : this.font.split(NO_SKILLS, 140)) {
-                guiGraphics.drawString(this.font, s, this.width / 2 - 65, this.height / 2 - 72 + lineHeight, 3158064, false);
+                guiGraphics.text(this.font, s, this.width / 2 - 65, this.height / 2 - 72 + lineHeight, GuiColors.text(3158064), false);
 
                 lineHeight += 10;
             }
@@ -220,9 +224,9 @@ public class SkillEditScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderTransparentBackground(guiGraphics);
-        guiGraphics.blit(SKILL_EDIT_UI, this.width / 2 - 104, this.height / 2 - 100, 0, 0, 208, 200);
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.extractTransparentBackground(guiGraphics);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SKILL_EDIT_UI, this.width / 2 - 104, this.height / 2 - 100, 0, 0, 208, 200, 256, 256);
     }
 
     private boolean canScroll() {
@@ -450,17 +454,15 @@ public class SkillEditScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             this.active = !this.skillContainer.onReplaceCooldown();
             int y = ((this.isHoveredOrFocused() || selectedSlotButton == this) && !this.skillContainer.onReplaceCooldown()) ? 35 : 17;
-            guiGraphics.blit(SKILL_EDIT_UI, this.getX(), this.getY(), 237, y, this.width, this.height);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SKILL_EDIT_UI, this.getX(), this.getY(), 237, y, this.width, this.height, 256, 256);
 
             if (!this.skillContainer.isEmpty()) {
-                RenderSystem.enableBlend();
-                guiGraphics.blit(this.skillContainer.getSkill().getSkillTexture(), this.getX() + 1, this.getY() + 1, this.getWidth() - 2, this.getHeight() - 2, 0, 0, 128, 128, 128, 128);
-                RenderSystem.disableBlend();
+                guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.skillContainer.getSkill().getSkillTexture(), this.getX() + 1, this.getY() + 1, 0, 0, this.getWidth() - 2, this.getHeight() - 2, 128, 128, 128, 128);
             } else {
-                guiGraphics.blit(EMPTY_SKILL_SLOT_ICON, this.getX() + 1, this.getY() + 1, this.getWidth() - 2, this.getHeight() - 2, 0, 0, 128, 128, 128, 128);
+                guiGraphics.blit(RenderPipelines.GUI_TEXTURED, EMPTY_SKILL_SLOT_ICON, this.getX() + 1, this.getY() + 1, 0, 0, this.getWidth() - 2, this.getHeight() - 2, 128, 128, 128, 128);
             }
 
             if (this.skillContainer.onReplaceCooldown()) {
@@ -532,19 +534,17 @@ public class SkillEditScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             this.active = true;
             int yTex = (this.isHoveredOrFocused() || selectedSlotButton == this) ? 35 : 17;
-            guiGraphics.blit(SKILL_EDIT_UI, this.getX(), this.getY(), 237, yTex, this.width, this.height);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SKILL_EDIT_UI, this.getX(), this.getY(), 237, yTex, this.width, this.height, 256, 256);
 
             SkillContainer firstEquipped = SkillEditScreen.this.findFirstEquippedCorePassive();
 
             if (firstEquipped != null && firstEquipped.getSkill() != null) {
-                RenderSystem.enableBlend();
-                guiGraphics.blit(firstEquipped.getSkill().getSkillTexture(), this.getX() + 1, this.getY() + 1, this.getWidth() - 2, this.getHeight() - 2, 0, 0, 128, 128, 128, 128);
-                RenderSystem.disableBlend();
+                guiGraphics.blit(RenderPipelines.GUI_TEXTURED, firstEquipped.getSkill().getSkillTexture(), this.getX() + 1, this.getY() + 1, 0, 0, this.getWidth() - 2, this.getHeight() - 2, 128, 128, 128, 128);
             } else {
-                guiGraphics.blit(EMPTY_SKILL_SLOT_ICON, this.getX() + 1, this.getY() + 1, this.getWidth() - 2, this.getHeight() - 2, 0, 0, 128, 128, 128, 128);
+                guiGraphics.blit(RenderPipelines.GUI_TEXTURED, EMPTY_SKILL_SLOT_ICON, this.getX() + 1, this.getY() + 1, 0, 0, this.getWidth() - 2, this.getHeight() - 2, 128, 128, 128, 128);
             }
 
             int equipped = SkillEditScreen.this.countEquippedCorePassives();
@@ -563,14 +563,14 @@ public class SkillEditScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-            if (this.up && scroll != 0) guiGraphics.blit(SCROLL_ARROW_UP, this.getX(), this.getY(), this.width, this.height, 0, 0, 16, 16, 16, 16);
-            else if (!this.up && scroll != maxScroll) guiGraphics.blit(SCROLL_ARROW_DOWN, this.getX(), this.getY(), this.width, this.height, 0, 0, 16, 16, 16, 16);
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+            if (this.up && scroll != 0) guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SCROLL_ARROW_UP, this.getX(), this.getY(), 0, 0, this.width, this.height, 16, 16, 16, 16);
+            else if (!this.up && scroll != maxScroll) guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SCROLL_ARROW_DOWN, this.getX(), this.getY(), 0, 0, this.width, this.height, 16, 16, 16, 16);
         }
 
         @Override
-        protected boolean clicked(double mouseX, double mouseY) {
-            return super.clicked(mouseX, mouseY) && (this.up && scroll != 0 || !this.up && scroll != maxScroll);
+        public boolean isMouseOver(double mouseX, double mouseY) {
+            return super.isMouseOver(mouseX, mouseY) && (this.up && scroll != 0 || !this.up && scroll != maxScroll);
         }
     }
 
@@ -587,17 +587,16 @@ public class SkillEditScreen extends Screen {
         }
 
         @Override
-        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             this.isHovered = mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
             int texY = (this.isHoveredOrFocused() || !this.active) ? 224 : 200;
-            guiGraphics.blit(SKILL_EDIT_UI, this.getX(), this.getY(), 0, texY, this.width, this.height);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SKILL_EDIT_UI, this.getX(), this.getY(), 0, texY, this.width, this.height, 256, 256);
 
-            RenderSystem.enableBlend();
-            guiGraphics.blit(this.skill.getSkillTexture(), this.getX() + 5, this.getY() + 4, 16, 16, 0, 0, 128, 128, 128, 128);
-            guiGraphics.drawString(font, this.getMessage(), this.getX() + SPACING, this.getY() + 2, -1, false);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.skill.getSkillTexture(), this.getX() + 5, this.getY() + 4, 0, 0, 16, 16, 128, 128, 128, 128);
+            guiGraphics.text(font, this.getMessage(), this.getX() + SPACING, this.getY() + 2, -1, false);
 
             if (!this.active) {
-                guiGraphics.drawString(font, Component.literal(skills.getSkillContainer(this.skill).getSlot().toString().toLowerCase(Locale.ROOT)), this.getX() + EquipSkillButton.SPACING, this.getY() + 12, 16736352, false);
+                guiGraphics.text(font, Component.literal(skills.getSkillContainer(this.skill).getSlot().toString().toLowerCase(Locale.ROOT)), this.getX() + EquipSkillButton.SPACING, this.getY() + 12, GuiColors.text(16736352), false);
 
                 if (this.isHovered) {
                     int dx = this.getDeequipButtonX();
@@ -620,7 +619,10 @@ public class SkillEditScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double x, double y, int pressType) {
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            double x = event.x();
+            double y = event.y();
+            int pressType = event.button();
             if (this.visible && pressType == 0 && !this.active && this.isMouseOverDeequip(x, y)) {
                 this.deequipSkill();
                 return true;
@@ -635,7 +637,7 @@ public class SkillEditScreen extends Screen {
                 }
             }
 
-            return super.mouseClicked(x, y, pressType);
+            return super.mouseClicked(event, doubleClick);
         }
 
         private int getDeequipButtonX() {
@@ -663,7 +665,7 @@ public class SkillEditScreen extends Screen {
             container.setSkill(null);
             EpicFightNetworkManager.sendToServer(new CPChangeSkill(container.getSlot(), null, -1));
 
-            // In-place refresh: see comment on the equip path for why we don't call selectedSlotButton.onPress().
+            // In-place refresh: see comment on the equip path for why we don't call selectedSlotButton.onPress(GuiInputs.PROGRAMMATIC).
             SkillEditScreen.this.refreshEquipSkillButtonStates();
         }
 

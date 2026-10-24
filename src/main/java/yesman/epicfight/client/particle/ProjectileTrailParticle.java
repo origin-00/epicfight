@@ -1,5 +1,6 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.util.RandomSource;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -8,13 +9,13 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.Arrow;
-import net.minecraft.world.entity.projectile.SpectralArrow;
-import net.minecraft.world.entity.projectile.ThrownTrident;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.Arrow;
+import net.minecraft.world.entity.projectile.arrow.SpectralArrow;
+import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
 import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.physics.bezier.CubicBezierCurve;
@@ -48,7 +49,7 @@ public class ProjectileTrailParticle extends AbstractTrailParticle<ProjectilePat
 			return false;
 		}
 		
-		return this.owner.getOriginal().isAlive() && !this.owner.getOriginal().inGround;
+		return this.owner.getOriginal().isAlive() && !this.owner.getOriginal().isInGround();
 	}
 	
 	@Override
@@ -195,7 +196,7 @@ public class ProjectileTrailParticle extends AbstractTrailParticle<ProjectilePat
 		
 		@SuppressWarnings("unchecked")
 		@Override
-		public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+		public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
 			int eid = (int)Double.doubleToRawLongBits(x);
 			Entity entity = level.getEntity(eid);
 			

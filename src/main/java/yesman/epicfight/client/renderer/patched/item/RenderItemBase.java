@@ -11,7 +11,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.entity.LivingEntity;
+import yesman.epicfight.client.renderer.submit.RecordingBufferSource;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -57,16 +61,26 @@ public class RenderItemBase {
 		.put("Root", new OpenMatrix4f().unmodifiable())
 		.build();
 	
-	protected static ItemRenderer itemRenderer;
-	protected static ItemInHandRenderer itemInHandRenderer;
-	
-	public static void initItemRenderers(Minecraft minecraft) {
-		if (itemRenderer != null || itemInHandRenderer != null) {
-			throw new IllegalStateException("Already initialized item renderers");
+	/// The vanilla item model resolver. Resolved on use: it was initialized from a render stage
+	/// registration event that no longer exists in 26.1.
+	protected static ItemModelResolver itemModelResolver() {
+		return Minecraft.getInstance().getItemModelResolver();
+	}
+
+	protected static ItemInHandRenderer itemInHandRenderer() {
+		return Minecraft.getInstance().gameRenderer.itemInHandRenderer;
+	}
+
+	/// Resolves and submits an item model, as `ItemInHandRenderer#renderItem` does since 1.21.9,
+	/// keeping the entity's outline color (the vanilla method always submits without one).
+	public static void submitItem(LivingEntity entity, ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+		if (stack.isEmpty() || !(buffer instanceof RecordingBufferSource recordingBufferSource)) {
+			return;
 		}
-		
-		itemRenderer = minecraft.getItemRenderer();
-		itemInHandRenderer = minecraft.gameRenderer.itemInHandRenderer;
+
+		ItemStackRenderState renderState = new ItemStackRenderState();
+		itemModelResolver().updateForTopItem(renderState, stack, displayContext, entity.level(), entity, entity.getId() + displayContext.ordinal());
+		renderState.submit(poseStack, recordingBufferSource.collector(), packedLight, OverlayTexture.NO_OVERLAY, recordingBufferSource.outlineColor());
 	}
 	
 	protected final Map<String, OpenMatrix4f> mainhandCorrectionTransforms;
@@ -166,7 +180,7 @@ public class RenderItemBase {
                 if (modifier != null && modifier.modify(
                         this, stack, entitypatch, hand, poses, buffer,
                         poseStack, packedLight, partialTicks,
-                        itemRenderer, itemInHandRenderer)) {
+                        itemModelResolver(), itemInHandRenderer())) {
                     return;
                 }
             }
@@ -176,7 +190,7 @@ public class RenderItemBase {
 		poseStack.pushPose();
 		MathUtils.mulStack(poseStack, modelMatrix);
 		ItemDisplayContext transformType = (hand == InteractionHand.MAIN_HAND) ? ItemDisplayContext.THIRD_PERSON_RIGHT_HAND : ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
-		itemInHandRenderer.renderItem(entitypatch.getOriginal(), stack, transformType, hand == InteractionHand.OFF_HAND, poseStack, buffer, packedLight);
+		submitItem(entitypatch.getOriginal(), stack, transformType, poseStack, buffer, packedLight);
 		poseStack.popPose();
 	}
 	

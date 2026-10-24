@@ -21,7 +21,7 @@ public class AnimatorCommand {
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(
 			Commands.literal("epicfight")
-					.then(Commands.literal("animator").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+					.then(Commands.literal("animator").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 							      .then(Commands.literal("play")
 												.then(Commands.argument("targets", EntityArgument.entities())
 														  	  .then(Commands.argument("animation", AnimationArgument.animation())

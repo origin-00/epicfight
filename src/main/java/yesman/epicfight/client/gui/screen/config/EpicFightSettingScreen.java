@@ -1,8 +1,8 @@
 package yesman.epicfight.client.gui.screen.config;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.components.tabs.Tab;
@@ -47,8 +47,6 @@ public class EpicFightSettingScreen extends Screen {
     public EpicFightSettingScreen(@Nullable final ModContainer mod, @Nullable Screen parentScreen) {
         super(Component.translatable(GUI_TITLE_SETTINGS));
 
-        this.minecraft = parentScreen == null ? Minecraft.getInstance() : parentScreen.getMinecraft();
-        this.font = this.minecraft.font;
         this.parentScreen = parentScreen;
 
         this.saveButton = AnchoredButton.buttonBuilder(
@@ -151,15 +149,15 @@ public class EpicFightSettingScreen extends Screen {
     }
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.drawString(this.font, "EpicFight " + ModList.get().getModFileById(EpicFightMod.MODID).versionString(), 4, this.height - 16, 0xFF9F9F9F);
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.text(this.font, "EpicFight " + ModList.get().getModFileById(EpicFightMod.MODID).versionString(), 4, this.height - 16, 0xFF9F9F9F);
     }
 
     @Override
     public void repositionElements() {
         if (this.tabNavigationBar != null) {
-            this.tabNavigationBar.setWidth(this.width);
+            this.tabNavigationBar.updateWidth(this.width);
             this.tabNavigationBar.arrangeElements();
             int i = this.tabNavigationBar.getRectangle().bottom();
             ScreenRectangle screenrectangle = new ScreenRectangle(0, i, this.width, this.height - 36 - i);
@@ -197,6 +195,11 @@ public class EpicFightSettingScreen extends Screen {
 
         public SettingTabPage(Component title) {
             this.title = title;
+        }
+
+        @Override
+        public @NotNull Component getTabExtraNarration() {
+            return Component.empty();
         }
 
         @Override

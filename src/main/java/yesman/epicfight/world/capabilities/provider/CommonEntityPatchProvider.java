@@ -3,14 +3,14 @@ package yesman.epicfight.world.capabilities.provider;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -131,8 +131,8 @@ public final class CommonEntityPatchProvider {
     }
 
     public Function<Entity, EntityPatch<?>> get(String registryName) {
-        ResourceLocation rl = ResourceLocation.parse(registryName);
-        EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(rl);
+        Identifier rl = Identifier.parse(registryName);
+        EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getValue(rl);
 
         return this.capabilities.get(entityType);
     }

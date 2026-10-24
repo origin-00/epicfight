@@ -1,16 +1,16 @@
 package yesman.epicfight.client.gui;
 
-import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
-import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
+import org.joml.Matrix3x2fStack;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import yesman.epicfight.api.utils.math.Vec2i;
 import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
@@ -60,7 +60,7 @@ public class BattleModeGui {
 		}
 	}
 	
-	public void renderStaminaBar(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public void renderStaminaBar(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		if (Minecraft.getInstance().screen instanceof HUDLocationsScreen) {
 			return;
 		}
@@ -71,28 +71,28 @@ public class BattleModeGui {
 			return;
 		}
 		
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
+		Matrix3x2fStack poseStack = guiGraphics.pose();
+		poseStack.pushMatrix();
 		
 		float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
 		float sliding = this.getSliding(partialTick);
-		poseStack.translate(0, sliding, 0);
+		poseStack.translate(0F, (float)(sliding));
 		
 		float maxStamina = playerpatch.getMaxStamina();
 		
 		if (maxStamina > 0.0F && this.stamina < maxStamina) {
 			Vec2i pos = ClientConfig.getStaminaPosition();
 			float ratio = (this.staminaO + (this.stamina - this.staminaO) * partialTick) / maxStamina;
-			RenderSystem.setShaderColor(1.0F, ratio, 0.25F, 1.0F);
-			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, 118, 4, 2, 38, 237, 9, 255, 255);
-			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, (int)(118 * ratio), 4, 2, 47, (int)(237 * ratio), 9, 255, 255);
-			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+			GuiColors.setColor(guiGraphics, 1.0F, ratio, 0.25F, 1.0F);
+			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, EntityUI.BATTLE_ICON, pos.x, pos.y, 2, 38, 118, 4, 237, 9, 255, 255);
+			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, EntityUI.BATTLE_ICON, pos.x, pos.y, 2, 47, (int)(118 * ratio), 4, (int)(237 * ratio), 9, 255, 255);
+			GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		}
 		
-		poseStack.popPose();
+		poseStack.popMatrix();
 	}
 	
-	public void renderChargingBar(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public void renderChargingBar(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		if (Minecraft.getInstance().screen instanceof HUDLocationsScreen) {
 			return;
 		}
@@ -109,20 +109,20 @@ public class BattleModeGui {
 			int prevChargingAmount = playerpatch.getChargingTicksO();
 			float ratio = Math.min((prevChargingAmount + (chargeTicks - prevChargingAmount) * partialTick) / chageableSkill.getMaxChargingTicks(), 1.0F);
 			Vec2i pos = ClientConfig.getChargingBarPosition();
-			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+			GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 			
-			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, 1, 71, 238, 13, 255, 255);
-			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, 1, 57, (int)(238 * ratio), 13, 255, 255);
+			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, EntityUI.BATTLE_ICON, pos.x, pos.y, 1, 71, 238, 13, 255, 255);
+			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, EntityUI.BATTLE_ICON, pos.x, pos.y, 1, 57, (int)(238 * ratio), 13, 255, 255);
 			
-			ResourceLocation rl = ResourceLocation.parse(chageableSkill.toString());
+			Identifier rl = Identifier.parse(chageableSkill.toString());
 			String skillName = Component.translatable(String.format("skill.%s.%s", rl.getNamespace(), rl.getPath())).getString();
 			
 			int stringWidth = this.minecraft.font.width(skillName);
-			guiGraphics.drawString(this.minecraft.font, skillName, (pos.x + 120 - stringWidth * 0.5F), pos.y - 12, 16777215, true);
+			guiGraphics.text(this.minecraft.font, skillName, (int)((pos.x + 120 - stringWidth * 0.5F)), (int)(pos.y - 12), GuiColors.text(16777215), true);
 		}
 	}
 	
-	public void renderNormalSkills(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public void renderNormalSkills(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		if (Minecraft.getInstance().screen instanceof HUDLocationsScreen) {
 			return;
 		}
@@ -158,32 +158,27 @@ public class BattleModeGui {
 		int icons = this.skillIcons.size();
 		Vec2i slotCoord = alignDirection.startCoordGetter.get(passiveX, passiveY, 24, 24, icons, horBasis, verBasis);
 		
-		RenderSystem.enableBlend();
-		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
 		float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
 		
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
+		Matrix3x2fStack poseStack = guiGraphics.pose();
+		poseStack.pushMatrix();
 		
 		float sliding = this.getSliding(partialTick);
-		poseStack.translate(0, sliding, 0);
+		poseStack.translate(0F, (float)(sliding));
 		
 		for (SkillContainer container : this.skillIcons) {
 			if (!container.isEmpty()) {
-				RenderSystem.enableBlend();
-				RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-				RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
+				GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 				container.getSkill().drawOnGui(this, container, guiGraphics, slotCoord.x, slotCoord.y, partialTick);
 				slotCoord = alignDirection.nextPositionGetter.getNext(horBasis, verBasis, slotCoord, 24, 24);
 			}
 		}
 		
-		poseStack.popPose();
+		poseStack.popMatrix();
 		
-		RenderSystem.disableBlend();
 	}
 	
-	public void renderWeaponInnateSkill(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public void renderWeaponInnateSkill(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		if (Minecraft.getInstance().screen instanceof HUDLocationsScreen) {
 			return;
 		}
@@ -200,13 +195,13 @@ public class BattleModeGui {
 			float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
 			Vec2i pos = ClientConfig.getWeaponInnatePosition();
 			
-			PoseStack poseStack = guiGraphics.pose();
-			poseStack.pushPose();
+			Matrix3x2fStack poseStack = guiGraphics.pose();
+			poseStack.pushMatrix();
 			
 			float sliding = this.getSliding(partialTick);
-			poseStack.translate(0, sliding, 0);
+			poseStack.translate(0F, (float)(sliding));
 			container.getSkill().drawOnGui(this, container, guiGraphics, pos.x, pos.y, partialTick);
-			poseStack.popPose();
+			poseStack.popMatrix();
 		}
 	}
 	

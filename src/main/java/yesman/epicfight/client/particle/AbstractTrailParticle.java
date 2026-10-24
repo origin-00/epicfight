@@ -1,5 +1,7 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import java.util.List;
 
 import org.joml.Matrix4f;
@@ -12,11 +14,11 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -24,7 +26,7 @@ import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
 
-public abstract class AbstractTrailParticle<T extends EntityPatch<?>> extends TextureSheetParticle {
+public abstract class AbstractTrailParticle<T extends EntityPatch<?>> extends CustomRenderParticle {
 	protected final TrailInfo trailInfo;
 	protected final T owner;
 	protected final List<TrailEdge> trailEdges;
@@ -110,7 +112,7 @@ public abstract class AbstractTrailParticle<T extends EntityPatch<?>> extends Te
 		}
 		
 		PoseStack poseStack = new PoseStack();
-		int light = this.getLightColor(partialTick);
+		int light = this.getLightCoords(partialTick);
 		this.setupPoseStack(poseStack, camera, partialTick);
 		Matrix4f matrix4f = poseStack.last().pose();
 		int edges = this.trailEdges.size() - 1;
@@ -160,17 +162,12 @@ public abstract class AbstractTrailParticle<T extends EntityPatch<?>> extends Te
 	}
 	
 	@Override
-	public AABB getRenderBoundingBox(float partialTicks) {
-        return AABB.INFINITE;
-    }
-	
-	@Override
-	public ParticleRenderType getRenderType() {
-		return EpicFightParticleRenderTypes.TRAIL_EFFECT.apply(this.trailInfo.texturePath());
+	public RenderType getRenderType() {
+		return EpicFightParticleRenderTypes.trailEffect(this.trailInfo.texturePath());
 	}
 	
 	protected void setupPoseStack(PoseStack poseStack, Camera camera, float partialTicks) {
-		Vec3 vec3 = camera.getPosition();
+		Vec3 vec3 = camera.position();
 		float x = (float)-vec3.x();
 		float y = (float)-vec3.y();
 		float z = (float)-vec3.z();
@@ -186,7 +183,7 @@ public abstract class AbstractTrailParticle<T extends EntityPatch<?>> extends Te
 	
 	@SuppressWarnings("deprecation")
 	@Override
-	protected int getLightColor(float pPartialTick) {
+	protected int getLightCoords(float pPartialTick) {
 		BlockPos blockpos = BlockPos.containing(this.x, this.y, this.z);
 		return this.level.hasChunkAt(blockpos) ? this.getLightColor(this.level, this.level.getBlockState(blockpos), blockpos) : 0;
 	}

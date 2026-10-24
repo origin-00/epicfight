@@ -2,7 +2,7 @@ package yesman.epicfight.compat.kubejs.skill;
 
 import dev.latvian.mods.kubejs.typings.Info;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.utils.side.ClientOnly;
 import yesman.epicfight.client.gui.BattleModeGui;
 import yesman.epicfight.skill.Skill;
@@ -26,7 +26,7 @@ public class CustomPassiveSkill extends CustomSkill {
             Ideally, you should not override `drawOnGui()`, as that is pre-set for passive skills. Otherwise, it wouldn't be necessary to use this builder type.
             """)
     public static class CustomPassiveSkillBuilder extends CustomSkillBuilder {
-        public CustomPassiveSkillBuilder(ResourceLocation id) {
+        public CustomPassiveSkillBuilder(Identifier id) {
             super(id);
         }
 

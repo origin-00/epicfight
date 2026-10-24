@@ -1,12 +1,14 @@
 package yesman.epicfight.client.online;
 
+import java.util.HashSet;
+import java.util.Set;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.client.online.texture.RemoteTexture;
@@ -21,13 +23,14 @@ import java.util.function.Consumer;
 
 public class RemoteAssets {
 	private static final RemoteAssets INSTANCE = new RemoteAssets();
-	private static final TextureManager TEXTURE_MANAGER = Minecraft.getInstance().getTextureManager();
 	
 	public static RemoteAssets getInstance() {
 		return INSTANCE;
 	}
 	
 	private final Map<Integer, RemoteMeshAccessor> cachedMeshes = Maps.newConcurrentMap();
+	
+	private final Set<Identifier> registeredTextures = new HashSet<> ();
 	
 	public synchronized AssetAccessor<Mesh> getRemoteMesh(int seq, String path, @Nullable Consumer<Mesh> callback) {
 		if (this.cachedMeshes.containsKey(seq)) {
@@ -62,13 +65,11 @@ public class RemoteAssets {
 		return this.cachedMeshes.get(seq);
 	}
 	
-	public synchronized ResourceLocation getRemoteTexture(String fileName) {
-		ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(EpicFightMod.EPICSKINS_MODID, "textures/remote/" + fileName);
-		AbstractTexture texture = TEXTURE_MANAGER.getTexture(textureLocation, MissingTextureAtlasSprite.getTexture());
-		
-		if (texture == MissingTextureAtlasSprite.getTexture()) {
-			AbstractTexture httptexture = new RemoteTexture(EpicFightSharedConstants.webServerDomain() + "/textures/" + fileName, MissingTextureAtlasSprite.getLocation());
-			TEXTURE_MANAGER.register(textureLocation, httptexture);
+	public synchronized Identifier getRemoteTexture(String fileName) {
+		Identifier textureLocation = Identifier.fromNamespaceAndPath(EpicFightMod.EPICSKINS_MODID, "textures/remote/" + fileName);
+		// TextureManager#getTexture would load (and cache) a missing resource texture for an unknown id.
+		if (this.registeredTextures.add(textureLocation)) {
+			Minecraft.getInstance().getTextureManager().register(textureLocation, new RemoteTexture(EpicFightSharedConstants.webServerDomain() + "/textures/" + fileName));
 		}
 		
 		return textureLocation;
@@ -98,7 +99,7 @@ public class RemoteAssets {
 		}
 		
 		@Override
-		public ResourceLocation registryName() {
+		public Identifier registryName() {
 			return null;
 		}
 		

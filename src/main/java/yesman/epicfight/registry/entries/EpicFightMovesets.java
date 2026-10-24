@@ -2,7 +2,7 @@ package yesman.epicfight.registry.entries;
 
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ProjectileWeaponItem;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.enchantment.Enchantments;
 import yesman.epicfight.EpicFight;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -224,7 +224,7 @@ public class EpicFightMovesets
                     .addLivingMotionModifier(LivingMotions.SHOT, Animations.BIPED_BOW_SHOT)
                     .setMotionPredicate((entityPatch, interactionHand) ->
                             entityPatch.getOriginal().isUsingItem() &&
-                                    entityPatch.getOriginal().getUseItem().getUseAnimation() == UseAnim.BOW
+                                    entityPatch.getOriginal().getUseItem().getUseAnimation() == ItemUseAnimation.BOW
                                     ? LivingMotions.AIM : null)
                     .addComboAttacks(
                             Animations.FIST_AUTO1, Animations.FIST_AUTO2, Animations.FIST_AUTO3,
@@ -254,7 +254,7 @@ public class EpicFightMovesets
                     )
                     .addMountAttacks(Animations.SPEAR_MOUNT_ATTACK)
                     .setMotionPredicate((entityPatch, interactionHand) ->
-                            entityPatch.getOriginal().isUsingItem() && entityPatch.getOriginal().getUseItem().getUseAnimation() == UseAnim.SPEAR ? LivingMotions.AIM : null)
+                            entityPatch.getOriginal().isUsingItem() && entityPatch.getOriginal().getUseItem().getUseAnimation() == ItemUseAnimation.SPEAR ? LivingMotions.AIM : null)
                     .addLivingMotionModifier(LivingMotions.AIM, Animations.BIPED_JAVELIN_AIM)
                     .addLivingMotionModifier(LivingMotions.SHOT, Animations.BIPED_JAVELIN_THROW)
                     .addInnateSkill((itemStack, playerPatch) -> {

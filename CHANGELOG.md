@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - Minecraft 26.1.2 / NeoForge 26.1.2.122 port
+### Changes
+- Ported to Minecraft 26.1.2 and NeoForge 26.1.2.122 (Java 25).
+- Mod compatibility modules (Geckolib, Controlify, Simply Tooltips, Skin Layers 3D, Wildfire FGM, Vampirism, Werewolves, etc.) are disabled until their 26.1 versions are available.
+- Compute-shader (GPU) mesh skinning is disabled; meshes are skinned on the CPU.
+- Game rule ids are now registry ids in snake_case (e.g. `epicfight:global_stun`).
+- Skill book category icons are selected by the `epicfight:skill_category` item model property (`assets/epicfight/items/skillbook.json`).
+### For Devs
+- Patched renderers draw through the 26.1 submit pipeline: `PatchedEntityRenderer#render` takes the vanilla `EntityRenderState`, and layers receive the `LivingEntityRenderState`. `RecordingBufferSource` adapts `MultiBufferSource` writers to a `SubmitNodeCollector`.
+- `RenderEnderDragonEvent` carries the `EnderDragonRenderState`.
+- `RenderItemBase.RenderModifier` takes an `ItemModelResolver`.
+- Custom-drawn particles extend `CustomRenderParticle` and return a `RenderType` from `getRenderType()`; `EpicFightParticleRenderTypes` provides render types instead of `ParticleRenderType`s.
+- `EpicFightInputCategories` entries are `KeyMapping.Category` records.
+- `GuiColors#setColor` replaces `GuiGraphics#setColor` / `RenderSystem#setShaderColor` for GUI tinting.
+- Model previewers render through a picture-in-picture renderer (`ModelPreviewRenderer`).
+
 ## [21.17.3] - 2026-5-14
 ### Additions
 - Added Item Specific Overrides to Builder to allow any explicit tier configurations.

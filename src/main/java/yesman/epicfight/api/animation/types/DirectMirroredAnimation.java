@@ -4,7 +4,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Optional;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
@@ -19,11 +19,11 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
  * pointing at a mirrored clip. Modeled on {@link DirectStaticAnimation}.
  */
 public class DirectMirroredAnimation extends MirroredAnimation implements AnimationAccessor<DirectMirroredAnimation> {
-    private final ResourceLocation registryName;
+    private final Identifier registryName;
 
     @ApiStatus.Internal
     public DirectMirroredAnimation(float transitionTime, boolean repeatPlay,
-                                   ResourceLocation registryName,
+                                   Identifier registryName,
                                    AssetAccessor<? extends StaticAnimation> source,
                                    AssetAccessor<? extends Armature> armature) {
         super(transitionTime, repeatPlay, registryName.toString(), source, armature);
@@ -43,7 +43,7 @@ public class DirectMirroredAnimation extends MirroredAnimation implements Animat
     }
 
     @Override
-    public ResourceLocation registryName() {
+    public Identifier registryName() {
         return this.registryName;
     }
 

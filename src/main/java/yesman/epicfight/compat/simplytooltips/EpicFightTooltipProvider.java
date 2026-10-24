@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -410,7 +410,7 @@ public class EpicFightTooltipProvider implements TooltipProvider
         }
     }
 
-    private static int modifierPriority(AttributeModifier modifier, ResourceLocation baseModifierId) {
+    private static int modifierPriority(AttributeModifier modifier, Identifier baseModifierId) {
         if (modifier.is(baseModifierId)) {
             return 3;
         } else {

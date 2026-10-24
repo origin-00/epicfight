@@ -1,5 +1,7 @@
 package yesman.epicfight.api.ex_cap.listeners;
 
+import net.minecraft.util.ExtraCodecs;
+import net.minecraft.resources.FileToIdConverter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -8,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import yesman.epicfight.api.event.EpicFightEventHooks;
 import yesman.epicfight.api.ex_cap.modules.core.events.ExCapBuilderCreationEvent;
 import yesman.epicfight.api.ex_cap.managers.ItemPresetManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -17,7 +19,7 @@ import yesman.epicfight.network.server.SPDatapackSync;
 import java.util.Map;
 
 @ApiStatus.Experimental
-public class ItemPresetReloadListener extends SimpleJsonResourceReloadListener
+public class ItemPresetReloadListener extends SimpleJsonResourceReloadListener<JsonElement>
 {
     public static final String DIRECTORY = "capabilities/weapons/excap_builders";
 
@@ -25,12 +27,12 @@ public class ItemPresetReloadListener extends SimpleJsonResourceReloadListener
 
     public ItemPresetReloadListener()
     {
-        super(GSON, DIRECTORY);
+        super(ExtraCodecs.JSON, FileToIdConverter.json(DIRECTORY));
     }
 
 
     @Override
-    protected void apply(@NotNull Map<ResourceLocation, JsonElement> elementMap, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller)
+    protected void apply(@NotNull Map<Identifier, JsonElement> elementMap, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller)
     {
         @Deprecated
         ExCapBuilderCreationEvent event = createEvent();

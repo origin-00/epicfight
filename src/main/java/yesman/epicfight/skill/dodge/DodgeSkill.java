@@ -85,8 +85,8 @@ public class DodgeSkill extends Skill {
 		super.executeOnServer(skillContainer, args);
 		
 		ServerPlayerPatch executor = skillContainer.getServerExecutor();
-		int i = args.getInt("direction");
-		float yRot = args.getFloat("yRot");
+		int i = args.getIntOr("direction", 0);
+		float yRot = args.getFloatOr("yRot", 0.0F);
 		AnimationAccessor<? extends StaticAnimation> animation = this.animations[i];
 		//An example of custom data, this is from a moveset.
 		CapabilityItem item = executor.getHoldingItemCapability(InteractionHand.MAIN_HAND);

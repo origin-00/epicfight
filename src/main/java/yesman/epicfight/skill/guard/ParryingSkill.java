@@ -50,7 +50,7 @@ public class ParryingSkill extends GuardSkill {
 	public void loadDatapackParameters(CompoundTag parameters) {
 		super.loadDatapackParameters(parameters);
 		
-		this.parryWindow = parameters.getInt("parry_window");
+		this.parryWindow = parameters.getIntOr("parry_window", 0);
 		
 		if (this.parryWindow <= 0) {
 			this.parryWindow = 8;
@@ -101,7 +101,7 @@ public class ParryingSkill extends GuardSkill {
 				boolean successParrying = serverplayer.tickCount - container.getDataManager().getDataValue(EpicFightSkillDataKeys.LAST_ACTIVE) < this.parryWindow;
 				float penalty = container.getDataManager().getDataValue(EpicFightSkillDataKeys.PENALTY);
 				playerPatch.playSound(EpicFightSounds.CLASH.get(), -0.05F, 0.1F);
-				EpicFightParticles.HIT_BLUNT.get().spawnParticleWithArgument(serverplayer.serverLevel(), HitParticleType.FRONT_OF_EYES, HitParticleType.ZERO, serverplayer, offender);
+				EpicFightParticles.HIT_BLUNT.get().spawnParticleWithArgument(serverplayer.level(), HitParticleType.FRONT_OF_EYES, HitParticleType.ZERO, serverplayer, offender);
 				
 				if (successParrying) {
 					event.setParried(true);
@@ -116,7 +116,7 @@ public class ParryingSkill extends GuardSkill {
 				}
 				
 				if (offender instanceof LivingEntity livingentity) {
-					float modifiedKnockback = EnchantmentHelper.modifyKnockback(serverplayer.serverLevel(), livingentity.getItemInHand(livingentity.getUsedItemHand()), livingentity, damageSource, knockback);
+					float modifiedKnockback = EnchantmentHelper.modifyKnockback(serverplayer.level(), livingentity.getItemInHand(livingentity.getUsedItemHand()), livingentity, damageSource, knockback);
 					knockback = (modifiedKnockback - knockback) * 0.1F;
 				}
 

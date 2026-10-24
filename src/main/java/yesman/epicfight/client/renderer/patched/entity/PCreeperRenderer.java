@@ -1,6 +1,7 @@
 package yesman.epicfight.client.renderer.patched.entity;
 
-import net.minecraft.client.model.CreeperModel;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.model.monster.creeper.CreeperModel;
 import net.minecraft.client.renderer.entity.CreeperRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -13,13 +14,13 @@ import yesman.epicfight.api.utils.math.Vec2i;
 import yesman.epicfight.client.mesh.CreeperMesh;
 import yesman.epicfight.world.capabilities.entitypatch.mob.CreeperPatch;
 
-public class PCreeperRenderer extends PatchedLivingEntityRenderer<Creeper, CreeperPatch, CreeperModel<Creeper>, CreeperRenderer, CreeperMesh> {
+public class PCreeperRenderer extends PatchedLivingEntityRenderer<Creeper, CreeperPatch, CreeperModel, CreeperRenderer, CreeperMesh> {
 	public PCreeperRenderer(EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(context, entityType);
 	}
 	
 	@Override
-	protected int getOverlayCoord(Creeper entity, CreeperPatch entitypatch, float partialTick) {
+	protected int getOverlayCoord(Creeper entity, CreeperPatch entitypatch, LivingEntityRenderState renderState, float partialTick) {
 		float swelling = entity.getSwelling(partialTick);
 		float u = (int) (swelling * 10.0F) % 2 == 0 ? 0.0F : Mth.clamp(swelling, 0.5F, 1.0F);
 		int initU = OverlayTexture.u(u);

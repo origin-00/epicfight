@@ -1,8 +1,10 @@
 package yesman.epicfight.client.gui.widgets;
 
+import yesman.epicfight.client.gui.GuiColors;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -66,10 +68,10 @@ public class AnchoredButton extends Button implements AnchoredWidget, ThemeAppli
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.theme.renderBackground(this, guiGraphics, mouseX, mouseY, partialTick);
-        int i = this.getFGColor();
-        this.renderString(guiGraphics, Minecraft.getInstance().font, i | Mth.ceil(this.alpha * 255.0F) << 24);
+        // The label color (getFGColor) is applied by extractDefaultLabel.
+        this.extractDefaultLabel(guiGraphics.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.NONE));
     }
 
     @Override
@@ -97,12 +99,12 @@ public class AnchoredButton extends Button implements AnchoredWidget, ThemeAppli
     }
 
     public interface ButtonTheme extends WidgetTheme {
-        void renderBackground(AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick);
+        void renderBackground(AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick);
     }
 
     @FunctionalInterface
     public interface ButtonRenderer {
-        void renderBackground(AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick);
+        void renderBackground(AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick);
     }
 
     static final WidgetSprites NUMBERED_TAB_SPRITES = new WidgetSprites(
@@ -125,53 +127,43 @@ public class AnchoredButton extends Button implements AnchoredWidget, ThemeAppli
 
     public enum BuiltInTheme implements ButtonTheme {
         VANILLA(
-            (AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) -> {
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, widget.alpha);
-                RenderSystem.enableBlend();
-                RenderSystem.enableDepthTest();
-                guiGraphics.blitSprite(SPRITES.get(widget.active, widget.highlightWhen.apply(widget)), widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight());
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            (AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) -> {
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, widget.alpha);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, SPRITES.get(widget.active, widget.highlightWhen.apply(widget)), widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight());
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
             }
         ),
         BLACK(
-            (AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) -> {
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, widget.alpha);
-                RenderSystem.enableBlend();
-                RenderSystem.enableDepthTest();
+            (AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) -> {
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, widget.alpha);
                 int color = widget.highlightWhen.apply(widget) ? 0xFF2A2A2A : widget.active ? 0xFF0A0A0A : 0xFF000000;
                 guiGraphics.fill(widget.getX(), widget.getY(), widget.getX() + widget.getWidth(), widget.getY() + widget.getHeight(), color);
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
             }
         ),
         NUMBERED_TAB(
-            (AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) -> {
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, widget.alpha);
-                RenderSystem.enableBlend();
-                RenderSystem.enableDepthTest();
-                guiGraphics.blitSprite(NUMBERED_TAB_SPRITES.get(widget.active, widget.highlightWhen.apply(widget)), widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight());
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            (AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) -> {
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, widget.alpha);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, NUMBERED_TAB_SPRITES.get(widget.active, widget.highlightWhen.apply(widget)), widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight());
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
             }
         ),
         UPSIDE_EMOTE_WHEEL(
-            (AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) -> {
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, widget.alpha);
-                RenderSystem.enableBlend();
-                RenderSystem.enableDepthTest();
-                guiGraphics.blitSprite(EMOTE_WHEEL_UP_SPRITES.get(widget.isActive(), widget.highlightWhen.apply(widget)), widget.getX() - 9, widget.getY() + 1, 61, 54);
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            (AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) -> {
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, widget.alpha);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, EMOTE_WHEEL_UP_SPRITES.get(widget.isActive(), widget.highlightWhen.apply(widget)), widget.getX() - 9, widget.getY() + 1, 61, 54);
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
             }
         ),
         DOWNSIDE_EMOTE_WHEEL(
-            (AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) -> {
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, widget.alpha);
-                RenderSystem.enableBlend();
-                RenderSystem.enableDepthTest();
-                guiGraphics.blitSprite(EMOTE_WHEEL_DOWN_SPRITES.get(widget.isActive(), widget.highlightWhen.apply(widget)), widget.getX() - 9, widget.getY() + 1, 61, 54);
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            (AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) -> {
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, widget.alpha);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, EMOTE_WHEEL_DOWN_SPRITES.get(widget.isActive(), widget.highlightWhen.apply(widget)), widget.getX() - 9, widget.getY() + 1, 61, 54);
+                GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
             }
         ),
         TRANSPARENT(
-            (AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) -> {
+            (AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) -> {
             }
         );
 
@@ -184,7 +176,7 @@ public class AnchoredButton extends Button implements AnchoredWidget, ThemeAppli
         }
 
         @Override
-        public void renderBackground(AnchoredButton widget, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        public void renderBackground(AnchoredButton widget, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             this.buttonRenderer.renderBackground(widget, guiGraphics, mouseX, mouseY, partialTick);
         }
 

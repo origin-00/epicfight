@@ -2,7 +2,7 @@ package yesman.epicfight.registry.entries;
 
 import com.google.common.collect.ImmutableSet;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -24,7 +24,6 @@ public final class EpicFightBlockEntities {
 				new UniversalBlockEntityType<>(
 					  FractureBlockEntity::new
 					, ImmutableSet.of(EpicFightBlocks.FRACTURE.get())
-					, Util.fetchChoiceType(References.BLOCK_ENTITY, "fracture_block")
 				)
 		);
 }

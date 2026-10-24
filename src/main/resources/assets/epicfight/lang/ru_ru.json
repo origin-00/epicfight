@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] для просмотра врождённого навыка",
 	"key.epicfight.gui": "Интерфейс Epic Fight",
 	"key.epicfight.combat": "Боевая система Epic Fight",
+	"key.category.epicfight.combat": "Боевая система Epic Fight",
+	"key.category.epicfight.gui": "Интерфейс Epic Fight",
 	"key.epicfight.show_tooltip": "Показывать всплывающую подсказку навыка оружия",
 	"key.epicfight.switch_mode": "Переключение режима Боя/Добычи",
 	"key.epicfight.attack": "Атака",

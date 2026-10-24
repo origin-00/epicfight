@@ -19,21 +19,6 @@ config = "${modId}.mixins.json"
 [[mixins]]
 config = "${modId}-platform.neoforge.mixins.json"
 
-[[mixins]]
-config = "${modId}-compat.skinlayers3d.mixins.json"
-
-[[mixins]]
-config = "${modId}-compat.geckolib.mixins.json"
-
-[[mixins]]
-config = "${modId}-compat.vampirism.mixins.json"
-
-[[mixins]]
-config = "${modId}-compat.werewolves.mixins.json"
-
-[[mixins]]
-config = "${modId}-compat.fgm.mixins.json"
-
 [[accessTransformers]]
 file = "META-INF/accesstransformer.cfg"
 

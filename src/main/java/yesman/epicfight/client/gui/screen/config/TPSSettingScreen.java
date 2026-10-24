@@ -1,16 +1,19 @@
 package yesman.epicfight.client.gui.screen.config;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.math.Axis;
 import net.minecraft.client.CameraType;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import yesman.epicfight.client.gui.widgets.AnchoredButton;
 import yesman.epicfight.client.gui.widgets.common.AnchoredWidget;
@@ -19,10 +22,10 @@ import yesman.epicfight.generated.LangKeys;
 import yesman.epicfight.main.EpicFightMod;
 
 public class TPSSettingScreen extends Screen {
-    private static final ResourceLocation DIRECTION_BUTTON_SPRITE = EpicFightMod.identifier("widget/direction_button");
-    private static final ResourceLocation DIRECTION_BUTTON_DISABLED_SPRITE = EpicFightMod.identifier("widget/direction_button_disabled");
-    private static final ResourceLocation DIRECTION_BUTTON_HIGHLIGHTED_SPRITE = EpicFightMod.identifier("widget/direction_button_highlighted");
-    private static final ResourceLocation ZOOM_SCROLL_SPRITE = EpicFightMod.identifier("widget/zoom_scroll");
+    private static final Identifier DIRECTION_BUTTON_SPRITE = EpicFightMod.identifier("widget/direction_button");
+    private static final Identifier DIRECTION_BUTTON_DISABLED_SPRITE = EpicFightMod.identifier("widget/direction_button_disabled");
+    private static final Identifier DIRECTION_BUTTON_HIGHLIGHTED_SPRITE = EpicFightMod.identifier("widget/direction_button_highlighted");
+    private static final Identifier ZOOM_SCROLL_SPRITE = EpicFightMod.identifier("widget/zoom_scroll");
 
     private static final Component NO_WORLD_WARNING = Component.translatable(LangKeys.GUI_MESSAGE_SETTINGS_CAMERA_TPS_PERSPECTIVE_RECOMMEND_JOIN_WORLD);
 
@@ -144,20 +147,20 @@ public class TPSSettingScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.minecraft.level != null) guiGraphics.fillGradient(0, 0, this.width, this.height, 0xAF222222, 0x8F222222);
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
-        guiGraphics.drawString(this.font, this.title, 6, 6, 16777215);
-        guiGraphics.drawString(this.font, Component.literal("Exit"), this.width - 24, 6, (mouseX > this.width - 24 && mouseY < 16) ? 7368816 : 16777215);
+        guiGraphics.text(this.font, this.title, 6, 6, GuiColors.text(16777215));
+        guiGraphics.text(this.font, Component.literal("Exit"), this.width - 24, 6, GuiColors.text((mouseX > this.width - 24 && mouseY < 16) ? 7368816 : 16777215));
 
         if (this.minecraft.level == null) {
-            guiGraphics.drawString(this.font, NO_WORLD_WARNING, this.width / 2 - this.font.width(NO_WORLD_WARNING) / 2, this.height / 2 + 40, 16777215);
+            guiGraphics.text(this.font, NO_WORLD_WARNING, this.width / 2 - this.font.width(NO_WORLD_WARNING) / 2, this.height / 2 + 40, GuiColors.text(16777215));
         }
     }
 
     @Override
-    protected void renderBlurredBackground(float partialTick) {
+    protected void extractBlurredBackground(GuiGraphicsExtractor guiGraphics) {
     }
 
     @Override
@@ -166,13 +169,16 @@ public class TPSSettingScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (mouseX > this.width - 24 && mouseY < 16) {
             this.minecraft.setScreen(null);
             return true;
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
@@ -203,27 +209,25 @@ public class TPSSettingScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-            guiGraphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
-            RenderSystem.enableBlend();
-            RenderSystem.enableDepthTest();
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(this.getX(), this.getY(), 0.0F);
-            guiGraphics.pose().translate(8.0F, 8.0F, 0.0F);
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+            GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, this.alpha);
+            guiGraphics.pose().pushMatrix();
+            guiGraphics.pose().translate((float)(this.getX()), (float)(this.getY()));
+            guiGraphics.pose().translate(8.0F, 8.0F);
 
             switch (this.direction) {
-                case UP -> { guiGraphics.pose().mulPose(Axis.ZP.rotationDegrees(90.0F)); }
-                case DOWN -> { guiGraphics.pose().mulPose(Axis.ZP.rotationDegrees(270.0F)); }
-                case RIGHT -> { guiGraphics.pose().mulPose(Axis.ZP.rotationDegrees(180.0F)); }
+                case UP -> { guiGraphics.pose().rotate((float)Math.toRadians(90.0F)); }
+                case DOWN -> { guiGraphics.pose().rotate((float)Math.toRadians(270.0F)); }
+                case RIGHT -> { guiGraphics.pose().rotate((float)Math.toRadians(180.0F)); }
             }
 
-            guiGraphics.pose().translate(-8.0F, -8.0F, 0.0F);
-            //guiGraphics.blit(BUTTON_TEXTURE, 0, 0, 0, u, v, 16, 16, 64, 64);
-            ResourceLocation sprite = this.isActive() ? (this.isHoveredOrFocused() ? DIRECTION_BUTTON_HIGHLIGHTED_SPRITE : DIRECTION_BUTTON_SPRITE) : DIRECTION_BUTTON_DISABLED_SPRITE;
-            guiGraphics.blitSprite(sprite, 0, 0, 16, 16);
-            guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            guiGraphics.pose().translate(-8.0F, -8.0F);
+            //guiGraphics.blit(RenderPipelines.GUI_TEXTURED, BUTTON_TEXTURE, 0, 0, u, v, 16, 16, 64, 64);
+            Identifier sprite = this.isActive() ? (this.isHoveredOrFocused() ? DIRECTION_BUTTON_HIGHLIGHTED_SPRITE : DIRECTION_BUTTON_SPRITE) : DIRECTION_BUTTON_DISABLED_SPRITE;
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, 0, 0, 16, 16);
+            GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
         }
 
         public enum Direction {
@@ -240,21 +244,25 @@ public class TPSSettingScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-            guiGraphics.blitSprite(ZOOM_SCROLL_SPRITE, this.getX(), this.getY(), 12, 52);
+        protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, ZOOM_SCROLL_SPRITE, this.getX(), this.getY(), 12, 52);
             int scrollCoord = (int)this.scrollPosition * 6;
             guiGraphics.fill(this.getX() + 3, this.getY() + scrollCoord + 3, this.getX() + 9, this.getY() + scrollCoord + 7, -1);
         }
 
         @Override
-        public void onClick(double mouseX, double mouseY) {
+        public void onClick(MouseButtonEvent event, boolean doubleClick) {
+            double mouseX = event.x();
+            double mouseY = event.y();
             if (this.getX() + 3 <= mouseX && mouseX <= this.getX() + 9 && this.getY() + 1 <= mouseY && mouseY <= this.getY() + 63) {
                 this.setScrollBaseOnYPressed(mouseY);
             }
         }
 
         @Override
-        protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
+        protected void onDrag(MouseButtonEvent event, double dragX, double dragY) {
+            double mouseX = event.x();
+            double mouseY = event.y();
             if (this.getX() + 3 <= mouseX && mouseX <= this.getX() + 9 && this.getY() + 1 <= mouseY + dragY && mouseY + dragY <= this.getY() + 63) {
                 this.setScrollBaseOnYPressed(mouseY + dragY);
             }

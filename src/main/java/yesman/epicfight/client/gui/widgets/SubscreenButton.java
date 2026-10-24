@@ -1,5 +1,6 @@
 package yesman.epicfight.client.gui.widgets;
 
+import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -26,7 +27,7 @@ public class SubscreenButton extends AnchoredButton {
     }
 
     @Override
-    public void onPress() {
+    public void onPress(InputWithModifiers input) {
         Minecraft.getInstance().setScreen(this.openScreen.get());
     }
 }

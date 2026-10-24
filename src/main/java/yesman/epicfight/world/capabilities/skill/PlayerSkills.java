@@ -2,7 +2,7 @@ package yesman.epicfight.world.capabilities.skill;
 
 import com.google.common.collect.HashMultimap;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import yesman.epicfight.api.utils.ParseUtil;
@@ -187,13 +187,13 @@ public class PlayerSkills {
 	}
 	
 	public void read(CompoundTag compound) {
-		CompoundTag skillCompound = compound.getCompound("playerSkills");
+		CompoundTag skillCompound = compound.getCompoundOrEmpty("playerSkills");
 		
 		for (SkillContainer container : this.skillContainers) {
 			String key = ParseUtil.toLowerCase(container.getSlot().toString());
 			
 			if (skillCompound.contains(key)) {
-				EpicFightRegistries.SKILL.getHolder(ResourceLocation.parse(skillCompound.getString(key))).ifPresent(skill -> {
+				EpicFightRegistries.SKILL.get(Identifier.parse(skillCompound.getStringOr(key, ""))).ifPresent(skill -> {
 					container.setSkill(skill.value());
 					this.addLearnedSkill(skill.value());
 				});
@@ -202,10 +202,10 @@ public class PlayerSkills {
 		
 		for (SkillCategory category : SkillCategory.ENUM_MANAGER.universalValues()) {
 			if (skillCompound.contains("learned:" + ParseUtil.toLowerCase(category.toString()))) {
-				CompoundTag learnedNBT = skillCompound.getCompound("learned:" + ParseUtil.toLowerCase(category.toString()));
+				CompoundTag learnedNBT = skillCompound.getCompoundOrEmpty("learned:" + ParseUtil.toLowerCase(category.toString()));
 				
-				for (String key : learnedNBT.getAllKeys()) {
-					EpicFightRegistries.SKILL.getHolder(ResourceLocation.parse(learnedNBT.getString(key))).ifPresent(skill -> {
+				for (String key : learnedNBT.keySet()) {
+					EpicFightRegistries.SKILL.get(Identifier.parse(learnedNBT.getStringOr(key, ""))).ifPresent(skill -> {
 						this.addLearnedSkill(skill.value());
 					});
 				}
@@ -213,7 +213,7 @@ public class PlayerSkills {
 		}
 		
 		if (skillCompound.contains("playerMode")) {
-			this.skillContainers[0].getExecutor().toMode(PlayerPatch.PlayerMode.valueOf(ParseUtil.toUpperCase(skillCompound.getString("playerMode"))), true);
+			this.skillContainers[0].getExecutor().toMode(PlayerPatch.PlayerMode.valueOf(ParseUtil.toUpperCase(skillCompound.getStringOr("playerMode", ""))), true);
 		} else {
 			this.skillContainers[0].getExecutor().toEpicFightMode(true);
 		}

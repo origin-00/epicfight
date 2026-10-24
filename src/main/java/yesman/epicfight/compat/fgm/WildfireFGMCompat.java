@@ -14,28 +14,28 @@ import com.wildfire.render.GenderLayer;
 import com.wildfire.render.WildfireModelRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.armortrim.ArmorTrim;
+import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.IEventBus;
@@ -110,7 +110,7 @@ public class WildfireFGMCompat implements ICompatModule {
                         }
 
                         RenderType breastRenderType = null;
-                        ResourceLocation entityTexture = accessor.getTexture(entity);
+                        Identifier entityTexture = accessor.getTexture(entity);
                         if (entityTexture != null) {
                             boolean bodyVisible = !entity.isInvisible();
                             Minecraft minecraft = Minecraft.getInstance();
@@ -284,7 +284,7 @@ public class WildfireFGMCompat implements ICompatModule {
         private void renderBreast(LivingEntityPatch<?> entity, ItemStack armorStack, PoseStack matrixStack, MultiBufferSource bufferSource, @Nullable RenderType breastRenderType, int light, int overlay, float alpha, boolean left, boolean hasJacketLayer) {
             if (breastRenderType != null) {
                 VertexConsumer vertexConsumer = bufferSource.getBuffer(breastRenderType);
-                int color = FastColor.ARGB32.color(FastColor.as8BitChannel(alpha), -1);
+                int color = ARGB.color(ARGB.as8BitChannel(alpha), -1);
                 renderBox(left ? this.lB : this.rB, matrixStack, vertexConsumer, light, overlay, color);
                 if (hasJacketLayer) {
                     this.shiftForJacket(matrixStack);
@@ -305,7 +305,7 @@ public class WildfireFGMCompat implements ICompatModule {
                     int color = armorStack.is(ItemTags.DYEABLE) ? DyedItemColor.getOrDefault(armorStack, -6265536) : -1;
 
                     for(ArmorMaterial.Layer layer : material.value().layers()) {
-                        ResourceLocation armorTexture = ClientHooks.getArmorTexture(entity.getOriginal(), armorStack, layer, false, EquipmentSlot.CHEST);
+                        Identifier armorTexture = ClientHooks.getArmorTexture(entity.getOriginal(), armorStack, layer, false, EquipmentSlot.CHEST);
                         RenderType armorType = RenderType.armorCutoutNoCull(armorTexture);
                         VertexConsumer armorVertexConsumer = bufferSource.getBuffer(armorType);
                         renderBox(armorBox, matrixStack, armorVertexConsumer, light, OverlayTexture.NO_OVERLAY, layer.dyeable() ? color : -1);

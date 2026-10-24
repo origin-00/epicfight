@@ -1,6 +1,6 @@
 package yesman.epicfight.api.ex_cap.modules.core.data;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import yesman.epicfight.api.ex_cap.data.Moveset;
 import yesman.epicfight.registry.deferred.MovesetRegister;
@@ -13,4 +13,4 @@ import yesman.epicfight.registry.deferred.holders.DeferredMoveset;
  * @deprecated For Removal. Replaced with {@link DeferredMoveset} and registered via {@link MovesetRegister} or by a {@link DeferredRegister}
  */
 @Deprecated(forRemoval = true)
-public record MoveSetEntry(ResourceLocation id, Moveset.Builder builder) {}
+public record MoveSetEntry(Identifier id, Moveset.Builder builder) {}

@@ -1,0 +1,47 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "epicfight:skill_category",
+    "cases": [
+      {
+        "when": "epicfight:skillbook_dodge",
+        "model": {
+          "type": "minecraft:model",
+          "model": "epicfight:item/skillbook_dodge"
+        }
+      },
+      {
+        "when": "epicfight:skillbook_guard",
+        "model": {
+          "type": "minecraft:model",
+          "model": "epicfight:item/skillbook_guard"
+        }
+      },
+      {
+        "when": "epicfight:skillbook_identity",
+        "model": {
+          "type": "minecraft:model",
+          "model": "epicfight:item/skillbook_identity"
+        }
+      },
+      {
+        "when": "epicfight:skillbook_mover",
+        "model": {
+          "type": "minecraft:model",
+          "model": "epicfight:item/skillbook_mover"
+        }
+      },
+      {
+        "when": "epicfight:skillbook_passive",
+        "model": {
+          "type": "minecraft:model",
+          "model": "epicfight:item/skillbook_passive"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "epicfight:item/skillbook"
+    }
+  }
+}

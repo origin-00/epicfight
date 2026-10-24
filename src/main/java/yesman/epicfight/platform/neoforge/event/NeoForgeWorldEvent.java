@@ -40,7 +40,7 @@ public final class NeoForgeWorldEvent {
 			
 			payloadBundleBuilder.send((first, others) -> EpicFightNetworkManager.sendToPlayer(first, event.getPlayer(), others));
 			
-			if (!event.getPlayer().getServer().isSingleplayerOwner(event.getPlayer().getGameProfile())) {
+			if (!event.getPlayer().level().getServer().isSingleplayerOwner(event.getPlayer().nameAndId())) {
 				sendLevelData(event.getPlayer());
 			} else {
 				EpicFightCapabilities.getUnparameterizedEntityPatch(event.getPlayer(), ServerPlayerPatch.class).ifPresent(serverplayerpatch -> {
@@ -75,7 +75,7 @@ public final class NeoForgeWorldEvent {
 			EpicFightNetworkManager.sendToPlayer(skillParamsPacket, player);
 		});
 		
-		SPDatapackSync animationPacket = new SPDatapackSync(player.getServer().isResourcePackRequired() ? SPDatapackSync.PacketType.MANDATORY_RESOURCE_PACK_ANIMATION : SPDatapackSync.PacketType.RESOURCE_PACK_ANIMATION);
+		SPDatapackSync animationPacket = new SPDatapackSync(player.level().getServer().isResourcePackRequired() ? SPDatapackSync.PacketType.MANDATORY_RESOURCE_PACK_ANIMATION : SPDatapackSync.PacketType.RESOURCE_PACK_ANIMATION);
 		SPDatapackSync armorPacket = new SPDatapackSync(SPDatapackSync.PacketType.ARMOR);
 		SPDatapackSync weaponPacket = new SPDatapackSync(SPDatapackSync.PacketType.WEAPON);
 		SPDatapackSync mobCapabilityPacket = new SPDatapackSync(SPDatapackSync.PacketType.MOB);

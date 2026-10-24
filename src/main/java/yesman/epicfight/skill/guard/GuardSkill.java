@@ -1,7 +1,9 @@
 package yesman.epicfight.skill.guard;
 
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -124,7 +126,7 @@ public class GuardSkill extends Skill implements HoldableSkill {
 	@Override
 	public void loadDatapackParameters(CompoundTag parameters) {
 		super.loadDatapackParameters(parameters);
-		this.penalizer = parameters.getFloat("penalizer");
+		this.penalizer = parameters.getFloatOr("penalizer", 0.0F);
 	}
 
     @Override
@@ -221,7 +223,7 @@ public class GuardSkill extends Skill implements HoldableSkill {
 		if (offender != null && this.isBlockableSource(damageSource, advanced)) {
 			playerPatch.playSound(EpicFightSounds.CLASH.get(), -0.05F, 0.1F);
 			ServerPlayer serverPlayer = playerPatch.getOriginal();
-			EpicFightParticles.HIT_BLUNT.get().spawnParticleWithArgument(serverPlayer.serverLevel(), HitParticleType.FRONT_OF_EYES, HitParticleType.ZERO, serverPlayer, offender);
+			EpicFightParticles.HIT_BLUNT.get().spawnParticleWithArgument(serverPlayer.level(), HitParticleType.FRONT_OF_EYES, HitParticleType.ZERO, serverPlayer, offender);
 			
 			if (offender instanceof LivingEntity livingEntity) {
 				float modifiedKnockback = EnchantmentHelper.modifyKnockback((ServerLevel)livingEntity.level(), livingEntity.getItemInHand(livingEntity.getUsedItemHand()), livingEntity, damageSource, knockback);
@@ -403,9 +405,9 @@ public class GuardSkill extends Skill implements HoldableSkill {
 	}
 	
 	@Override @ClientOnly
-	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphics guiGraphics, float x, float y, float partialTick) {
-		guiGraphics.blit(EpicFightSkills.GUARD.get().getSkillTexture(), (int)x, (int)y, 24, 24, 0, 0, 1, 1, 1, 1);
-		guiGraphics.drawString(gui.getFont(), String.format("x%.1f", container.getDataManager().getDataValue(EpicFightSkillDataKeys.PENALTY)), x, y + 6, 16777215, true);
+	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphicsExtractor guiGraphics, float x, float y, float partialTick) {
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, EpicFightSkills.GUARD.get().getSkillTexture(), (int)x, (int)y, 0, 0, 24, 24, 1, 1, 1, 1);
+		guiGraphics.text(gui.getFont(), String.format("x%.1f", container.getDataManager().getDataValue(EpicFightSkillDataKeys.PENALTY)), (int)x, (int)(y + 6), GuiColors.text(16777215), true);
 	}
 	
 	

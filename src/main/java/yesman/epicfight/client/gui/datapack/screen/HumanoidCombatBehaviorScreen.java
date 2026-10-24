@@ -1,5 +1,8 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -7,11 +10,11 @@ import java.util.Locale;
 import com.google.common.collect.Lists;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -48,8 +51,6 @@ public class HumanoidCombatBehaviorScreen extends Screen {
 		super(Component.translatable("datapack_edit.mob_patch.humanoid_combat_behavior"));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		
 		this.rootTag = rootTag;
 		this.inputComponentsList = new InputComponentList<>(this, 0, 0, 0, 26) {
@@ -57,17 +58,17 @@ public class HumanoidCombatBehaviorScreen extends Screen {
 			public void importTag(CompoundTag tag) {
 				this.setComponentsActive(true);
 				
-				ListTag weaponCategoriesList = tag.getList("weapon_categories", Tag.TAG_STRING);
+				ListTag weaponCategoriesList = tag.getListOrEmpty("weapon_categories");
 				Grid.PackImporter packImporter = new Grid.PackImporter();
 				
 				for (Tag weaponCategory : weaponCategoriesList) {
 					packImporter.newRow();
-					packImporter.newValue("weapon_category", weaponCategory.getAsString());
+					packImporter.newValue("weapon_category", weaponCategory.asString().orElse(""));
 				}
 				
 				this.setDataBindingComponenets(new Object[] {
 					packImporter,
-					Style.ENUM_MANAGER.get(tag.getString("style"))
+					Style.ENUM_MANAGER.get(tag.getStringOr("style", ""))
 				});
 			}
 		};
@@ -117,7 +118,7 @@ public class HumanoidCombatBehaviorScreen extends Screen {
 													.editable(true)
 													.valueChanged((event) -> {
 														CompoundTag weaponBehaviorTag = this.weaponList.get(this.weaponGrid.getRowposition());
-														ListTag weaponCategoriesList = weaponBehaviorTag.getList("weapon_categories", Tag.TAG_STRING);
+														ListTag weaponCategoriesList = weaponBehaviorTag.getListOrEmpty("weapon_categories");
 														weaponCategoriesList.set(event.rowposition, StringTag.valueOf(ParseUtil.nullParam(event.postValue).toLowerCase(Locale.ROOT)));
 													}).width(150))
 									.pressAdd((grid, button) -> {
@@ -134,7 +135,7 @@ public class HumanoidCombatBehaviorScreen extends Screen {
 									.pressRemove((grid, button) -> {
 										grid.removeRow((removedRow) -> {
 											CompoundTag weaponBehaviorTag = this.weaponList.get(this.weaponGrid.getRowposition());
-											ListTag weaponCategoriesList = weaponBehaviorTag.getList("weapon_categories", Tag.TAG_STRING);
+											ListTag weaponCategoriesList = weaponBehaviorTag.getListOrEmpty("weapon_categories");
 											weaponCategoriesList.remove(removedRow);
 										});
 									})
@@ -167,10 +168,10 @@ public class HumanoidCombatBehaviorScreen extends Screen {
 		
 		if (this.rootTag.contains("combat_behavior_humanoid")) {
 			Grid.PackImporter packImporter = new Grid.PackImporter();
-			ListTag list = this.rootTag.getList("combat_behavior_humanoid", Tag.TAG_COMPOUND);
+			ListTag list = this.rootTag.getListOrEmpty("combat_behavior_humanoid");
 			
 			for (int i = 0; i < list.size(); i++) {
-				this.weaponList.add(list.getCompound(i));
+				this.weaponList.add(list.getCompoundOrEmpty(i));
 				packImporter.newRow();
 				packImporter.newValue("weapon", "weapon" + (i+1));
 			}
@@ -231,54 +232,57 @@ public class HumanoidCombatBehaviorScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-		if (this.inputComponentsList.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
+		if (this.inputComponentsList.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int yBegin = 32;
 		int yEnd = this.height - 45;
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
-		guiGraphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.125F, 0.125F, 0.125F, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		
-		guiGraphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-		guiGraphics.blit(Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.25F, 0.25F, 0.25F, 1.0F);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         
-        guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yBegin, this.width, yBegin + 4, -16777216, 0, 0);
-		guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yEnd, this.width, yEnd + 1, 0, -16777216, 0);
+        guiGraphics.fillGradient(0, yBegin, this.width, yBegin + 4, -16777216, 0);
+		guiGraphics.fillGradient(0, yEnd, this.width, yEnd + 1, 0, -16777216);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	
 	private void validateTagSave(CompoundTag tag) throws IllegalStateException {
-		if (!tag.contains("weapon_categories") || tag.getList("weapon_categories", Tag.TAG_STRING).size() == 0) {
+		if (!tag.contains("weapon_categories") || tag.getListOrEmpty("weapon_categories").size() == 0) {
 			throw new IllegalStateException("Define at least one weapon category");
 		}
 		
-		for (Tag weaponCategoryTag : tag.getList("weapon_categories", Tag.TAG_STRING)) {
-			if (StringUtil.isNullOrEmpty(weaponCategoryTag.getAsString())) {
+		for (Tag weaponCategoryTag : tag.getListOrEmpty("weapon_categories")) {
+			if (StringUtil.isNullOrEmpty(weaponCategoryTag.asString().orElse(""))) {
 				throw new IllegalStateException("Invalid weapon category");
 			}
 			
 			try {
-				WeaponCategory.ENUM_MANAGER.getOrThrow(weaponCategoryTag.getAsString());
+				WeaponCategory.ENUM_MANAGER.getOrThrow(weaponCategoryTag.asString().orElse(""));
 			} catch (IllegalArgumentException e) {
-				throw new IllegalStateException("Invalid weapon category " + weaponCategoryTag.getAsString());
+				throw new IllegalStateException("Invalid weapon category " + weaponCategoryTag.asString().orElse(""));
 			}
 		}
 		
-		if (!tag.contains("style") || StringUtil.isNullOrEmpty(tag.getString("style"))) {
+		if (!tag.contains("style") || StringUtil.isNullOrEmpty(tag.getStringOr("style", ""))) {
 			throw new IllegalStateException("Define a style");
 		}
 		

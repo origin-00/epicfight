@@ -1,7 +1,10 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.MouseButtonEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -39,13 +42,16 @@ public class CheckBox extends AbstractWidget implements DataBindingComponent<Boo
 	}
 	
 	@Override
-	public boolean mouseClicked(double x, double y, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
+		int button = event.button();
 		if (this.active && this.visible) {
-			if (this.isValidClickButton(button)) {
-				boolean flag = this.clicked(x, y);
+			if (this.isValidClickButton(event.buttonInfo())) {
+				boolean flag = this.isInClickArea(x, y);
 				
 				if (flag) {
-					this.onClick(x, y);
+					this.onClick(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)), false);
 					return true;
 				}
 			}
@@ -54,13 +60,15 @@ public class CheckBox extends AbstractWidget implements DataBindingComponent<Boo
 		return false;
 	}
 	
-	@Override
-	protected boolean clicked(double x, double y) {
+	/// The click area (`AbstractWidget#clicked` before 1.21.9).
+	protected boolean isInClickArea(double x, double y) {
 		return this.active && this.visible && x >= (double)this._getX() && y >= (double) this._getY() && x < (double) (this._getX() + this.width) && y < (double) (this._getY() + this.height);
 	}
 	
 	@Override
-	public void onClick(double x, double y) {
+	public void onClick(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
 		this._setValue(this.value == null ? !this.defaultVal : !this.value.booleanValue());
 	}
 	
@@ -71,7 +79,7 @@ public class CheckBox extends AbstractWidget implements DataBindingComponent<Boo
 	}
 	
 	@Override
-	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+	public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		int rectangleLength = Math.min(this._getWidth(), this._getHeight());
 		int outlineColor = this.isFocused() ? -1 : this.isActive() ? -6250336 : -12566463;
 		
@@ -84,7 +92,7 @@ public class CheckBox extends AbstractWidget implements DataBindingComponent<Boo
 		
 		int fontColor = this.isActive() ? 16777215 : 4210752;
 		
-		guiGraphics.drawString(this.font, this._getMessage(), this._getX() + rectangleLength + 4, this._getY() + this.height / 2 - this.font.lineHeight / 2 + 1, fontColor, false);
+		guiGraphics.text(this.font, this._getMessage(), this._getX() + rectangleLength + 4, this._getY() + this.height / 2 - this.font.lineHeight / 2 + 1, GuiColors.text(fontColor), false);
 	}
 	
 	@Override
@@ -232,7 +240,7 @@ public class CheckBox extends AbstractWidget implements DataBindingComponent<Boo
 	}
 
 	@Override
-	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+	public void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 }

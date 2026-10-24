@@ -1,6 +1,7 @@
 package yesman.epicfight.client.particle;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.state.level.QuadParticleRenderState;
+import net.minecraft.util.RandomSource;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -27,9 +28,9 @@ public class BlastParticle extends HitParticle {
 	}
 	
 	@Override
-	public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
+	public void extract(QuadParticleRenderState particleTypeRenderState, Camera camera, float partialTicks) {
 		if (!this.removed) {
-			super.render(buffer, renderInfo, partialTicks);
+			super.extract(particleTypeRenderState, camera, partialTicks);
 			
 			if (this.age++ >= this.lifetime) {
 		       this.remove();
@@ -45,7 +46,7 @@ public class BlastParticle extends HitParticle {
 	    }
 	    
 		@Override
-		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
 			BlastParticle particle = new BlastParticle(worldIn, x, y, z, spriteSet);
 			return particle;
 		}

@@ -366,7 +366,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	
 	@Override
 	public AttackResult attack(EpicFightDamageSource damageSource, Entity target, InteractionHand hand) {
-		float fallDist = this.original.fallDistance;
+		float fallDist = (float)this.original.fallDistance;
 		boolean onGround = this.original.onGround();
 		boolean offhandValid = this.isOffhandItemValid();
 		

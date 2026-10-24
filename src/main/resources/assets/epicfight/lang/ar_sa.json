@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	"key.epicfight.gui": "واجهة المعركة الملحمية",
 	"key.epicfight.combat": "قتال المعركة الملحمية",
+	"key.category.epicfight.combat": "قتال المعركة الملحمية",
+	"key.category.epicfight.gui": "واجهة المعركة الملحمية",
 	"key.epicfight.show_tooltip": "إظهار تلميح مهارة السلاح",
 	"key.epicfight.switch_mode": "تغيير وضع المعركة/التعدين",
 	"key.epicfight.attack": "Attack",

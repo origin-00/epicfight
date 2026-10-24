@@ -1,11 +1,12 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
@@ -15,7 +16,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -53,14 +54,12 @@ public class ImportAnimationsScreen extends Screen {
 	private InputComponentList<EditorAnimation> inputComponentsList;
 	private ComboBox<EditorAnimation.AnimationType> animationType;
 	private Consumer<EditorAnimation.AnimationType> responder;
-	private Map<ResourceLocation, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> userAnimations;
+	private Map<Identifier, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> userAnimations;
 	
 	public ImportAnimationsScreen(SelectAnimationScreen parentScreen, AssetAccessor<? extends Armature> armature, AssetAccessor<? extends SkinnedMesh> mesh) {
 		super(Component.literal("register_animation_screen"));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		
 		this.userAnimations = DatapackEditScreen.getCurrentScreen().getUserAniamtions();
 		this.fakeAnimations.addAll(this.userAnimations.values().stream().map(PackEntry::getKey).map(EditorAnimation::deepCopy).toList());
@@ -127,7 +126,7 @@ public class ImportAnimationsScreen extends Screen {
 										}
 									})
 									.addColumn(Grid.editbox("animation_name")
-													.editWidgetCreated((editbox) -> editbox.setFilter(rl -> ResourceLocation.isValidNamespace(rl) && ResourceLocation.isValidPath(rl)))
+													.editWidgetCreated((editbox) -> editbox.setFilter(rl -> Identifier.isValidNamespace(rl) && Identifier.isValidPath(rl)))
 													.editable(true)
 													.valueChanged((event) -> this.fakeAnimations.get(event.rowposition).setParameter("path", event.postValue))
 													.width(180))
@@ -191,12 +190,12 @@ public class ImportAnimationsScreen extends Screen {
 						fakeAnim.getParameter("hand"),
 						null,
 						ParseUtil.nullParam(colliderTag.get("number")),
-						colliderTag.contains("center") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-						colliderTag.contains("center") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-						colliderTag.contains("center") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getList("center", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
-						colliderTag.contains("size") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(0), Tag::getAsString)) : "",
-						colliderTag.contains("size") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(1), Tag::getAsString)) : "",
-						colliderTag.contains("size") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getList("size", Tag.TAG_DOUBLE).get(2), Tag::getAsString)) : "",
+						colliderTag.contains("center") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(0), ParseUtil::tagAsString)) : "",
+						colliderTag.contains("center") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(1), ParseUtil::tagAsString)) : "",
+						colliderTag.contains("center") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("center").get(2), ParseUtil::tagAsString)) : "",
+						colliderTag.contains("size") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(0), ParseUtil::tagAsString)) : "",
+						colliderTag.contains("size") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(1), ParseUtil::tagAsString)) : "",
+						colliderTag.contains("size") ? ParseUtil.nullParam(ParseUtil.nullOrToString(colliderTag.getListOrEmpty("size").get(2), ParseUtil::tagAsString)) : "",
 						fakeAnim.getParameter("colliderJoint")
 					});
 					
@@ -382,32 +381,32 @@ public class ImportAnimationsScreen extends Screen {
 										.rowpositionChanged((rowposition, values) -> {
 											EditorAnimation fakeAnimation = this.fakeAnimations.get(this.animationGrid.getRowposition());
 											ListTag phases = fakeAnimation.getParameter("phases");
-											CompoundTag tag = phases.getCompound(rowposition);
+											CompoundTag tag = phases.getCompoundOrEmpty(rowposition);
 											
-											antic.setValue(tag.contains("antic") ? ParseUtil.valueOfOmittingType(tag.get("antic").getAsString()) : "");
-											preDelay.setValue(tag.contains("preDelay") ? ParseUtil.valueOfOmittingType(tag.get("preDelay").getAsString()) : "");
-											contact.setValue(tag.contains("contact") ? ParseUtil.valueOfOmittingType(tag.get("contact").getAsString()) : "");
-											recovery.setValue(tag.contains("recovery") ? ParseUtil.valueOfOmittingType(tag.get("recovery").getAsString()) : "");
+											antic.setValue(tag.contains("antic") ? ParseUtil.valueOfOmittingType(tag.get("antic").asString().orElse("")) : "");
+											preDelay.setValue(tag.contains("preDelay") ? ParseUtil.valueOfOmittingType(tag.get("preDelay").asString().orElse("")) : "");
+											contact.setValue(tag.contains("contact") ? ParseUtil.valueOfOmittingType(tag.get("contact").asString().orElse("")) : "");
+											recovery.setValue(tag.contains("recovery") ? ParseUtil.valueOfOmittingType(tag.get("recovery").asString().orElse("")) : "");
 											
 											if (tag.contains("joint")) {
-												String armature$joint = tag.getString("joint");
+												String armature$joint = tag.getStringOr("joint", "");
 												String joinName = armature$joint.substring(armature$joint.lastIndexOf('.') + 1);
 												colliderJoint._setValue(this.modelPreviewer.getArmature().get().searchJointByName(joinName));
 											} else {
 												colliderJoint._setValue(null);
 											}
 											
-											interactionHand._setValue(tag.contains("hand") ? InteractionHand.valueOf(tag.getString("hand")) : null);
+											interactionHand._setValue(tag.contains("hand") ? InteractionHand.valueOf(tag.getStringOr("hand", "")) : null);
 											
 											if (tag.contains("collider")) {
-												CompoundTag colliderTag = tag.getCompound("collider");
+												CompoundTag colliderTag = tag.getCompoundOrEmpty("collider");
 												colliderCount.setValue(ParseUtil.valueOfOmittingType(colliderTag.get("number")));
-												colliderCenterX.setValue(ParseUtil.valueOfOmittingType(colliderTag.getList("center", Tag.TAG_DOUBLE).get(0)));
-												colliderCenterY.setValue(ParseUtil.valueOfOmittingType(colliderTag.getList("center", Tag.TAG_DOUBLE).get(1)));
-												colliderCenterZ.setValue(ParseUtil.valueOfOmittingType(colliderTag.getList("center", Tag.TAG_DOUBLE).get(2)));
-												colliderSizeX.setValue(ParseUtil.valueOfOmittingType(colliderTag.getList("size", Tag.TAG_DOUBLE).get(0)));
-												colliderSizeY.setValue(ParseUtil.valueOfOmittingType(colliderTag.getList("size", Tag.TAG_DOUBLE).get(1)));
-												colliderSizeZ.setValue(ParseUtil.valueOfOmittingType(colliderTag.getList("size", Tag.TAG_DOUBLE).get(2)));
+												colliderCenterX.setValue(ParseUtil.valueOfOmittingType(colliderTag.getListOrEmpty("center").get(0)));
+												colliderCenterY.setValue(ParseUtil.valueOfOmittingType(colliderTag.getListOrEmpty("center").get(1)));
+												colliderCenterZ.setValue(ParseUtil.valueOfOmittingType(colliderTag.getListOrEmpty("center").get(2)));
+												colliderSizeX.setValue(ParseUtil.valueOfOmittingType(colliderTag.getListOrEmpty("size").get(0)));
+												colliderSizeY.setValue(ParseUtil.valueOfOmittingType(colliderTag.getListOrEmpty("size").get(1)));
+												colliderSizeZ.setValue(ParseUtil.valueOfOmittingType(colliderTag.getListOrEmpty("size").get(2)));
 											} else {
 												colliderPopup._setValue(null);
 												colliderCount.setValue("");
@@ -499,7 +498,7 @@ public class ImportAnimationsScreen extends Screen {
 			antic.setResponder((input) -> {
 				if (!StringUtil.isNullOrEmpty(input)) {
 					ListTag phases = this.fakeAnimations.get(this.animationGrid.getRowposition()).getParameter("phases");
-					CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+					CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 					phaseTag.putFloat("antic", Float.valueOf(input));
 				}
 			});
@@ -507,7 +506,7 @@ public class ImportAnimationsScreen extends Screen {
 			preDelay.setResponder((input) -> {
 				if (!StringUtil.isNullOrEmpty(input)) {
 					ListTag phases = this.fakeAnimations.get(this.animationGrid.getRowposition()).getParameter("phases");
-					CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+					CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 					float f = Float.valueOf(input);
 					
 					phaseTag.putFloat("preDelay", f);
@@ -518,7 +517,7 @@ public class ImportAnimationsScreen extends Screen {
 			contact.setResponder((input) -> {
 				if (!StringUtil.isNullOrEmpty(input)) {
 					ListTag phases = this.fakeAnimations.get(this.animationGrid.getRowposition()).getParameter("phases");
-					CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+					CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 					float f = Float.valueOf(input);
 					
 					phaseTag.putFloat("contact", f);
@@ -529,7 +528,7 @@ public class ImportAnimationsScreen extends Screen {
 			recovery.setResponder((input) -> {
 				if (!StringUtil.isNullOrEmpty(input)) {
 					ListTag phases = this.fakeAnimations.get(this.animationGrid.getRowposition()).getParameter("phases");
-					CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+					CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 					phaseTag.putFloat("recovery", Float.valueOf(input));
 				}
 			});
@@ -575,7 +574,7 @@ public class ImportAnimationsScreen extends Screen {
 				tag.put("size", size);
 				EditorAnimation fakeAnimation = this.fakeAnimations.get(this.animationGrid.getRowposition());
 				ListTag phases = fakeAnimation.getParameter("phases");
-				CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+				CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 				
 				try {
 					Collider collider = ColliderPreset.deserializeSimpleCollider(tag);
@@ -626,7 +625,7 @@ public class ImportAnimationsScreen extends Screen {
 			colliderJoint._setResponder((joint) -> {
 				if (joint != null) {
 					ListTag phases = this.fakeAnimations.get(this.animationGrid.getRowposition()).getParameter("phases");
-					CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+					CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 					phaseTag.putString("joint", this.modelPreviewer.getArmature().toString() + "." + joint.getName());
 					
 					this.modelPreviewer.setColliderJoint(joint);
@@ -636,7 +635,7 @@ public class ImportAnimationsScreen extends Screen {
 			interactionHand._setResponder((hand) -> {
 				if (hand != null) {
 					ListTag phases = this.fakeAnimations.get(this.animationGrid.getRowposition()).getParameter("phases");
-					CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+					CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 					phaseTag.putString("hand", hand.toString());
 				}
 			});
@@ -644,18 +643,18 @@ public class ImportAnimationsScreen extends Screen {
 			colliderPopup._setResponder((pair) -> {
 				if (pair.getSecond() != null) {
 					ListTag phases = this.fakeAnimations.get(this.animationGrid.getRowposition()).getParameter("phases");
-					CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+					CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 					CompoundTag colliderTag = new CompoundTag();
 					pair.getSecond().serialize(colliderTag);
 					
 					colliderCount.setValue(String.valueOf(colliderTag.getInt("number")));
 					
-					ListTag centerVec = colliderTag.getList("center", Tag.TAG_DOUBLE);
+					ListTag centerVec = colliderTag.getListOrEmpty("center");
 					colliderCenterX.setValue(String.valueOf(centerVec.getDouble(0)));
 					colliderCenterY.setValue(String.valueOf(centerVec.getDouble(1)));
 					colliderCenterZ.setValue(String.valueOf(centerVec.getDouble(2)));
 					
-					ListTag sizeVec = colliderTag.getList("size", Tag.TAG_DOUBLE);
+					ListTag sizeVec = colliderTag.getListOrEmpty("size");
 					colliderSizeX.setValue(String.valueOf(sizeVec.getDouble(0)));
 					colliderSizeY.setValue(String.valueOf(sizeVec.getDouble(1)));
 					colliderSizeZ.setValue(String.valueOf(sizeVec.getDouble(2)));
@@ -665,7 +664,7 @@ public class ImportAnimationsScreen extends Screen {
 					this.modelPreviewer.setCollider(pair.getSecond(), colliderJoint._getValue());
 				} else {
 					ListTag phases = this.fakeAnimations.get(this.animationGrid.getRowposition()).getParameter("phases");
-					CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
+					CompoundTag phaseTag = phases.getCompoundOrEmpty(phasesGrid.getRowposition());
 					
 					if (phaseTag.contains("collider")) {
 						colliderCount.setValue("");
@@ -828,7 +827,7 @@ public class ImportAnimationsScreen extends Screen {
 					try {
 						File file = path.toFile();
 						stream = new FileInputStream(file);
-						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, ResourceLocation.fromNamespaceAndPath(modid, file.getName()));
+						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, Identifier.fromNamespaceAndPath(modid, file.getName()));
 						String armatureName = this.modelPreviewer.getArmature().get().toString();
 						armatureName = armatureName.substring(armatureName.indexOf(":") + 1);
 						
@@ -861,22 +860,25 @@ public class ImportAnimationsScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-		if (this.modelPreviewer.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
+		if (this.modelPreviewer.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		if (this.inputComponentsList.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+		if (this.inputComponentsList.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractBackground(guiGraphics, mouseX, mouseY, partialTicks);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 	
 	private String createRealAnimations(List<EditorAnimation> fakeAnimations) {

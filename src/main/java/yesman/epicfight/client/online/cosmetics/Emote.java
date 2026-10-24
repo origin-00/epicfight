@@ -2,7 +2,7 @@ package yesman.epicfight.client.online.cosmetics;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.EmoteAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -18,7 +18,7 @@ public record Emote(AssetAccessor<? extends EmoteAnimation> animation, String ti
             PreviewCameraTransform.CODEC.fieldOf("preview_camera_transform").forGetter(Emote::previewCameraTransform)
         )
         .apply(instance, (animationName, title, snapshotTimeStampOptional, previewCameraTransform) -> {
-            return new Emote(AnimationManager.trasientAccessor(ResourceLocation.parse(animationName)), title, snapshotTimeStampOptional.orElse(0.0F), previewCameraTransform);
+            return new Emote(AnimationManager.trasientAccessor(Identifier.parse(animationName)), title, snapshotTimeStampOptional.orElse(0.0F), previewCameraTransform);
         })
     );
 

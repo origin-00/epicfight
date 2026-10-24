@@ -3,7 +3,7 @@ package yesman.epicfight.api.ex_cap.modules.core.data;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import yesman.epicfight.api.ex_cap.managers.ConditionalManager;
 import yesman.epicfight.api.ex_cap.managers.MovesetManager;
@@ -21,7 +21,7 @@ import java.util.Map;
  * @deprecated For Removal. Functions transferred to WeaponModifier
  */
 @Deprecated(forRemoval = true)
-public record ExCapData(List<ProviderConditional.Builder> conditionals, Map<Style, ResourceLocation> sets) {
+public record ExCapData(List<ProviderConditional.Builder> conditionals, Map<Style, Identifier> sets) {
 
     public void apply(WeaponCapability.Builder cap)
     {
@@ -37,7 +37,7 @@ public record ExCapData(List<ProviderConditional.Builder> conditionals, Map<Styl
     public static class Builder {
 
         private final List<ProviderConditional.Builder> conditionals = Lists.newArrayList();
-        private final Map<Style, ResourceLocation> moveSets = Maps.newHashMap();
+        private final Map<Style, Identifier> moveSets = Maps.newHashMap();
 
         public static Builder deserialize(JsonElement jsonElement)
         {
@@ -45,7 +45,7 @@ public record ExCapData(List<ProviderConditional.Builder> conditionals, Map<Styl
             JsonElement conditionals = jsonElement.getAsJsonObject().get("conditionals");
             if (conditionals != null && conditionals.isJsonArray())
             {
-                conditionals.getAsJsonArray().forEach(el -> builder.addConditional(ResourceLocation.parse(el.getAsJsonObject().get("id").getAsString())));
+                conditionals.getAsJsonArray().forEach(el -> builder.addConditional(Identifier.parse(el.getAsJsonObject().get("id").getAsString())));
             }
             JsonElement moveSets = jsonElement.getAsJsonObject().get("move_sets");
             if (moveSets != null && moveSets.isJsonObject())
@@ -53,7 +53,7 @@ public record ExCapData(List<ProviderConditional.Builder> conditionals, Map<Styl
                 moveSets.getAsJsonObject().entrySet().forEach(entry ->
                 {
                     Style style = Style.ENUM_MANAGER.get(entry.getKey());
-                    ResourceLocation moveSet = ResourceLocation.tryParse(entry.getValue().getAsString());
+                    Identifier moveSet = Identifier.tryParse(entry.getValue().getAsString());
                     if (style != null && moveSet != null)
                     {
                         builder.addMoveset(style, moveSet);
@@ -64,14 +64,14 @@ public record ExCapData(List<ProviderConditional.Builder> conditionals, Map<Styl
         }
 
         @ApiStatus.Internal
-        public void addConditional(ResourceLocation... conds) {
-            for (ResourceLocation cond : conds) {
+        public void addConditional(Identifier... conds) {
+            for (Identifier cond : conds) {
                 conditionals.add(ConditionalManager.get(cond));
             }
         }
 
         @ApiStatus.Internal
-        public void addMoveset(Style style, ResourceLocation builder)
+        public void addMoveset(Style style, Identifier builder)
         {
             moveSets.put(style, builder);
         }

@@ -5,20 +5,23 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TieredItem;
+import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.neoforge.common.extensions.ILevelReaderExtension;
 import yesman.epicfight.registry.entries.EpicFightSkills;
 import yesman.epicfight.world.capabilities.item.WeaponCapabilityPresets;
+import yesman.epicfight.world.item.ToolMaterials;
 
 public class ExtraDamageInstance {
 	public static final ExtraDamage EVISCERATE_LOST_HEALTH = new ExtraDamage(
 		(attacker, itemstack, target, baseDamage, params) -> {
 			int tier = 0;
 			
-			if (itemstack.getItem() instanceof TieredItem tieredItem) {
-				tier += WeaponCapabilityPresets.vanillaTierToLevel(tieredItem.getTier());
+			ToolMaterial material = ToolMaterials.of(itemstack);
+			
+			if (material != null) {
+				tier += WeaponCapabilityPresets.vanillaTierToLevel(material);
 			}
 			
             // Bad implementation: add parameter to ExtraDamageFunction to accept skill parameters
@@ -27,8 +30,10 @@ public class ExtraDamageInstance {
 		(levelReader, itemstack, tooltips, baseDamage, params) -> {
 			int tier = 0;
 			
-			if (itemstack.getItem() instanceof TieredItem tieredItem) {
-				tier += WeaponCapabilityPresets.vanillaTierToLevel(tieredItem.getTier());
+			ToolMaterial material = ToolMaterials.of(itemstack);
+			
+			if (material != null) {
+				tier += WeaponCapabilityPresets.vanillaTierToLevel(material);
 			}
 			
 			tooltips.append(Component.translatable("damage_source.epicfight.target_lost_health", Component.literal(ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format((params[0] + tier * 0.05F) * 100F) + "%").withStyle(ChatFormatting.RED)).withStyle(ChatFormatting.DARK_GRAY));

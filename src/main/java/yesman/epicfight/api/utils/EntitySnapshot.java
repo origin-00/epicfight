@@ -1,5 +1,8 @@
 package yesman.epicfight.api.utils;
 
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -7,26 +10,23 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.PlayerModelPart;
-import net.minecraft.world.item.ArmorItem;
+import yesman.epicfight.world.item.ArmorItems;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.ClientHooks;
 import org.apache.logging.log4j.Logger;
 import org.joml.Matrix4f;
 import yesman.epicfight.api.animation.Pose;
@@ -82,11 +82,13 @@ public class EntitySnapshot<T extends LivingEntityPatch<?>> {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public EntitySnapshot(T entitypatch) {
-		LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> vanillarenderer = (LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>>)Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entitypatch.getOriginal());
+		LivingEntityRenderer<LivingEntity, ?, ?> vanillarenderer = (LivingEntityRenderer<LivingEntity, ?, ?>)Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entitypatch.getOriginal());
 		PatchedEntityRenderer patchedrenderer = (PatchedEntityRenderer)RenderEngine.getInstance().getEntityRenderer(entitypatch.getOriginal());
 		AssetAccessor<SkinnedMesh> meshAccessor = patchedrenderer.getMeshProvider(entitypatch);
 		
-		ResourceLocation textureLocation = vanillarenderer.getTextureLocation(entitypatch.getOriginal());
+		// Textures come from the render state since 1.21.2.
+		LivingEntityRenderState vanillaState = (LivingEntityRenderState)((EntityRenderer)vanillarenderer).createRenderState(entitypatch.getOriginal(), 1.0F);
+		Identifier textureLocation = ((LivingEntityRenderer)vanillarenderer).getTextureLocation(vanillaState);
 		
 		if (textureLocation == null) {
 			EpicFightMod.logAndStacktraceIfDevSide(Logger::warn, "No texture for " + entitypatch.getOriginal(), NullPointerException::new, "No texture is provided by vanilla renderer " + vanillarenderer.getClass().getSimpleName());
@@ -105,19 +107,24 @@ public class EntitySnapshot<T extends LivingEntityPatch<?>> {
 		
 		ImmutableList.Builder<RenderableFigure> builder = ImmutableList.builder();
 		
-		entitypatch.getOriginal().getArmorSlots().forEach(itemstack -> {
-			if (!(itemstack.getItem() instanceof ArmorItem)) {
-				return;
+		for (EquipmentSlot armorSlot : EquipmentSlot.values()) {
+			if (armorSlot.getType() != EquipmentSlot.Type.HUMANOID_ARMOR) {
+				continue;
 			}
-			
-			EquipmentSlot armorSlot = itemstack.getEquipmentSlot();
+
+			ItemStack itemstack = entitypatch.getOriginal().getItemBySlot(armorSlot);
+
+			if (!ArmorItems.isArmor(itemstack.getItem())) {
+				continue;
+			}
+
 			SkinnedMesh armor = WearableItemLayer.getCachedModel(itemstack.getItem());
-			ResourceLocation texture = WearableItemLayer.getArmorResource(entitypatch.getOriginal(), itemstack, armorSlot, null);
-			
-			if (armor != null) {
+			Identifier texture = WearableItemLayer.getArmorResource(entitypatch.getOriginal(), itemstack, armorSlot);
+
+			if (armor != null && texture != null) {
 				builder.add(new RenderableFigure(armor, texture));
 			}
-		});
+		}
 		
 		this.armorMeshes = builder.build();
 		
@@ -152,7 +159,7 @@ public class EntitySnapshot<T extends LivingEntityPatch<?>> {
 		}
 	}
 	
-	public void renderTextured(PoseStack poseStack, MultiBufferSource buffers, Function<ResourceLocation, RenderType> rendertypeFunction, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a) {
+	public void renderTextured(PoseStack poseStack, MultiBufferSource buffers, Function<Identifier, RenderType> rendertypeFunction, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a) {
 		if (this.entityFigure.mesh == null || this.entityFigure.texture == null) {
 			return;
 		}
@@ -169,25 +176,40 @@ public class EntitySnapshot<T extends LivingEntityPatch<?>> {
 	public void renderItems(PoseStack poseStack, MultiBufferSource buffers, RenderType rendertype, Mesh.DrawingFunction drawingFunction, int packedLight, float alpha) {
 		for (Pair<InteractionHand, ItemStack> items : this.handItems) {
 			ItemStack itemstack = items.getSecond();
-			
+
 			if (RenderEngine.getInstance().getItemRenderer(itemstack).appearedInAfterimage()) {
-				poseStack.pushPose();
-				BakedModel bakedmodel = Minecraft.getInstance().getItemRenderer().getModel(itemstack, this.entitypatch.getOriginal().level(), this.entitypatch.getOriginal(), this.entitypatch.getOriginal().getId() + ItemDisplayContext.THIRD_PERSON_RIGHT_HAND.ordinal());
-				
-				if (!bakedmodel.isCustomRenderer()) {
-					MathUtils.mulStack(poseStack, RenderEngine.getInstance().getItemRenderer(itemstack).getCorrectionMatrix(this.entitypatch, items.getFirst(), this.poseMatrices));
-					bakedmodel = ClientHooks.handleCameraTransforms(poseStack, bakedmodel, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, false);
-					poseStack.translate(-0.5F, -0.5F, -0.5F);
-					
-					for (var model : bakedmodel.getRenderPasses(itemstack, true)) {
-						renderModelLists(model, itemstack, packedLight, OverlayTexture.NO_OVERLAY, alpha, poseStack, buffers.getBuffer(rendertype), drawingFunction);
-					}
+				// Since 1.21.4 item models resolve into an ItemStackRenderState: per-layer quads with
+				// their display transform and tints. Layers drawn by special renderers are skipped,
+				// as custom-rendered items always were.
+				ItemStackRenderState itemState = new ItemStackRenderState();
+				Minecraft.getInstance().getItemModelResolver().updateForLiving(itemState, itemstack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, this.entitypatch.getOriginal());
+
+				if (itemState.isEmpty()) {
+					continue;
 				}
+
+				poseStack.pushPose();
+				MathUtils.mulStack(poseStack, RenderEngine.getInstance().getItemRenderer(itemstack).getCorrectionMatrix(this.entitypatch, items.getFirst(), this.poseMatrices));
+				VertexConsumer buffer = buffers.getBuffer(rendertype);
+
+				for (int i = 0; i < itemState.activeLayerCount; i++) {
+					ItemStackRenderState.LayerRenderState layer = itemState.layers[i];
+
+					if (layer.specialRenderer != null) {
+						continue;
+					}
+
+					poseStack.pushPose();
+					layer.applyTransform(poseStack.last());
+					renderQuadList(poseStack, buffer, layer.prepareQuadList(), layer.tintLayers != null ? layer.tintLayers.toIntArray() : ItemStackRenderState.LayerRenderState.EMPTY_TINTS, packedLight, OverlayTexture.NO_OVERLAY, alpha, drawingFunction);
+					poseStack.popPose();
+				}
+
 				poseStack.popPose();
 			}
 		}
 	}
-	
+
 	public OpenMatrix4f[] poseMatrices() {
 		return this.poseMatrices;
 	}
@@ -208,42 +230,24 @@ public class EntitySnapshot<T extends LivingEntityPatch<?>> {
 		return this.position;
 	}
 	
-	/**
-	 * Code copy from {@link ItemRenderer#renderModelLists} but replaces putting bulk data to follow DrawingFunction
-	 */
-	@SuppressWarnings("deprecation")
-	public static void renderModelLists(BakedModel pModel, ItemStack pStack, int pCombinedLight, int pCombinedOverlay, float alpha, PoseStack pPoseStack, VertexConsumer pBuffer, Mesh.DrawingFunction drawingFunction) {
-		RandomSource randomsource = RandomSource.create();
-		
-		for (Direction direction : Direction.values()) {
-			randomsource.setSeed(42L);
-			renderQuadList(pPoseStack, pBuffer, pModel.getQuads((BlockState)null, direction, randomsource), pStack, pCombinedLight, pCombinedOverlay, alpha, drawingFunction);
-		}
-
-		randomsource.setSeed(42L);
-		renderQuadList(pPoseStack, pBuffer, pModel.getQuads((BlockState)null, (Direction)null, randomsource), pStack, pCombinedLight, pCombinedOverlay, alpha, drawingFunction);
-	}
-	
-	public static void renderQuadList(PoseStack pPoseStack, VertexConsumer pBuffer, List<BakedQuad> pQuads, ItemStack pItemStack, int pCombinedLight, int pCombinedOverlay, float alpha, Mesh.DrawingFunction drawingFunction) {
-		boolean flag = !pItemStack.isEmpty();
+	/// Writes item quads through a drawing function, tinting by the layer's tint list like
+	/// `ItemFeatureRenderer` does.
+	public static void renderQuadList(PoseStack pPoseStack, VertexConsumer pBuffer, List<BakedQuad> pQuads, int[] tints, int pCombinedLight, int pCombinedOverlay, float alpha, Mesh.DrawingFunction drawingFunction) {
 		PoseStack.Pose posestack$pose = pPoseStack.last();
-		
+
 		for (BakedQuad bakedquad : pQuads) {
-			int i = -1;
-			
-			if (flag && bakedquad.isTinted()) {
-				i = Minecraft.getInstance().getItemColors().getColor(pItemStack, bakedquad.getTintIndex());
-			}
-			
+			int tintIndex = bakedquad.materialInfo().tintIndex();
+			int i = tintIndex >= 0 && tintIndex < tints.length ? tints[tintIndex] : -1;
+
 			float f = (float) (i >> 16 & 255) / 255.0F;
 			float f1 = (float) (i >> 8 & 255) / 255.0F;
 			float f2 = (float) (i & 255) / 255.0F;
-			
+
 			drawingFunction.putBulkData(posestack$pose, bakedquad, pBuffer, f, f1, f2, alpha, pCombinedLight, pCombinedOverlay, true);
 		}
 	}
-	
-	public record RenderableFigure(Mesh mesh, ResourceLocation texture) {
+
+	public record RenderableFigure(Mesh mesh, Identifier texture) {
 	}
 	
 	public static class PlayerSnapshot extends EntitySnapshot<AbstractClientPlayerPatch<?>> {
@@ -265,7 +269,7 @@ public class EntitySnapshot<T extends LivingEntityPatch<?>> {
 				this.unboundPoseMatrices[i] = new OpenMatrix4f(entitypatch.getArmature().getPoseMatrices()[i]);
 			}
 			
-			if (entitypatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE) && entitypatch.getOriginal().getSkin().capeTexture() != null) {
+			if (entitypatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE) && entitypatch.getOriginal().getSkin().cape() != null) {
 				entitypatch.getSimulator(SimulationTypes.CLOTH).ifPresent(clohtSimulator -> {
 					clohtSimulator.getRunningObject(ClothSimulator.PLAYER_CLOAK).ifPresent(clothObj -> {
 						ClothObject capturedClothObj = clothObj.captureMyself();
@@ -277,7 +281,7 @@ public class EntitySnapshot<T extends LivingEntityPatch<?>> {
 				        };
 						
 						capturedClothObj.tick(entitypatch, partialColliderTransformProvider, 1.0F, entitypatch.getArmature(), this.unboundPoseMatrices);
-						this.capeFigure = new RenderableFigure(capturedClothObj, entitypatch.getOriginal().getSkin().capeTexture());
+						this.capeFigure = new RenderableFigure(capturedClothObj, entitypatch.getOriginal().getSkin().cape().texturePath());
 					});
 				});
 			}
@@ -293,7 +297,7 @@ public class EntitySnapshot<T extends LivingEntityPatch<?>> {
 		}
 		
 		@Override
-		public void renderTextured(PoseStack poseStack, MultiBufferSource buffers, Function<ResourceLocation, RenderType> rendertypeFunction, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a) {
+		public void renderTextured(PoseStack poseStack, MultiBufferSource buffers, Function<Identifier, RenderType> rendertypeFunction, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a) {
 			super.renderTextured(poseStack, buffers, rendertypeFunction, drawingFunction, packedLight, r, g, b, a);
 			
 			if (this.capeFigure != null) {

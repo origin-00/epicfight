@@ -2,7 +2,7 @@ package yesman.epicfight.network;
 
 import com.google.common.collect.Maps;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.client.*;
 import yesman.epicfight.network.common.BiDirectionalAnimationVariable;
@@ -63,7 +63,7 @@ public interface ManagedCustomPacketPayload extends CustomPacketPayload {
     CustomPacketPayload.Type<BiDirectionalSyncEmoteSlots> BI_DIRECTIONAL_SYNC_EMOTE_SLOTS = registerPayloadType(BiDirectionalSyncEmoteSlots.class, EpicFightMod.MODID, "bi_directional_emote_slots");
 
 	static <T extends ManagedCustomPacketPayload> CustomPacketPayload.Type<T> registerPayloadType(Class<T> type, String modid, String payloadId) {
-		CustomPacketPayload.Type<T> packet = new CustomPacketPayload.Type<T> (ResourceLocation.fromNamespaceAndPath(modid, payloadId));
+		CustomPacketPayload.Type<T> packet = new CustomPacketPayload.Type<T> (Identifier.fromNamespaceAndPath(modid, payloadId));
 		PAYLOAD_TYPES.put(type, packet);
 		
 		return packet;

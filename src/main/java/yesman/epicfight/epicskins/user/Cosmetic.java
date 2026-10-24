@@ -1,7 +1,7 @@
 package yesman.epicfight.epicskins.user;
 
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Mesh;
@@ -12,7 +12,7 @@ import yesman.epicfight.client.online.RemoteAssets;
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
-public record Cosmetic(int seq, boolean unlocked, String title, String description, String resourceFile, Slot slot, @Nullable ResourceLocation textureLocation, boolean useIntParam1, boolean useBoolParam1) {
+public record Cosmetic(int seq, boolean unlocked, String title, String description, String resourceFile, Slot slot, @Nullable Identifier textureLocation, boolean useIntParam1, boolean useBoolParam1) {
 	public Cosmetic(JsonObject json) {
 		this(
 			  GsonHelper.getAsInt(json, "seq")
@@ -30,7 +30,7 @@ public record Cosmetic(int seq, boolean unlocked, String title, String descripti
 	public AssetAccessor<? extends Mesh> getAsMesh(Consumer<Mesh> onDownloaded) {
 		if (this.slot == Slot.CAPE) {
 			if (this.seq == -1) {
-				return AuthenticationHelperImpl.getInstance().playerInfo().getSkin().capeTexture() != null ? Meshes.CAPE_DEFAULT : null;
+				return AuthenticationHelperImpl.getInstance().playerInfo().getSkin().cape() != null ? Meshes.CAPE_DEFAULT : null;
 			} else {
 				return RemoteAssets.getInstance().getRemoteMesh(this.seq, this.resourceFile, onDownloaded);
 			}

@@ -1,19 +1,17 @@
 package yesman.epicfight.client;
 
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import yesman.epicfight.client.particle.EpicFightParticleRenderTypes;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.main.AuthenticationHelper;
 import yesman.epicfight.network.server.SPPlayUISound;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 
 import javax.annotation.Nullable;
-import java.util.Comparator;
 import java.util.List;
 
 public class ClientEngine {
@@ -23,7 +21,10 @@ public class ClientEngine {
         return instance;
     }
 
-    public Minecraft minecraft;
+    /// The client instance. Not cached: since 26.1 this is constructed before the Minecraft instance exists.
+    public Minecraft minecraft() {
+        return Minecraft.getInstance();
+    }
 
     private boolean vanillaModelDebuggingMode = false;
     private AuthenticationHelper authenticationHelper = new AuthenticationHelper() {
@@ -52,7 +53,6 @@ public class ClientEngine {
 
     public ClientEngine() {
         instance = this;
-        this.minecraft = Minecraft.getInstance();
     }
 
     public boolean switchVanillaModelDebuggingMode() {
@@ -88,42 +88,12 @@ public class ClientEngine {
     }
 
     public boolean isEpicFightMode() {
-        LocalPlayerPatch localPlayerPatch = EpicFightCapabilities.getEntityPatch(this.minecraft.player, LocalPlayerPatch.class);
+        LocalPlayerPatch localPlayerPatch = EpicFightCapabilities.getEntityPatch(this.minecraft().player, LocalPlayerPatch.class);
 
         if (localPlayerPatch == null) {
             return false;
         }
 
         return localPlayerPatch.isEpicFightMode();
-    }
-
-    /// Copy from [ClientHooks#makeParticleRenderTypeComparator] but prioritize [ParticleRenderType#CUSTOM] lowest since it resets GL parameters setup
-    public static Comparator<ParticleRenderType> makeCustomLowestParticleRenderTypeComparator(List<ParticleRenderType> renderOrder) {
-        Comparator<ParticleRenderType> vanillaComparator = Comparator.comparingInt(renderOrder::indexOf);
-
-        return (t1, t2) -> {
-            boolean vanillaType1 = renderOrder.contains(t1);
-            boolean vanillaType2 = renderOrder.contains(t2);
-
-            if (vanillaType1 && vanillaType2) {
-                return vanillaComparator.compare(t1, t2);
-            }
-
-            if (t1.equals(t2)) {
-                return 0;
-            }
-
-            if (t1 == ParticleRenderType.CUSTOM || t1 == EpicFightParticleRenderTypes.ENTITY_PARTICLE) {
-                return 1;
-            } else if (t2 == ParticleRenderType.CUSTOM || t2 == EpicFightParticleRenderTypes.ENTITY_PARTICLE) {
-                return -1;
-            }
-
-            if (!vanillaType1 && !vanillaType2) {
-                return Integer.compare(System.identityHashCode(t1), System.identityHashCode(t2));
-            }
-
-            return vanillaType1 ? -1 : 1;
-        };
     }
 }

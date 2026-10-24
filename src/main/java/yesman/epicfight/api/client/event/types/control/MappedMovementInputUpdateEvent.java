@@ -1,6 +1,6 @@
 package yesman.epicfight.api.client.event.types.control;
 
-import net.minecraft.client.player.Input;
+import net.minecraft.client.player.ClientInput;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public class MappedMovementInputUpdateEvent extends LivingEntityPatchEvent {
     @SuppressWarnings("DeprecatedIsStillUsed")
     @NotNull
     @Deprecated
-    private final Input movementInput;
+    private final ClientInput movementInput;
 
     // This was set as @Nullable to introduce PlayerInputState in a backward compatible way.
     // As soon as we introduce a breaking change by removing the existing constructor that sets movementInput, we
@@ -36,7 +36,7 @@ public class MappedMovementInputUpdateEvent extends LivingEntityPatchEvent {
     /// @see InputManager
     @Deprecated
     @ApiStatus.Internal
-    public MappedMovementInputUpdateEvent(LocalPlayerPatch playerPatch, @NotNull Input input) {
+    public MappedMovementInputUpdateEvent(LocalPlayerPatch playerPatch, @NotNull ClientInput input) {
         super(playerPatch);
         this.movementInput = input;
         this.inputState = null;
@@ -63,7 +63,7 @@ public class MappedMovementInputUpdateEvent extends LivingEntityPatchEvent {
     /// @return the vanilla input instance (deprecated)
     /// @see InputManager#setInputState 
     @Deprecated
-    public @NotNull Input getMovementInput() {
+    public @NotNull ClientInput getMovementInput() {
         return this.movementInput;
     }
 

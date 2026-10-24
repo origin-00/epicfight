@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	"key.epicfight.gui": "GUI Epic Fight",
 	"key.epicfight.combat": "Walka Epic Fight",
+	"key.category.epicfight.combat": "Walka Epic Fight",
+	"key.category.epicfight.gui": "GUI Epic Fight",
 	"key.epicfight.show_tooltip": "Pokaż podpowiedź do wewnętrznej umiejętności broni",
 	"key.epicfight.switch_mode": "Przełącz tryb Bitwy/Wydobywania",
 	"key.epicfight.attack": "Attack",

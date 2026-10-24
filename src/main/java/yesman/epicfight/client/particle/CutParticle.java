@@ -1,5 +1,6 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.util.RandomSource;
 import java.util.Random;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -32,7 +33,7 @@ public class CutParticle extends HitParticle {
 	    }
 	    
 		@Override
-		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
 			if (!ClientConfig.bloodEffects) {
 				return null;
 			}

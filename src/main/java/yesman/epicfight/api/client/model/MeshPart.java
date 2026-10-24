@@ -1,5 +1,6 @@
 package yesman.epicfight.api.client.model;
 
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -11,7 +12,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 

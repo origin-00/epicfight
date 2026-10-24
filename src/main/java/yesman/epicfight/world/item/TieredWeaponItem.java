@@ -4,14 +4,18 @@ import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import yesman.epicfight.world.capabilities.item.WeaponCapabilityPresets;
 
-public abstract class TieredWeaponItem extends SwordItem {
-    public static ItemAttributeModifiers createAttributes(Tier tier, float attackDamage, float attackSpeed, float attackSpeedModifier) {
-        return createAttributes(attackDamage + tier.getAttackDamageBonus(), attackSpeed + WeaponCapabilityPresets.vanillaTierToLevel(tier) * attackSpeedModifier);
+/// A weapon built from a [ToolMaterial], replacing the `SwordItem`/`Tier` pair removed in 1.21.2.
+///
+/// The sword components (durability, repair material, enchantability, cobweb mining) come from
+/// [Item.Properties#sword]; [#properties] then replaces the vanilla sword attributes with the
+/// weapon-specific ones, so callers only pass the material and the attribute modifiers.
+public abstract class TieredWeaponItem extends WeaponItem {
+    public static ItemAttributeModifiers createAttributes(ToolMaterial material, float attackDamage, float attackSpeed, float attackSpeedModifier) {
+        return createAttributes(attackDamage + material.attackDamageBonus(), attackSpeed + WeaponCapabilityPresets.vanillaTierToLevel(material) * attackSpeedModifier);
     }
 	
     public static ItemAttributeModifiers createAttributes(float attackDamage, float attackSpeed) {
@@ -29,7 +33,19 @@ public abstract class TieredWeaponItem extends SwordItem {
             .build();
     }
     
-	public TieredWeaponItem(Tier tier, Item.Properties properties) {
-		super(tier, properties);
+    /// Applies the sword components of `material`, then overrides the attributes with `attributes`.
+    public static Item.Properties properties(Item.Properties properties, ToolMaterial material, ItemAttributeModifiers attributes) {
+        return properties.sword(material, 0.0F, 0.0F).attributes(attributes);
+    }
+    
+    private final ToolMaterial material;
+    
+	public TieredWeaponItem(ToolMaterial material, Item.Properties properties) {
+		super(properties);
+		this.material = material;
+	}
+	
+	public ToolMaterial getMaterial() {
+		return this.material;
 	}
 }

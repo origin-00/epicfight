@@ -1,5 +1,6 @@
 package yesman.epicfight.world.entity;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
@@ -9,7 +10,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
-import net.minecraft.world.entity.monster.WitherSkeleton;
+import net.minecraft.world.entity.monster.skeleton.WitherSkeleton;
 import net.minecraft.world.level.Level;
 import yesman.epicfight.registry.entries.EpicFightEntityTypes;
 
@@ -38,16 +39,16 @@ public class WitherSkeletonMinion extends WitherSkeleton {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false, livingentity -> (!livingentity.getType().is(EntityTypeTags.UNDEAD) && livingentity.attackable())));
+		this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false, (livingentity, level) -> (!livingentity.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD) && livingentity.attackable())));
 	}
 	
 	@Override
-	public boolean hurt(DamageSource source, float amount) {
+	public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
 		if (this.summoner != null && source.getEntity() == this.summoner) {
 			return false;
 		}
 		
-		return super.hurt(source, amount);
+		return super.hurtServer(level, source, amount);
 	}
 	
 	@Override

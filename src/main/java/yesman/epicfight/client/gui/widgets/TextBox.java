@@ -2,7 +2,7 @@ package yesman.epicfight.client.gui.widgets;
 
 import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
@@ -75,7 +75,7 @@ public class TextBox extends AbstractWidget implements AnchoredWidget, Scrollabl
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), 0xBF000000);
 
         var textLine = this.font.split(this.getMessage(), this.width - 6 - (this.isScrollVisible() ? this.getScrollWidth() : 0));
@@ -84,7 +84,7 @@ public class TextBox extends AbstractWidget implements AnchoredWidget, Scrollabl
         this.preRenderProcess(guiGraphics);
 
         for (var text : textLine) {
-            guiGraphics.drawString(this.font, text, this.getX() + 3, textY, -1);
+            guiGraphics.text(this.font, text, this.getX() + 3, textY, -1);
             textY += this.getScrollStride();
         }
 
@@ -94,7 +94,7 @@ public class TextBox extends AbstractWidget implements AnchoredWidget, Scrollabl
     }
 
     @Override
-    public void renderScroll(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, int minX, int minY, int maxX, int maxY) {
+    public void renderScroll(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick, int minX, int minY, int maxX, int maxY) {
         guiGraphics.fill(minX, minY, maxX, maxY, 0x8BFFFFFF);
     }
 

@@ -34,12 +34,12 @@ import yesman.epicfight.client.ClientEngine;
 /// Future maintainers should consider refactoring or removing this class
 /// if it becomes problematic or a maintenance burden.
 public class CombatKeyMapping extends KeyMapping {
-    public CombatKeyMapping(String description, int code, String category) {
+    public CombatKeyMapping(String description, int code, KeyMapping.Category category) {
         this(description, InputConstants.Type.KEYSYM, code, category);
     }
 
     /// This key mapping only applies [KeyConflictContext#IN_GAME] since it represents player moves.
-    public CombatKeyMapping(String description, InputConstants.Type type, int code, String category) {
+    public CombatKeyMapping(String description, InputConstants.Type type, int code, KeyMapping.Category category) {
         super(description, KeyConflictContext.IN_GAME, type, code, category);
     }
 

@@ -1,10 +1,10 @@
 package yesman.epicfight.api.animation.types;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
@@ -27,8 +27,8 @@ public class MirrorAnimation extends StaticAnimation {
 	public MirrorAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends MirrorAnimation> accessor, String mainhandPath, String offhandPath, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, false, accessor, armature);
 
-		ResourceLocation mainhand = ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), mainhandPath);
-		ResourceLocation offhand = ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), offhandPath);
+		Identifier mainhand = Identifier.fromNamespaceAndPath(accessor.registryName().getNamespace(), mainhandPath);
+		Identifier offhand = Identifier.fromNamespaceAndPath(accessor.registryName().getNamespace(), offhandPath);
 		this.original = new DirectStaticAnimation(transitionTime, repeatPlay, mainhand, armature);
 		this.mirror = new DirectStaticAnimation(transitionTime, repeatPlay, offhand, armature);
 	}
@@ -54,7 +54,7 @@ public class MirrorAnimation extends StaticAnimation {
 	 *    weapon under {@code isMirrorMode}). So {@code isUsingItem()} ends up true with
 	 *    {@code getUsedItemHand() == MAIN_HAND} even when the actual shield is in the offhand --
 	 *    routing on {@code usedItemHand} alone would play the mainhand variant on an empty hand.
-	 *    Route directly to whichever hand actually holds a {@link UseAnim#BLOCK} item first.
+	 *    Route directly to whichever hand actually holds a {@link ItemUseAnimation#BLOCK} item first.
 	 *
 	 *  - F-swap mid-use ({@code BIPED_DRINK} / {@code _EAT} / {@code _SPYGLASS_USE}): the player
 	 *    presses F while right-clicking, items trade slots, but {@code usedItemHand} stays on
@@ -68,8 +68,8 @@ public class MirrorAnimation extends StaticAnimation {
 		ItemStack main = entity.getMainHandItem();
 		ItemStack off = entity.getOffhandItem();
 
-		boolean mainBlock = main.getUseAnimation() == UseAnim.BLOCK;
-		boolean offBlock = off.getUseAnimation() == UseAnim.BLOCK;
+		boolean mainBlock = main.getUseAnimation() == ItemUseAnimation.BLOCK;
+		boolean offBlock = off.getUseAnimation() == ItemUseAnimation.BLOCK;
 		if (mainBlock != offBlock) {
 			return mainBlock ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 		}

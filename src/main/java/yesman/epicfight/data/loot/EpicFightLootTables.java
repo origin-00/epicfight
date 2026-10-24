@@ -27,7 +27,7 @@ public class EpicFightLootTables {
 		int antiDropChance = 100 - modifier;
 		float dropChanceModifier = dropChance / (float)(antiDropChance + dropChance);
 		
-    	if (event.getName().equals(BuiltInLootTables.DESERT_PYRAMID.location())) {
+    	if (event.getName().equals(BuiltInLootTables.DESERT_PYRAMID.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 2.0F))
     			.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -46,7 +46,7 @@ public class EpicFightLootTables {
     		.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.JUNGLE_TEMPLE.location())) {
+    	if (event.getName().equals(BuiltInLootTables.JUNGLE_TEMPLE.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 2.0F))
         		.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -65,7 +65,7 @@ public class EpicFightLootTables {
     		.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.SIMPLE_DUNGEON.location())) {
+    	if (event.getName().equals(BuiltInLootTables.SIMPLE_DUNGEON.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 3.0F))
         		.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -79,7 +79,7 @@ public class EpicFightLootTables {
         	.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.ABANDONED_MINESHAFT.location())) {
+    	if (event.getName().equals(BuiltInLootTables.ABANDONED_MINESHAFT.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 3.0F))
         		.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -93,7 +93,7 @@ public class EpicFightLootTables {
         	.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.PILLAGER_OUTPOST.location())) {
+    	if (event.getName().equals(BuiltInLootTables.PILLAGER_OUTPOST.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 3.0F))
         		.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -107,7 +107,7 @@ public class EpicFightLootTables {
         	.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.UNDERWATER_RUIN_BIG.location())) {
+    	if (event.getName().equals(BuiltInLootTables.UNDERWATER_RUIN_BIG.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 3.0F))
         		.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -122,7 +122,7 @@ public class EpicFightLootTables {
         	.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.SHIPWRECK_MAP.location())) {
+    	if (event.getName().equals(BuiltInLootTables.SHIPWRECK_MAP.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 2.0F))
         		.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -136,7 +136,7 @@ public class EpicFightLootTables {
         	.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.STRONGHOLD_LIBRARY.location())) {
+    	if (event.getName().equals(BuiltInLootTables.STRONGHOLD_LIBRARY.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 5.0F))
     			.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -153,7 +153,7 @@ public class EpicFightLootTables {
     		.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.WOODLAND_MANSION.location())) {
+    	if (event.getName().equals(BuiltInLootTables.WOODLAND_MANSION.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 5.0F))
     			.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,
@@ -170,7 +170,7 @@ public class EpicFightLootTables {
     		.build());
     	}
     	
-    	if (event.getName().equals(BuiltInLootTables.BASTION_OTHER.location())) {
+    	if (event.getName().equals(BuiltInLootTables.BASTION_OTHER.identifier())) {
     		event.getTable().addPool(LootPool.lootPool().setRolls(UniformGenerator.between(1.0F, 4.0F))
     			.add(LootItem.lootTableItem(EpicFightItems.SKILLBOOK.get()).apply(SetSkillFunction.builder(
     				EpicFightSkills.BERSERKER,

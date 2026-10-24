@@ -7,7 +7,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jetbrains.annotations.Nullable;
 import yesman.epicfight.client.online.cosmetics.Emote;
@@ -43,7 +43,7 @@ public class PlayerEmoteSlots {
     }
 
     public void deserialize(CompoundTag compoundTag, RegistryAccess registryAccess) {
-        ListTag listTag = compoundTag.getList("emotes", CompoundTag.TAG_LIST);
+        ListTag listTag = compoundTag.getListOrEmpty("emotes");
         this.emoteTabs.clear();
 
         for (Tag pageTag : listTag) {
@@ -51,18 +51,18 @@ public class PlayerEmoteSlots {
             MutableInt slotIndex = new MutableInt();
 
             for (Tag registyNameTag : (ListTag)pageTag) {
-                String emoteName = registyNameTag.getAsString();
+                String emoteName = registyNameTag.asString().orElse("");
 
                 if (emoteName.isEmpty()) {
                     page.emotes[slotIndex.getValue()] = null;
                 } else {
-                    ResourceKey<Emote> emoteResourceKey = ResourceKey.create(EpicFightRegistries.Keys.EMOTE, ResourceLocation.parse(emoteName));
+                    ResourceKey<Emote> emoteResourceKey = ResourceKey.create(EpicFightRegistries.Keys.EMOTE, Identifier.parse(emoteName));
                     Optional<Holder.Reference<Emote>> emoteHolder = registryAccess.holder(emoteResourceKey);
 
                     emoteHolder.ifPresentOrElse(emote -> {
                         page.emotes[slotIndex.getValue()] = emote;
                     }, () -> {
-                        EpicFightMod.LOGGER.error("Unknown emote: {}. Ignored.", registyNameTag.getAsString());
+                        EpicFightMod.LOGGER.error("Unknown emote: {}. Ignored.", registyNameTag.asString().orElse(""));
                     });
                 }
 

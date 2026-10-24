@@ -1,5 +1,6 @@
 package yesman.epicfight.client.renderer.patched.layer;
 
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
@@ -12,7 +13,7 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
-public class RenderOriginalModelLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>> extends PatchedLayer<E, T, M, RenderLayer<E, M>> {
+public class RenderOriginalModelLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<?>> extends PatchedLayer<E, T, M, RenderLayer<?, ?>> {
 	private final String parentJoint;
 	private final Vec3f vec;
 	private final Vec3f rot;
@@ -24,7 +25,7 @@ public class RenderOriginalModelLayer<E extends LivingEntity, T extends LivingEn
 	}
 	
 	@Override
-	protected void renderLayer(T entitypatch, E entityliving, RenderLayer<E, M> vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
+	protected void renderLayer(T entitypatch, E entityliving, RenderLayer<?, ?> vanillaLayer, LivingEntityRenderState renderState, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
 		OpenMatrix4f modelMatrix = poses[entitypatch.getArmature().searchJointByName(this.parentJoint).getId()];
 		
 		poseStack.pushPose();
@@ -35,7 +36,7 @@ public class RenderOriginalModelLayer<E extends LivingEntity, T extends LivingEn
 		poseStack.mulPose(Axis.ZP.rotationDegrees(this.rot.z));
 		poseStack.scale(-1.0F, -1.0F, 1.0F);
 		
-		vanillaLayer.render(poseStack, buffer, packedLight, entityliving, entityliving.walkAnimation.position(), entityliving.walkAnimation.speed(), partialTicks, bob, yRot, xRot);
+		submitVanillaLayer(vanillaLayer, poseStack, buffer, packedLight, renderState, yRot, xRot);
 		
 		poseStack.popPose();
 	}

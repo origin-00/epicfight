@@ -1,10 +1,13 @@
 package yesman.epicfight.client.renderer.patched.entity;
 
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import yesman.epicfight.client.renderer.EpicFightRenderUtils;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import yesman.epicfight.api.animation.AnimationPlayer;
@@ -19,8 +22,8 @@ import yesman.epicfight.world.entity.WitherGhostClone;
 
 public class WitherGhostCloneRenderer extends PatchedEntityRenderer<WitherGhostClone, WitherGhostPatch, WitherGhostRenderer, WitherMesh> {
 	@Override
-	public void render(WitherGhostClone entity, WitherGhostPatch entitypatch, WitherGhostRenderer renderer, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
-		RenderType renderType = RenderType.entityTranslucent(PWitherRenderer.WITHER_INVULNERABLE_LOCATION);
+	public void render(WitherGhostClone entity, WitherGhostPatch entitypatch, WitherGhostRenderer renderer, EntityRenderState renderState, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
+		RenderType renderType = RenderTypes.entityTranslucent(PWitherRenderer.WITHER_INVULNERABLE_LOCATION);
 		WitherMesh mesh = this.getMeshProvider(entitypatch).get();
 		Armature armature = entitypatch.getArmature();
 		float tranparency = entity.isNoAi() ? 0.6F : Mth.sin((entity.tickCount + partialTicks) * 0.025F * Mth.PI) * 0.6F;
@@ -30,7 +33,7 @@ public class WitherGhostCloneRenderer extends PatchedEntityRenderer<WitherGhostC
 		this.setArmaturePose(entitypatch, armature, partialTicks);
 		mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, tranparency, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), armature.getPoseMatrices());
 		
-		if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
+		if (EpicFightRenderUtils.shouldRenderHitBoxes()) {
 			for (Layer.Priority priority : Layer.Priority.values()) {
 				AnimationPlayer animPlayer = entitypatch.getClientAnimator().getCompositeLayer(priority).animationPlayer;
 				float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;

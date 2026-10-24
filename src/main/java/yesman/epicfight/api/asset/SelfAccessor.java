@@ -1,9 +1,9 @@
 package yesman.epicfight.api.asset;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
-public record SelfAccessor<A>(ResourceLocation registryName, A asset) implements AssetAccessor<A> {
-	public static <A> SelfAccessor<A> create(ResourceLocation registryName, A asset) {
+public record SelfAccessor<A>(Identifier registryName, A asset) implements AssetAccessor<A> {
+	public static <A> SelfAccessor<A> create(Identifier registryName, A asset) {
 		return new SelfAccessor<> (registryName, asset);
 	}
 	

@@ -1,6 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.main.EpicFightMod;
 
@@ -16,12 +16,12 @@ public enum Factions implements Faction {
 	ZOMBIFIED_PIGLIN(EpicFightMod.identifier("textures/gui/healthbars2.png"), MathUtils.packColor(255, 0, 0, 100), 2)
 	;
 	
-	final ResourceLocation healthBar;
+	final Identifier healthBar;
 	final int healthBarIndex;
 	final int damageColor;
 	final int id;
 	
-	Factions(ResourceLocation healthBar, int damageColor, int healthBarIndex) { 
+	Factions(Identifier healthBar, int damageColor, int healthBarIndex) { 
 		this.id = Faction.ENUM_MANAGER.assign(this);
 		this.healthBar = healthBar;
 		this.damageColor = damageColor;
@@ -34,7 +34,7 @@ public enum Factions implements Faction {
 	}
 	
 	@Override
-	public ResourceLocation healthBarTexture() {
+	public Identifier healthBarTexture() {
 		return this.healthBar;
 	}
 	

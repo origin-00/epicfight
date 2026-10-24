@@ -9,7 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -139,16 +139,16 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
             if (customLivingMotion != null)
                 currentCompositeMotion = customLivingMotion;
             else if (this.original.isUsingItem()) {
-                    UseAnim useAnim = this.original.getUseItem().getUseAnimation();
-                if (useAnim == UseAnim.BLOCK)
+                    ItemUseAnimation useAnim = this.original.getUseItem().getUseAnimation();
+                if (useAnim == ItemUseAnimation.BLOCK)
                     currentCompositeMotion = LivingMotions.BLOCK_SHIELD;
-                else if (useAnim == UseAnim.CROSSBOW)
+                else if (useAnim == ItemUseAnimation.CROSSBOW)
                     currentCompositeMotion = LivingMotions.RELOAD;
-                else if (useAnim == UseAnim.DRINK)
+                else if (useAnim == ItemUseAnimation.DRINK)
                     currentCompositeMotion = LivingMotions.DRINK;
-                else if (useAnim == UseAnim.EAT)
+                else if (useAnim == ItemUseAnimation.EAT)
                     currentCompositeMotion = LivingMotions.EAT;
-                else if (useAnim == UseAnim.SPYGLASS)
+                else if (useAnim == ItemUseAnimation.SPYGLASS)
                     currentCompositeMotion = LivingMotions.SPECTATE;
                 else
                     currentCompositeMotion = currentLivingMotion;
@@ -170,9 +170,9 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 
     @Override
     public void preTickClient() {
-        this.xCloakO2 = this.original.xCloakO;
-        this.yCloakO2 = this.original.yCloakO;
-        this.zCloakO2 = this.original.zCloakO;
+        this.xCloakO2 = this.original.avatarState().xCloakO;
+        this.yCloakO2 = this.original.avatarState().yCloakO;
+        this.zCloakO2 = this.original.avatarState().zCloakO;
 
         super.preTickClient();
 
@@ -180,8 +180,8 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
             this.original.yBodyRot = this.original.yHeadRot;
         }
 
-        Item currentMain = this.original.getInventory().getSelected().getItem();
-        Item currentOff = this.original.getInventory().offhand.getFirst().getItem();
+        Item currentMain = this.original.getInventory().getSelectedItem().getItem();
+        Item currentOff = this.original.getOffhandItem().getItem();
         boolean isMainHandChanged = this.prevHeldItem != currentMain;
         boolean isOffHandChanged = this.prevHeldItemOffHand != currentOff;
 
@@ -355,7 +355,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
             mat.rotateDeg(-Mth.rotLerp(partialTick, this.original.yBodyRotO, this.original.yBodyRot), Vec3f.Y_AXIS).rotateDeg(f2 * (-this.original.getXRot()), Vec3f.X_AXIS);
 
             Vec3 vec3d = this.original.getViewVector(partialTick);
-            Vec3 vec3d1 = this.original.getDeltaMovementLerped(partialTick);
+            Vec3 vec3d1 = this.original.avatarState().deltaMovementOnPreviousTick().lerp(this.original.getDeltaMovement(), partialTick);
             double d0 = vec3d1.horizontalDistanceSqr();
             double d1 = vec3d.horizontalDistanceSqr();
 
@@ -462,15 +462,15 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
         if (partialFrame < 0.0F) {
             partialFrame = 1.0F - partialFrame;
 
-            double x = Mth.lerp((double)partialFrame, this.xCloakO2, this.original.xCloakO) - Mth.lerp((double)partialFrame, this.xPosO2, this.original.xo);
-            double y = Mth.lerp((double)partialFrame, this.yCloakO2, this.original.yCloakO) - Mth.lerp((double)partialFrame, this.yPosO2, this.original.yo);
-            double z = Mth.lerp((double)partialFrame, this.zCloakO2, this.original.zCloakO) - Mth.lerp((double)partialFrame, this.zPosO2, this.original.zo);
+            double x = Mth.lerp((double)partialFrame, this.xCloakO2, this.original.avatarState().xCloakO) - Mth.lerp((double)partialFrame, this.xPosO2, this.original.xo);
+            double y = Mth.lerp((double)partialFrame, this.yCloakO2, this.original.avatarState().yCloakO) - Mth.lerp((double)partialFrame, this.yPosO2, this.original.yo);
+            double z = Mth.lerp((double)partialFrame, this.zCloakO2, this.original.avatarState().zCloakO) - Mth.lerp((double)partialFrame, this.zPosO2, this.original.zo);
 
             return new Vec3(x, y, z);
         } else {
-            double x = Mth.lerp((double)partialFrame, this.original.xCloakO, this.original.xCloak) - Mth.lerp((double)partialFrame, this.original.xo, this.original.getX());
-            double y = Mth.lerp((double)partialFrame, this.original.yCloakO, this.original.yCloak) - Mth.lerp((double)partialFrame, this.original.yo, this.original.getY());
-            double z = Mth.lerp((double)partialFrame, this.original.zCloakO, this.original.zCloak) - Mth.lerp((double)partialFrame, this.original.zo, this.original.getZ());
+            double x = Mth.lerp((double)partialFrame, this.original.avatarState().xCloakO, this.original.avatarState().xCloak) - Mth.lerp((double)partialFrame, this.original.xo, this.original.getX());
+            double y = Mth.lerp((double)partialFrame, this.original.avatarState().yCloakO, this.original.avatarState().yCloak) - Mth.lerp((double)partialFrame, this.original.yo, this.original.getY());
+            double z = Mth.lerp((double)partialFrame, this.original.avatarState().zCloakO, this.original.avatarState().zCloak) - Mth.lerp((double)partialFrame, this.original.zo, this.original.getZ());
 
             return new Vec3(x, y, z);
         }

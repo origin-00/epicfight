@@ -2,7 +2,7 @@ package yesman.epicfight.api.animation.types.datapack;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.LivingMotion;
@@ -20,12 +20,12 @@ import java.util.Map;
 
 public class DatapackEmoteAnimation extends EmoteAnimation implements DatapackAnimation<DatapackEmoteAnimation> {
     protected EditorAnimation fakeAnimation;
-    protected ResourceLocation registryName;
+    protected Identifier registryName;
 
     public DatapackEmoteAnimation(float transitionTime, boolean isRepeat, String path, AssetAccessor<? extends Armature> armature) {
         super(transitionTime, isRepeat, path, armature);
 
-        this.setRegistryName(ResourceLocation.parse(path));
+        this.setRegistryName(Identifier.parse(path));
         this.accessor = this;
     }
 
@@ -56,12 +56,12 @@ public class DatapackEmoteAnimation extends EmoteAnimation implements DatapackAn
     }
 
     @Override
-    public void setRegistryName(ResourceLocation registryName) {
+    public void setRegistryName(Identifier registryName) {
         this.registryName = registryName;
     }
 
     @Override
-    public ResourceLocation registryName() {
+    public Identifier registryName() {
         return this.registryName;
     }
 

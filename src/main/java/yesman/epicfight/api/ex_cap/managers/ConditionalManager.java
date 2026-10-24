@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import org.jetbrains.annotations.ApiStatus;
 import yesman.epicfight.api.ex_cap.modules.core.events.ConditionalRegistryEvent;
 import yesman.epicfight.api.ex_cap.provider.ProviderConditional;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.registry.EpicFightRegistries;
 
 import java.util.Map;
@@ -13,19 +13,19 @@ import java.util.Map;
 @ApiStatus.Experimental
 public class ConditionalManager
 {
-    private static final Map<ResourceLocation, ProviderConditional.Builder> CONDITIONALS = Maps.newHashMap();
-    private static final Map<ResourceLocation, ProviderConditional.Builder> BUILDER_DECLARED_CONDITIONALS = Maps.newHashMap();
+    private static final Map<Identifier, ProviderConditional.Builder> CONDITIONALS = Maps.newHashMap();
+    private static final Map<Identifier, ProviderConditional.Builder> BUILDER_DECLARED_CONDITIONALS = Maps.newHashMap();
 
-    public static ProviderConditional.Builder get(ResourceLocation id) {
+    public static ProviderConditional.Builder get(Identifier id) {
         return CONDITIONALS.get(id);
     }
 
-    public static void addConditional(ResourceLocation id, ProviderConditional.Builder builder)
+    public static void addConditional(Identifier id, ProviderConditional.Builder builder)
     {
         BUILDER_DECLARED_CONDITIONALS.put(id, builder);
     }
 
-    public static void add(ResourceLocation id, JsonElement json) {
+    public static void add(Identifier id, JsonElement json) {
         CONDITIONALS.put(id, ProviderConditional.Builder.deserialize(json));
     }
 
@@ -34,7 +34,7 @@ public class ConditionalManager
     {
 
         CONDITIONALS.clear();
-        EpicFightRegistries.PROVIDER_CONDITIONALS.entrySet().forEach(registryKey -> CONDITIONALS.put(registryKey.getKey().location(), registryKey.getValue()));
+        EpicFightRegistries.PROVIDER_CONDITIONALS.entrySet().forEach(registryKey -> CONDITIONALS.put(registryKey.getKey().identifier(), registryKey.getValue()));
         CONDITIONALS.putAll(BUILDER_DECLARED_CONDITIONALS);
         CONDITIONALS.putAll(event.getConditionals());
     }

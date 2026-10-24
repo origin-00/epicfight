@@ -1,6 +1,6 @@
 package yesman.epicfight.client.renderer.shader.compute.backend.ssbo;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15C;

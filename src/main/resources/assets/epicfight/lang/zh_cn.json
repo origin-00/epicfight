@@ -242,6 +242,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	"key.epicfight.gui": "史诗战斗界面",
 	"key.epicfight.combat": "史诗战斗模式",
+	"key.category.epicfight.combat": "史诗战斗模式",
+	"key.category.epicfight.gui": "史诗战斗界面",
 	"key.epicfight.show_tooltip": "显示武器进阶技能提示",
 	"key.epicfight.switch_mode": "切换战斗/挖掘模式",
 	"key.epicfight.attack": "攻击",

@@ -1,5 +1,6 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,13 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.asset.SelfAccessor;
@@ -42,8 +43,6 @@ public class ImportModelScreen extends Screen {
 		super(Component.literal("register_model_screen"));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		
 		Stream<PackEntry<String, AssetAccessor<? extends SkinnedMesh>>> meshesStream = DatapackEditScreen.getCurrentScreen().getUserMeshes().entrySet().stream().map((entry) -> PackEntry.ofValue(entry.getKey().toString(), entry.getValue()));
 		this.userMeshes = new ArrayList<>(meshesStream.toList());
@@ -64,7 +63,7 @@ public class ImportModelScreen extends Screen {
 									this.modelPreviewer.setMesh(this.userMeshes.get(rowposition).getValue());
 								})
 								.addColumn(Grid.editbox("mesh_name")
-												.editWidgetCreated((editbox) -> editbox.setFilter(rl -> ResourceLocation.isValidNamespace(rl) && ResourceLocation.isValidPath(rl)))
+												.editWidgetCreated((editbox) -> editbox.setFilter(rl -> Identifier.isValidNamespace(rl) && Identifier.isValidPath(rl)))
 												.valueChanged((event) -> this.userMeshes.get(event.rowposition).setPackKey(event.postValue))
 												.editable(true)
 												.width(180))
@@ -79,7 +78,7 @@ public class ImportModelScreen extends Screen {
 								.rowHeight(26)
 								.rowEditable(RowEditButton.REMOVE)
 								.addColumn(Grid.editbox("armature_name")
-												.editWidgetCreated((editbox) -> editbox.setFilter(rl -> ResourceLocation.isValidNamespace(rl) && ResourceLocation.isValidPath(rl)))
+												.editWidgetCreated((editbox) -> editbox.setFilter(rl -> Identifier.isValidNamespace(rl) && Identifier.isValidPath(rl)))
 												.valueChanged((event) -> this.userArmatures.get(event.rowposition).setPackKey(event.postValue))
 												.editable(true)
 												.width(180))
@@ -122,14 +121,14 @@ public class ImportModelScreen extends Screen {
 		this.addRenderableWidget(this.modelPreviewer);
 		
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_OK, (button) -> {
-			Map<ResourceLocation, AssetAccessor<? extends SkinnedMesh>> userMeshes = DatapackEditScreen.getCurrentScreen().getUserMeshes();
-			Map<ResourceLocation, AssetAccessor<? extends Armature>> userArmatures = DatapackEditScreen.getCurrentScreen().getUserArmatures();
+			Map<Identifier, AssetAccessor<? extends SkinnedMesh>> userMeshes = DatapackEditScreen.getCurrentScreen().getUserMeshes();
+			Map<Identifier, AssetAccessor<? extends Armature>> userArmatures = DatapackEditScreen.getCurrentScreen().getUserArmatures();
 			
 			userMeshes.clear();
 			userArmatures.clear();
 			
-			this.userMeshes.forEach((packEntry) -> userMeshes.put(ResourceLocation.parse(packEntry.getKey()), packEntry.getValue()));
-			this.userArmatures.forEach((packEntry) -> userArmatures.put(ResourceLocation.parse(packEntry.getKey()), packEntry.getValue()));
+			this.userMeshes.forEach((packEntry) -> userMeshes.put(Identifier.parse(packEntry.getKey()), packEntry.getValue()));
+			this.userArmatures.forEach((packEntry) -> userArmatures.put(Identifier.parse(packEntry.getKey()), packEntry.getValue()));
 			
 			this.onClose();
 		}).pos(this.width / 2 - 162, this.height - 26).size(160, 21).build());
@@ -166,7 +165,7 @@ public class ImportModelScreen extends Screen {
 						stream = new FileInputStream(file);
 						
 						String modelPath = modid + ":" + file.getName().replace(".json", "");
-						ResourceLocation modelId = ResourceLocation.parse(modelPath);
+						Identifier modelId = Identifier.parse(modelPath);
 						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, modelId);
 						SkinnedMesh mesh = jsonLoader.loadSkinnedMesh(SkinnedMesh::new);
 						Armature armature = jsonLoader.loadArmature(Armature::new);
@@ -193,18 +192,21 @@ public class ImportModelScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-		if (this.modelPreviewer.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
+		if (this.modelPreviewer.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractBackground(guiGraphics, mouseX, mouseY, partialTicks);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 }

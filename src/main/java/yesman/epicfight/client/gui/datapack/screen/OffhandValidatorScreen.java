@@ -1,22 +1,24 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.datapack.widgets.Grid;
 import yesman.epicfight.client.gui.datapack.widgets.Grid.GridBuilder.RowEditButton;
@@ -39,8 +41,6 @@ public class OffhandValidatorScreen extends Screen {
 	public OffhandValidatorScreen(Screen parentScreen, CompoundTag rootTag) {
 		super(Component.translatable("datapack_edit.weapon_type.offhand_validator"));
 		
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		this.rootTag = rootTag;
 		this.parentScreen = parentScreen;
 		
@@ -143,8 +143,8 @@ public class OffhandValidatorScreen extends Screen {
 													}).width(150))
 									.build();
 		
-		if (rootTag.contains("offhand_item_compatible_predicate", Tag.TAG_LIST)) {
-			ListTag conditionList = rootTag.getList("offhand_item_compatible_predicate", Tag.TAG_COMPOUND);
+		if (rootTag.getList("offhand_item_compatible_predicate").isPresent()) {
+			ListTag conditionList = rootTag.getListOrEmpty("offhand_item_compatible_predicate");
 			
 			Grid.PackImporter packImporter = new Grid.PackImporter();
 			
@@ -153,7 +153,7 @@ public class OffhandValidatorScreen extends Screen {
 				this.conditionList.add(compTag);
 				
 				packImporter.newRow();
-				packImporter.newValue("condition", EpicFightConditions.getConditionOrNull(ResourceLocation.parse(compTag.getString("predicate"))));
+				packImporter.newValue("condition", EpicFightConditions.getConditionOrNull(Identifier.parse(compTag.getStringOr("predicate", ""))));
 			}
 			
 			this.conditionGrid._setValue(packImporter);
@@ -207,30 +207,30 @@ public class OffhandValidatorScreen extends Screen {
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int yBegin = 32;
 		int yEnd = this.height - 45;
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
-		guiGraphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.125F, 0.125F, 0.125F, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		
-		guiGraphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-		guiGraphics.blit(Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.25F, 0.25F, 0.25F, 1.0F);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         
-        guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yBegin, this.width, yBegin + 4, -16777216, 0, 0);
-		guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yEnd, this.width, yEnd + 1, 0, -16777216, 0);
+        guiGraphics.fillGradient(0, yBegin, this.width, yBegin + 4, -16777216, 0);
+		guiGraphics.fillGradient(0, yEnd, this.width, yEnd + 1, 0, -16777216);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	
 	private void validateTagSave(CompoundTag tag) throws IllegalStateException {
 		try {
-			Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(tag.getString("predicate")));
+			Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(Identifier.parse(tag.getStringOr("predicate", "")));
 			condition.get().read(tag);
 		} catch (Exception e) {
 			throw new IllegalStateException(e.getMessage());

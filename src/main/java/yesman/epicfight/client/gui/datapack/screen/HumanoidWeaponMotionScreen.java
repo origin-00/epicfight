@@ -1,5 +1,8 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -8,11 +11,11 @@ import java.util.Map;
 import com.google.common.collect.Lists;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -49,8 +52,6 @@ public class HumanoidWeaponMotionScreen extends Screen {
 		super(Component.translatable("datapack_edit.mob_patch.humanoid_weapon_motions"));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		
 		this.rootTag = rootTag;
 		this.motionSetGrid = Grid.builder(this, parentScreen.getMinecraft())
@@ -92,20 +93,20 @@ public class HumanoidWeaponMotionScreen extends Screen {
 			public void importTag(CompoundTag tag) {
 				Grid.PackImporter categories = new Grid.PackImporter();
 				
-				for (Tag weaponCategory : tag.getList("weapon_categories", Tag.TAG_STRING)) {
+				for (Tag weaponCategory : tag.getListOrEmpty("weapon_categories")) {
 					categories.newRow();
-					categories.newValue("weapon_category", WeaponCategory.ENUM_MANAGER.get(weaponCategory.getAsString()));
+					categories.newValue("weapon_category", WeaponCategory.ENUM_MANAGER.get(weaponCategory.asString().orElse("")));
 				}
 				
 				Grid.PackImporter livingMotions = new Grid.PackImporter();
 				
-				for (Map.Entry<String, Tag> entry : tag.getCompound("livingmotions").tags.entrySet()) {
+				for (Map.Entry<String, Tag> entry : tag.getCompoundOrEmpty("livingmotions").tags.entrySet()) {
 					livingMotions.newRow();
 					livingMotions.newValue("living_motion", LivingMotion.ENUM_MANAGER.get(entry.getKey()));
-					livingMotions.newValue("animation", DatapackEditScreen.animationByKey(entry.getValue().getAsString()));
+					livingMotions.newValue("animation", DatapackEditScreen.animationByKey(entry.getValue().asString().orElse("")));
 				}
 				
-				Style style = Style.ENUM_MANAGER.get(tag.getString("style"));
+				Style style = Style.ENUM_MANAGER.get(tag.getStringOr("style", ""));
 				
 				this.setDataBindingComponenets(new Object[] {
 					categories,
@@ -206,10 +207,10 @@ public class HumanoidWeaponMotionScreen extends Screen {
 		
 		if (this.rootTag.contains("humanoid_weapon_motions")) {
 			Grid.PackImporter packImporter = new Grid.PackImporter();
-			ListTag list = this.rootTag.getList("humanoid_weapon_motions", Tag.TAG_COMPOUND);
+			ListTag list = this.rootTag.getListOrEmpty("humanoid_weapon_motions");
 			
 			for (int i = 0; i < list.size(); i++) {
-				this.motionSetList.add(list.getCompound(i));
+				this.motionSetList.add(list.getCompoundOrEmpty(i));
 				packImporter.newRow();
 				packImporter.newValue("motion_set", "set" + (i+1));
 			}
@@ -270,57 +271,60 @@ public class HumanoidWeaponMotionScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-		if (this.inputComponentsList.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
+		if (this.inputComponentsList.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int yBegin = 32;
 		int yEnd = this.height - 45;
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
-		guiGraphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.125F, 0.125F, 0.125F, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		
-		guiGraphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-		guiGraphics.blit(Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.25F, 0.25F, 0.25F, 1.0F);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         
-        guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yBegin, this.width, yBegin + 4, -16777216, 0, 0);
-		guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yEnd, this.width, yEnd + 1, 0, -16777216, 0);
+        guiGraphics.fillGradient(0, yBegin, this.width, yBegin + 4, -16777216, 0);
+		guiGraphics.fillGradient(0, yEnd, this.width, yEnd + 1, 0, -16777216);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	
 	private void validateTagSave(CompoundTag tag) throws IllegalStateException {
-		if (!tag.contains("weapon_categories") || tag.getList("weapon_categories", Tag.TAG_STRING).size() == 0) {
+		if (!tag.contains("weapon_categories") || tag.getListOrEmpty("weapon_categories").size() == 0) {
 			throw new IllegalStateException("Define at least one weapon category");
 		}
 		
-		if (!tag.contains("style") || StringUtil.isNullOrEmpty(tag.getString("style"))) {
+		if (!tag.contains("style") || StringUtil.isNullOrEmpty(tag.getStringOr("style", ""))) {
 			throw new IllegalStateException("Define a style");
 		}
 		
-		if (!tag.contains("livingmotions") || tag.getCompound("livingmotions").tags.size() == 0) {
+		if (!tag.contains("livingmotions") || tag.getCompoundOrEmpty("livingmotions").tags.size() == 0) {
 			throw new IllegalStateException("Define at least one living motion");
 		}
 		
 		int idx = 1;
 		
-		for (Map.Entry<String, Tag> entry : tag.getCompound("livingmotions").tags.entrySet()) {
+		for (Map.Entry<String, Tag> entry : tag.getCompoundOrEmpty("livingmotions").tags.entrySet()) {
 			if (StringUtil.isNullOrEmpty(entry.getKey())) {
 				throw new IllegalStateException("Row " + idx + ": No living motion defined.");
 			}
 			
-			if (StringUtil.isNullOrEmpty(entry.getValue().getAsString())) {
+			if (StringUtil.isNullOrEmpty(entry.getValue().asString().orElse(""))) {
 				throw new IllegalStateException("Row " + idx + ": No animation defined.");
 			}
 			

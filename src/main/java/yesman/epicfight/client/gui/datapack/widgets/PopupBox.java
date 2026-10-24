@@ -1,11 +1,15 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -16,7 +20,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.EntityType;
@@ -50,7 +54,7 @@ import java.util.stream.Collectors;
 /// We're refactoring UI codes, use [yesman.epicfight.client.gui.widgets.PopupBox] instead
 @Deprecated
 public abstract class PopupBox<T> extends AbstractWidget implements DataBindingComponent<T, Pair<String, T>> {
-    public static final ResourceLocation POPUP_ICON = EpicFightMod.identifier("textures/gui/widget/popup_icon.png");
+    public static final Identifier POPUP_ICON = EpicFightMod.identifier("textures/gui/widget/popup_icon.png");
 	
 	protected final Screen owner;
 	protected final Font font;
@@ -87,7 +91,7 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@Override
-	protected boolean clicked(double x, double y) {
+	public boolean isMouseOver(double x, double y) {
 		return this.active && this.visible && x >= (double)this._getX() && y >= (double) this._getY() && x < (double) (this._getX() + this.width) && y < (double) (this._getY() + this.height);
 	}
 	
@@ -96,15 +100,18 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@Override
-	public abstract void onClick(double x, double y);
+	public abstract void onClick(MouseButtonEvent event, boolean doubleClick);
 	
 	@Override
-	public boolean mouseClicked(double x, double y, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
+		int button = event.button();
 		if (this.active && this.visible) {
-			if (this.isValidClickButton(button)) {
-				if (this.clicked(x, y)) {
+			if (this.isValidClickButton(event.buttonInfo())) {
+				if (this.isMouseOver(x, y)) {
 					this.playDownSound(Minecraft.getInstance().getSoundManager());
-					this.onClick(x, y);
+					this.onClick(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)), false);
 					return true;
 				}
 			}
@@ -116,25 +123,23 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@Override
-	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int outlineColor = this.isFocused() ? -1 : this.isActive() ? -6250336 : -12566463;
 		
 		guiGraphics.fill(this._getX() - 1, this._getY() - 1, this._getX() + this.width + 1, this._getY() + this.height + 1, outlineColor);
 		guiGraphics.fill(this._getX(), this._getY(), this._getX() + this.width, this._getY() + this.height, -16777216);
 		
 		String correctedString = StringUtil.isNullOrEmpty(this.itemDisplayName) ? "" : this.font.plainSubstrByWidth(this.itemDisplayName, this.width - 16);
-		guiGraphics.drawString(this.font, correctedString, this._getX() + 4, this._getY() + this.height / 2 - this.font.lineHeight / 2 + 1, 16777215, false);
+		guiGraphics.text(this.font, correctedString, this._getX() + 4, this._getY() + this.height / 2 - this.font.lineHeight / 2 + 1, GuiColors.text(16777215), false);
 		
-		RenderSystem.enableBlend();
 		
 		if (!this.isActive()) {
-			RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 1.0F);
+			GuiColors.setColor(guiGraphics, 0.3F, 0.3F, 0.3F, 1.0F);
 		}
 		
-		guiGraphics.blit(POPUP_ICON, this._getX() + this.width - this.height, this._getY(), 0, 0.0F, 0.0F, this.height, this.height, this.height, this.height);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, POPUP_ICON, this._getX() + this.width - this.height, this._getY(), 0.0F, 0.0F, this.height, this.height, this.height, this.height);
 		
-		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		RenderSystem.disableBlend();
+		GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 	}
 	
 	@Override
@@ -164,7 +169,9 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		}
 		
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
 				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<>(this.owner, this.registry, (name, item) -> this._setValue(item), (name, item) -> this._setValue(item), this.onPressRow, this.getFilter()));
 			}
@@ -193,7 +200,9 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		}
 		
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
 				if (this.armature == null || this.armature.get() == null || this.mesh == null || this.mesh.get() == null) {
 					this.owner.getMinecraft().setScreen(new MessageScreen<>("", "Define model and armature first.", this.owner, (button2) -> this.owner.getMinecraft().setScreen(this.owner), 180, 60));
@@ -210,7 +219,9 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		}
 		
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
 				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<>(this.owner, ParseUtil.mapEntryToPair(ColliderPreset.entries()), "Collider", (name, item) -> this._setValue(item), (name, item) -> this._setValue(item), (c) -> {}, this.getFilter()));
 			}
@@ -220,7 +231,7 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	public static class WeaponTypePopupBox extends PopupBox<Function<Item, CapabilityItem.Builder<?>>> {
 		public WeaponTypePopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, Function<Item, CapabilityItem.Builder<?>>>> responder) {
 			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (builder) -> {
-				Map<Function<Item, ? extends CapabilityItem.Builder<?>>, ResourceLocation> map = new HashMap<> ();
+				Map<Function<Item, ? extends CapabilityItem.Builder<?>>, Identifier> map = new HashMap<> ();
 				
 				WeaponTypeReloadListener.entries().forEach((entry) -> map.put(entry.getValue(), entry.getKey()));
 				DatapackEditScreen.getSerializableWeaponTypes().forEach((entry) -> map.put(entry.getValue(), entry.getKey()));
@@ -230,13 +241,15 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		}
 		
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
-				Set<Map.Entry<ResourceLocation, Function<Item, ? extends CapabilityItem.Builder<?>>>> weaponTypeEntry = Sets.newHashSet();
+				Set<Map.Entry<Identifier, Function<Item, ? extends CapabilityItem.Builder<?>>>> weaponTypeEntry = Sets.newHashSet();
 				weaponTypeEntry.addAll(WeaponTypeReloadListener.entries());
 				weaponTypeEntry.addAll(DatapackEditScreen.getSerializableWeaponTypes());
 				
-				Set<Pair<ResourceLocation, Function<Item, CapabilityItem.Builder<?>>>> castedPairs =
+				Set<Pair<Identifier, Function<Item, CapabilityItem.Builder<?>>>> castedPairs =
 					ParseUtil.mapEntryToPair(weaponTypeEntry).stream()
 						.map(pair -> {
 							@SuppressWarnings("unchecked")
@@ -283,7 +296,9 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		}
 		
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
 				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<>(this.owner, ParseUtil.mapEntryToPair(JointMaskReloadListener.entries()), "Joint Mask", (name, item) -> this._setValue(item), (name, item) -> this._setValue(item), (c) -> {}, this.getFilter()));
 			}
@@ -296,9 +311,11 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		}
 		
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
-				Set<Pair<ResourceLocation, EntityType<?>>> set = Sets.newHashSet();
+				Set<Pair<Identifier, EntityType<?>>> set = Sets.newHashSet();
 				EpicFightCapabilities.ENTITY_PATCH_PROVIDER.getPatchedEntities().forEach(entityType -> set.add(Pair.of(EntityType.getKey(entityType), entityType)));
 				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<>(this.owner, set, "Preset", (name, item) -> this._setValue(item), (name, item) -> this._setValue(item), (c) -> {}, this.getFilter()));
 			}
@@ -311,7 +328,9 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		}
 		
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
 				this.owner.getMinecraft().setScreen(new SelectModelScreen(this.owner, (name, item) -> {
 					this._setValue(item);
@@ -331,9 +350,11 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		
 		@SuppressWarnings("unchecked")
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
-				Set<Pair<ResourceLocation, AssetAccessor<Armature>>> entries = Armatures.entry();
+				Set<Pair<Identifier, AssetAccessor<Armature>>> entries = Armatures.entry();
 				DatapackEditScreen.getCurrentScreen().getUserArmatures().entrySet().forEach((entry) -> entries.add(Pair.of(entry.getKey(), (AssetAccessor<Armature>)entry.getValue())));
 				
 				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<> (this.owner, entries, "Armature", (name, item) -> {
@@ -347,15 +368,17 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		}
 	}
 	
-	public static class RendererPopupBox extends PopupBox<ResourceLocation> {
-		public RendererPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, ResourceLocation>> responder) {
+	public static class RendererPopupBox extends PopupBox<Identifier> {
+		public RendererPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, Identifier>> responder) {
 			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (entityType) -> ParseUtil.nullOrToString(entityType, (rl) -> rl.toString()), responder);
 		}
 		
 		@Override
-		public void onClick(double x, double y) {
+		public void onClick(MouseButtonEvent event, boolean doubleClick) {
+			double x = event.x();
+			double y = event.y();
 			if (this.clickedPopupButton(x, y)) {
-				Set<Pair<ResourceLocation, ResourceLocation>> set = Sets.newHashSet();
+				Set<Pair<Identifier, Identifier>> set = Sets.newHashSet();
 				RenderEngine.getInstance().getRendererEntries().forEach((rl) -> set.add(Pair.of(rl, rl)));
 				
 				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<>(this.owner, set, "Renderer", (name, item) -> this._setValue(item), (name, item) -> this._setValue(item), (c) -> {}, this.getFilter()));
@@ -520,7 +543,7 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 
 	@Override
-	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+	public void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 }

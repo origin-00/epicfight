@@ -1,0 +1,7 @@
+{
+  "gui_light": "front",
+  "parent": "epicfight:item/longsword",
+  "textures": {
+    "layer0": "epicfight:item/golden_longsword_gui"
+  }
+}

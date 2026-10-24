@@ -2,7 +2,7 @@ package yesman.epicfight.registry.deferred;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import yesman.epicfight.api.ex_cap.data.Moveset;
 import yesman.epicfight.registry.EpicFightRegistries;
@@ -24,7 +24,7 @@ public final class MovesetRegister extends DeferredRegister<Moveset.Builder> {
         this.register(name, builder);
         ResourceKey<Moveset.Builder> key = ResourceKey.create(
                 this.getRegistryKey(),
-                ResourceLocation.fromNamespaceAndPath(this.getNamespace(), name)
+                Identifier.fromNamespaceAndPath(this.getNamespace(), name)
         );
         return new DeferredMoveset(key);
     }

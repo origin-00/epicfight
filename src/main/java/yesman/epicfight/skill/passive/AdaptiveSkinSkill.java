@@ -1,9 +1,14 @@
 package yesman.epicfight.skill.passive;
 
+import net.minecraft.util.ARGB;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import org.joml.Vector4f;
+import yesman.epicfight.client.gui.GuiColors;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.DamageTypeTags;
@@ -78,8 +83,8 @@ public class AdaptiveSkinSkill extends PassiveSkill {
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
 
-        this.damageResistance = parameters.getFloat("damage_resistance");
-        this.maxResistanceStack = parameters.getInt("max_resistance_stack");
+        this.damageResistance = parameters.getFloatOr("damage_resistance", 0.0F);
+        this.maxResistanceStack = parameters.getIntOr("max_resistance_stack", 0);
     }
 
     @Override
@@ -144,9 +149,15 @@ public class AdaptiveSkinSkill extends PassiveSkill {
         container.getExecutor().getEntityDecorations().addDecorationOverlay(this, new DecorationOverlay() {
             @Override
             public RenderType getRenderType() {
+                return EpicFightRenderTypes.coloredGlint();
+            }
+            
+            // The glint tint is a vertex color since 26.1 (see EpicFightRenderTypes#coloredGlint).
+            @Override
+            public Vector4f color(float partialTick) {
                 TagKey<DamageType> resistingDamageTypeTagKey = container.getDataManager().getDataValue(EpicFightSkillDataKeys.RESISTING_DAMAGE_TYPE);
                 Vec3f color = AdaptiveSkinSkill.this.getGlintColor(resistingDamageTypeTagKey);
-                return EpicFightRenderTypes.coloredGlintWorldRendertype(container.getExecutor().getOriginal(), color.x, color.y, color.z);
+                return new Vector4f(color.x, color.y, color.z, 1.0F);
             }
 
             @Override
@@ -192,20 +203,20 @@ public class AdaptiveSkinSkill extends PassiveSkill {
     }
 
     @Override @ClientOnly
-    public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphics guiGraphics, float x, float y, float partialTick) {
+    public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphicsExtractor guiGraphics, float x, float y, float partialTick) {
         Vec3f color = this.protectableDamageTypeTags.get(container.getDataManager().getDataValue(EpicFightSkillDataKeys.RESISTING_DAMAGE_TYPE));
-        guiGraphics.innerBlit(this.getSkillTexture(), (int)x, (int)x + 24, (int)y, (int)y + 24, 0, 0.0F, 1.0F, 0.0F, 1.0F, color.x, color.y, color.z, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.getSkillTexture(), (int)x, (int)y, 0.0F, 0.0F, 24, 24, 24, 24, ARGB.colorFromFloat(1.0F, color.x, color.y, color.z));
         int stacks = container.getDataManager().getDataValue(EpicFightSkillDataKeys.STACKS);
 
         if (stacks > 1) {
-            guiGraphics.drawString(gui.getFont(), String.valueOf(stacks), x + 18, y + 16, 16777215, true);
+            guiGraphics.text(gui.getFont(), String.valueOf(stacks), (int)(x + 18), (int)(y + 16), GuiColors.text(16777215), true);
         }
 
         int lastHitTick = container.getDataManager().getDataValueOptional(EpicFightSkillDataKeys.TICK_RECORD).orElse(0);
 
         if (container.getExecutor().getOriginal().tickCount - lastHitTick > 200) {
             int remainseconds = 1 + (100 - (container.getExecutor().getOriginal().tickCount - lastHitTick - 200)) / 20;
-            guiGraphics.drawString(gui.getFont(), String.valueOf(remainseconds), x + 8, y + 8, 16777215, true);
+            guiGraphics.text(gui.getFont(), String.valueOf(remainseconds), (int)(x + 8), (int)(y + 8), GuiColors.text(16777215), true);
         }
     }
 
@@ -217,7 +228,7 @@ public class AdaptiveSkinSkill extends PassiveSkill {
         StringBuilder sb = new StringBuilder();
 
         for (TagKey<DamageType> tag : this.protectableDamageTypeTags.keySet()) {
-            String tagKey = String.format("tag.%s.%s.%s", tag.registry().location().getPath(), tag.location().getNamespace(), tag.location().getPath());
+            String tagKey = String.format("tag.%s.%s.%s", tag.registry().identifier().getPath(), tag.location().getNamespace(), tag.location().getPath());
             sb.append("- ").append(Component.translatable(tagKey).getString()).append("\n");
         }
 

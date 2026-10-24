@@ -52,7 +52,7 @@ public class PlayerSkillCommand {
 			}
 		}
 		
-		LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal("skill").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+		LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal("skill").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 			.then(Commands.literal("clear").executes((commandContext) -> clearSkill(commandContext.getSource(), ImmutableList.of(commandContext.getSource().getPlayerOrException())))
 			.then(Commands.argument("targets", EntityArgument.players()).executes((commandContext) -> clearSkill(commandContext.getSource(), EntityArgument.getPlayers(commandContext, "targets")))))
 			.then(Commands.literal("add")

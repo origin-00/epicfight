@@ -1,5 +1,6 @@
 package yesman.epicfight.api.client.event.types.render;
 
+import net.minecraft.client.renderer.entity.state.EnderDragonRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EnderDragonRenderer;
@@ -14,8 +15,10 @@ public class RenderEnderDragonEvent extends Event implements CancelableEvent {
     private final PoseStack poseStack;
     private final MultiBufferSource buffers;
     private final int light;
+    private final EnderDragonRenderState renderState;
 	
-	public RenderEnderDragonEvent(EnderDragon entity, EnderDragonRenderer renderer, float partialRenderTick, PoseStack poseStack, MultiBufferSource buffers, int light) {
+	public RenderEnderDragonEvent(EnderDragon entity, EnderDragonRenderer renderer, EnderDragonRenderState renderState, float partialRenderTick, PoseStack poseStack, MultiBufferSource buffers, int light) {
+		this.renderState = renderState;
 		this.entity = entity;
         this.renderer = renderer;
         this.partialRenderTick = partialRenderTick;
@@ -24,6 +27,11 @@ public class RenderEnderDragonEvent extends Event implements CancelableEvent {
         this.light = light;
 	}
 	
+	/// The vanilla render state of this frame (render states replaced entity arguments in 1.21.2).
+	public EnderDragonRenderState getRenderState() {
+		return this.renderState;
+	}
+
 	public EnderDragon getEntity() {
 		return entity;
 	}

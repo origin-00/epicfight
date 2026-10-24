@@ -10,7 +10,7 @@ import com.google.common.collect.Sets;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.EntityType;
 import yesman.epicfight.api.animation.Joint;
@@ -41,7 +41,7 @@ public class Armatures {
 		T invoke(String name, int jointNumber, Joint joint, Map<String, Joint> jointMap);
 	}
 	
-	private static final Map<ResourceLocation, ArmatureAccessor<? extends Armature>> ACCESSORS = new HashMap<> ();
+	private static final Map<Identifier, ArmatureAccessor<? extends Armature>> ACCESSORS = new HashMap<> ();
 	private static final Map<ArmatureAccessor<? extends Armature>, Armature> ARMATURES = new HashMap<> ();
 	private static final Map<EntityType<?>, AssetAccessor<? extends Armature>> ENTITY_TYPE_ARMATURE_MAPPER = new HashMap<> ();
 	
@@ -102,7 +102,7 @@ public class Armatures {
 	
 	//For presets
 	public static void registerEntityTypeArmatureByPreset(EntityType<?> entityType, String presetName) {
-		EntityType<?> presetEntityType = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(presetName));
+		EntityType<?> presetEntityType = BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.parse(presetName));
 		ENTITY_TYPE_ARMATURE_MAPPER.put(entityType, ENTITY_TYPE_ARMATURE_MAPPER.get(presetEntityType));
 	}
 	
@@ -113,18 +113,18 @@ public class Armatures {
 	
 	@SuppressWarnings("unchecked")
 	@Nullable
-	public static <A extends Armature> AssetAccessor<A> get(ResourceLocation id) {
+	public static <A extends Armature> AssetAccessor<A> get(Identifier id) {
 		return (AssetAccessor<A>) ACCESSORS.get(id);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <A extends Armature> AssetAccessor<A> getOrCreate(ResourceLocation id, ArmatureContructor<A> armatureConstructor) {
+	public static <A extends Armature> AssetAccessor<A> getOrCreate(Identifier id, ArmatureContructor<A> armatureConstructor) {
 		return ACCESSORS.containsKey(id) ? (AssetAccessor<A>)ACCESSORS.get(id) : ArmatureAccessor.create(id, armatureConstructor, false);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <A extends Armature> Set<Pair<ResourceLocation, AssetAccessor<A>>> entry() {
-		Set<Pair<ResourceLocation, AssetAccessor<A>>> newset = Sets.newHashSet();
+	public static <A extends Armature> Set<Pair<Identifier, AssetAccessor<A>>> entry() {
+		Set<Pair<Identifier, AssetAccessor<A>>> newset = Sets.newHashSet();
 		
 		for (AssetAccessor<? extends Armature> accessor : ACCESSORS.values()) {
 			try {
@@ -137,16 +137,16 @@ public class Armatures {
 		return newset;
 	}
 	
-	public static ResourceLocation wrapLocation(ResourceLocation rl) {
-		return rl.getPath().matches("animmodels/.*\\.json") ? rl : ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
+	public static Identifier wrapLocation(Identifier rl) {
+		return rl.getPath().matches("animmodels/.*\\.json") ? rl : Identifier.fromNamespaceAndPath(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
 	}
 	
-	public static record ArmatureAccessor<A extends Armature> (ResourceLocation registryName, ArmatureContructor<A> armatureConstructor, boolean inRegistry) implements AssetAccessor<A> {
+	public static record ArmatureAccessor<A extends Armature> (Identifier registryName, ArmatureContructor<A> armatureConstructor, boolean inRegistry) implements AssetAccessor<A> {
 		public static <A extends Armature> ArmatureAccessor<A> create(String namespaceId, String path, ArmatureContructor<A> armatureConstructor) {
-			return create(ResourceLocation.fromNamespaceAndPath(namespaceId, path), armatureConstructor, true);
+			return create(Identifier.fromNamespaceAndPath(namespaceId, path), armatureConstructor, true);
 		}
 		
-		private static <A extends Armature> ArmatureAccessor<A> create(ResourceLocation id, ArmatureContructor<A> armatureConstructor, boolean inRegistry) {
+		private static <A extends Armature> ArmatureAccessor<A> create(Identifier id, ArmatureContructor<A> armatureConstructor, boolean inRegistry) {
 			ArmatureAccessor<A> accessor = new ArmatureAccessor<A> (id, armatureConstructor, inRegistry);
 			ACCESSORS.put(id, accessor);
 			return accessor;
@@ -176,7 +176,7 @@ public class Armatures {
 				return true;
 			} else if (obj instanceof ArmatureAccessor armatureAccessor) {
 				return this.registryName.equals(armatureAccessor.registryName());
-			} else if (obj instanceof ResourceLocation rl) {
+			} else if (obj instanceof Identifier rl) {
 				return this.registryName.equals(rl);
 			} else if (obj instanceof String name) {
 				return this.registryName.toString().equals(name);

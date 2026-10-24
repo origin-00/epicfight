@@ -25,7 +25,7 @@ public class TechnicianSkill extends PassiveSkill {
             EpicFightEventHooks.Entity.ON_DODGE,
             event -> {
                 skillContainer.getExecutor().playSound(EpicFightSounds.TECHNICIAN.get(), 1.0F, 1.0F, 1.0F);
-                skillContainer.getServerExecutor().getOriginal().serverLevel().sendParticles(ParticleTypes.POOF, event.getLocation().x(), event.getLocation().y(), event.getLocation().z(), 4, 0.0D, 0.0D, 0.0D, 0.075D);
+                skillContainer.getServerExecutor().getOriginal().level().sendParticles(ParticleTypes.POOF, event.getLocation().x(), event.getLocation().y(), event.getLocation().z(), 4, 0.0D, 0.0D, 0.0D, 0.075D);
                 float consumption = skillContainer.getExecutor().getModifiedStaminaConsume(skillContainer.getExecutor().getSkill(SkillSlots.DODGE).getSkill().getConsumption());
                 skillContainer.getExecutor().setStamina(skillContainer.getExecutor().getStamina() + consumption);
             },

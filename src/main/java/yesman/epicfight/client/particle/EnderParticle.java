@@ -1,18 +1,20 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.RandomSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 
-public class EnderParticle extends TextureSheetParticle {
+public class EnderParticle extends SingleQuadParticle {
 	private EnderParticle.Usage usage;
 	
-	public EnderParticle(ClientLevel worldIn, double x, double y, double z, double xd, double yd, double dz) {
-		super(worldIn, x, y, z);
+	public EnderParticle(ClientLevel worldIn, double x, double y, double z, double xd, double yd, double dz, TextureAtlasSprite sprite) {
+		super(worldIn, x, y, z, sprite);
 	    this.xd = xd;
 	    this.yd = yd;
 	    this.zd = dz;
@@ -29,18 +31,18 @@ public class EnderParticle extends TextureSheetParticle {
 	}
 	
 	@Override
-	public ParticleRenderType getRenderType() {
-		return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
+	protected SingleQuadParticle.Layer getLayer() {
+		return SingleQuadParticle.Layer.OPAQUE;
 	}
 	
 	@Override
-	public int getLightColor(float p_107086_) {
+	public int getLightCoords(float p_107086_) {
 		if (this.usage == EnderParticle.Usage.DRAGON_BREATH_FLAME) {
-			int i = super.getLightColor(p_107086_);
+			int i = super.getLightCoords(p_107086_);
 			int k = i >> 16 & 255;
 			return 240 | k << 16;
 		} else {
-			return super.getLightColor(p_107086_);
+			return super.getLightCoords(p_107086_);
 		}
 	}
 	
@@ -60,9 +62,8 @@ public class EnderParticle extends TextureSheetParticle {
 	    }
 		
 		@Override
-		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-			EnderParticle particle = new EnderParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
-			particle.pickSprite(this.spriteSet);
+		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
+			EnderParticle particle = new EnderParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet.get(random));
 			particle.setUsage(EnderParticle.Usage.ENDERMAN_DEATH);
 			return particle;
 		}
@@ -76,9 +77,8 @@ public class EnderParticle extends TextureSheetParticle {
 	    }
 		
 		@Override
-		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-			EnderParticle particle = new EnderParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
-			particle.pickSprite(this.spriteSet);
+		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
+			EnderParticle particle = new EnderParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet.get(random));
 			particle.quadSize *= 2.0F;
 			particle.setUsage(EnderParticle.Usage.DRAGON_BREATH_FLAME);
 			return particle;

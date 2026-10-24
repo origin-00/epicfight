@@ -1,5 +1,6 @@
 package yesman.epicfight.epicskins.client.widget;
 
+import net.minecraft.client.input.MouseButtonEvent;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
@@ -20,7 +21,9 @@ public class CapePopupBox extends PopupBox<Cosmetic> {
 	}
 	
 	@Override
-	public void onClick(double x, double y) {
+	public void onClick(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
 		if (this.clickedPopupButton(x, y)) {
 			this.onPress.run();
 		}

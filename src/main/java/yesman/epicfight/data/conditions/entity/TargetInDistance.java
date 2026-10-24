@@ -32,8 +32,8 @@ public class TargetInDistance extends EntityPatchCondition {
 	
 	@Override
 	public TargetInDistance read(CompoundTag tag) {
-		this.min = this.assertTag("min", "decimal", tag, NumericTag.class, CompoundTag::getDouble);
-		this.max = this.assertTag("max", "decimal", tag, NumericTag.class, CompoundTag::getDouble);
+		this.min = this.assertTag("min", "decimal", tag, NumericTag.class, (compoundTag, key) -> compoundTag.getDoubleOr(key, 0.0D));
+		this.max = this.assertTag("max", "decimal", tag, NumericTag.class, (compoundTag, key) -> compoundTag.getDoubleOr(key, 0.0D));
 		
 		return this;
 	}
@@ -61,7 +61,7 @@ public class TargetInDistance extends EntityPatchCondition {
 		minEditBox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsable(context, Double::parseDouble));
 		maxEditBox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsable(context, Double::parseDouble));
 		Function<Object, Tag> doubleParser = (value) -> DoubleTag.valueOf(Double.valueOf(value.toString()));
-		Function<Tag, Object> doubleGetter = (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, Tag::getAsString));
+		Function<Tag, Object> doubleGetter = (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, ParseUtil::tagAsString));
 		
 		return List.of(ParameterEditor.of(doubleParser, doubleGetter, minEditBox), ParameterEditor.of(doubleParser, doubleGetter, maxEditBox));
 	}

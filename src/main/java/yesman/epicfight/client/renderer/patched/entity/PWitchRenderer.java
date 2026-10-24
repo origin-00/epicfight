@@ -1,6 +1,6 @@
 package yesman.epicfight.client.renderer.patched.entity;
 
-import net.minecraft.client.model.WitchModel;
+import net.minecraft.client.model.monster.witch.WitchModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.WitchRenderer;
 import net.minecraft.client.renderer.entity.layers.WitchItemLayer;
@@ -12,7 +12,7 @@ import yesman.epicfight.client.mesh.VillagerMesh;
 import yesman.epicfight.client.renderer.patched.layer.PatchedItemInHandLayer;
 import yesman.epicfight.world.capabilities.entitypatch.mob.WitchPatch;
 
-public class PWitchRenderer extends PatchedLivingEntityRenderer<Witch, WitchPatch, WitchModel<Witch>, WitchRenderer, VillagerMesh> {
+public class PWitchRenderer extends PatchedLivingEntityRenderer<Witch, WitchPatch, WitchModel, WitchRenderer, VillagerMesh> {
 	public PWitchRenderer(EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(context, entityType);
 		this.addPatchedLayer(WitchItemLayer.class, new PatchedItemInHandLayer<>());

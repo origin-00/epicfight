@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "epicfight:stray_cloth"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "epicfight:stray_cloth"
+      }
+    ]
+  }
+}

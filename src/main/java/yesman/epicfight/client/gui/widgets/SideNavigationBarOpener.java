@@ -1,13 +1,15 @@
 package yesman.epicfight.client.gui.widgets;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.navigation.CommonInputs;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.client.gui.screen.SideBarScreen;
 import yesman.epicfight.client.gui.widgets.common.AnchoredWidget;
 import yesman.epicfight.client.gui.widgets.common.PressableWidget;
@@ -17,8 +19,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public class SideNavigationBarOpener extends AbstractWidget implements AnchoredWidget, PressableWidget {
-    private static final ResourceLocation ARROW_SPRITE = EpicFightMod.identifier("widget/arrow");
-    private static final ResourceLocation ARROW_HIGHLIGHTED_SPRITE = EpicFightMod.identifier("widget/arrow_highlighted");
+    private static final Identifier ARROW_SPRITE = EpicFightMod.identifier("widget/arrow");
+    private static final Identifier ARROW_HIGHLIGHTED_SPRITE = EpicFightMod.identifier("widget/arrow_highlighted");
 
     private final Screen owner;
     private final Screen twoStepsParent;
@@ -39,7 +41,7 @@ public class SideNavigationBarOpener extends AbstractWidget implements AnchoredW
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.setWidth(this.isHoveredOrFocused() ? 16 : 8);
         int outlineColor = this.isHoveredOrFocused() ? -6250336 : -12566463;
         int minX = this.getX();
@@ -47,16 +49,16 @@ public class SideNavigationBarOpener extends AbstractWidget implements AnchoredW
         int maxX = this.getX() + this.getWidth();
         int maxY = this.getY() + this.getHeight();
 
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(0, 0, 1000);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate(0F, 0F);
 
         guiGraphics.fill(minX, minY, maxX, maxY, outlineColor);
         guiGraphics.fill(minX, minY + 1, maxX - 1, maxY - 1, 0xFF000000);
 
-        ResourceLocation resourcelocation = this.isHoveredOrFocused() ? ARROW_HIGHLIGHTED_SPRITE : ARROW_SPRITE;
-        guiGraphics.blitSprite(resourcelocation, this.getX() + this.getWidth() / 2 - 3, this.getY() + this.getHeight() / 2 - 3, 4, 6);
+        Identifier resourcelocation = this.isHoveredOrFocused() ? ARROW_HIGHLIGHTED_SPRITE : ARROW_SPRITE;
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, resourcelocation, this.getX() + this.getWidth() / 2 - 3, this.getY() + this.getHeight() / 2 - 3, 4, 6);
 
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
     }
 
     @Override
@@ -65,10 +67,13 @@ public class SideNavigationBarOpener extends AbstractWidget implements AnchoredW
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (this.active && this.visible) {
-            if (this.isValidClickButton(button)) {
-                boolean flag = this.clicked(mouseX, mouseY);
+            if (this.isValidClickButton(event.buttonInfo())) {
+                boolean flag = this.isMouseOver(mouseX, mouseY);
                 if (flag) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
                     this.onPressed();
@@ -83,9 +88,12 @@ public class SideNavigationBarOpener extends AbstractWidget implements AnchoredW
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
         if (this.active && this.visible) {
-            if (CommonInputs.selected(keyCode)) {
+            if (new KeyEvent(keyCode, 0, 0).isSelection()) {
                 this.playDownSound(Minecraft.getInstance().getSoundManager());
                 this.onPressed();
                 return true;

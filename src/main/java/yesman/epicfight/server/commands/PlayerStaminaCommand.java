@@ -18,7 +18,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
@@ -26,7 +26,7 @@ public class PlayerStaminaCommand {
 	private static final SimpleCommandExceptionType ERROR_MODIFYING_FAILED = new SimpleCommandExceptionType(Component.translatable("commands.epicfight.stamina.success.failed"));
 	
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-		LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal("stamina").requires((commandSourceStack) -> commandSourceStack.hasPermission(2));
+		LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal("stamina").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
 		
 		builder.then(Commands.literal("get").then(Commands.argument("target", EntityArgument.player()).executes((command) -> {
 			return getStamina(command.getSource(), EntityArgument.getPlayer(command, "target"));
@@ -85,7 +85,7 @@ public class PlayerStaminaCommand {
 				command.getSource().sendSuccess(wrap(Component.translatable("commands.epicfight.stamina.success.self", players.iterator().next().getDisplayName(), ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format(returnVal))), true);
 			} else {
 				for (ServerPlayer serverplayer : players) {
-					if (command.getSource().getLevel().getGameRules().getBoolean(GameRules.RULE_SENDCOMMANDFEEDBACK)) {
+					if (command.getSource().getLevel().getGameRules().get(GameRules.SEND_COMMAND_FEEDBACK)) {
 						serverplayer.sendSystemMessage(Component.translatable("commands.epicfight.stamina.success.other", String.valueOf(i)));
 					}
 				}

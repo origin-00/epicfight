@@ -1,11 +1,12 @@
 package yesman.epicfight.api.animation.types;
 
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.netty.util.internal.StringUtil;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -57,7 +58,7 @@ import java.util.stream.Stream;
 public class StaticAnimation extends DynamicAnimation implements InverseKinematicsProvider {
     public static final IndependentVariableKey<Boolean> NO_PHYSICS = AnimationVariables.unsyncIndependent(animator -> false, true);
 
-    public static String getFileHash(ResourceLocation rl) {
+    public static String getFileHash(Identifier rl) {
         String fileHash;
 
         try {
@@ -78,7 +79,7 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
     protected final StateSpectrum.Blueprint stateSpectrumBlueprint = new StateSpectrum.Blueprint();
     protected final StateSpectrum stateSpectrum = new StateSpectrum();
     protected final AssetAccessor<? extends Armature> armature;
-    protected ResourceLocation resourceLocation;
+    protected Identifier resourceLocation;
     protected AnimationAccessor<? extends StaticAnimation> accessor;
     private final String filehash;
 
@@ -97,7 +98,7 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
     public StaticAnimation(float transitionTime, boolean isRepeat, AnimationAccessor<? extends StaticAnimation> accessor, AssetAccessor<? extends Armature> armature) {
         super(transitionTime, isRepeat);
 
-        this.resourceLocation = ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), "animmodels/animations/" + accessor.registryName().getPath() + ".json");
+        this.resourceLocation = Identifier.fromNamespaceAndPath(accessor.registryName().getNamespace(), "animmodels/animations/" + accessor.registryName().getPath() + ".json");
 
         this.armature = armature;
         this.accessor = accessor;
@@ -108,14 +109,14 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
     public StaticAnimation(float transitionTime, boolean isRepeat, String path, AssetAccessor<? extends Armature> armature) {
         super(transitionTime, isRepeat);
 
-        ResourceLocation registryName = ResourceLocation.parse(path);
-        this.resourceLocation = ResourceLocation.fromNamespaceAndPath(registryName.getNamespace(), "animmodels/animations/" + registryName.getPath() + ".json");
+        Identifier registryName = Identifier.parse(path);
+        this.resourceLocation = Identifier.fromNamespaceAndPath(registryName.getNamespace(), "animmodels/animations/" + registryName.getPath() + ".json");
         this.armature = armature;
         this.filehash = StringUtil.EMPTY_STRING;
     }
 
     /* Multilayer Constructor */
-    public StaticAnimation(ResourceLocation fileLocation, float transitionTime, boolean isRepeat, String registryName, AssetAccessor<? extends Armature> armature) {
+    public StaticAnimation(Identifier fileLocation, float transitionTime, boolean isRepeat, String registryName, AssetAccessor<? extends Armature> armature) {
         super(transitionTime, isRepeat);
 
         this.resourceLocation = fileLocation;
@@ -404,16 +405,16 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
 
     @SuppressWarnings("unchecked")
     public <A extends StaticAnimation> A setResourceLocation(String namespace, String path) {
-        this.resourceLocation = ResourceLocation.fromNamespaceAndPath(namespace, "animmodels/animations/" + path + ".json");
+        this.resourceLocation = Identifier.fromNamespaceAndPath(namespace, "animmodels/animations/" + path + ".json");
         return (A)this;
     }
 
-    public ResourceLocation getLocation() {
+    public Identifier getLocation() {
         return this.resourceLocation;
     }
 
     @Override
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return this.accessor.registryName();
     }
 

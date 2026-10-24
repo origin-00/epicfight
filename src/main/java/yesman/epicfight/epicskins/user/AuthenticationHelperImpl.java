@@ -1,5 +1,9 @@
 package yesman.epicfight.epicskins.user;
 
+import javax.annotation.Nullable;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -8,12 +12,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -38,6 +42,22 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class AuthenticationHelperImpl implements AuthenticationHelper {
+	@Nullable
+	private static Runnable pendingInitialization;
+
+	/// Runs an initialization requested before the client existed, once.
+	public static final class PendingInitialization {
+		@SubscribeEvent
+		public static void onClientTick(ClientTickEvent.Pre event) {
+			Runnable initialization = pendingInitialization;
+
+			if (initialization != null && Minecraft.getInstance() != null) {
+				pendingInitialization = null;
+				initialization.run();
+			}
+		}
+	}
+
 	public static boolean checkOnlineUser(User user) {
 		return !"0".equals(user.getAccessToken());
 	}
@@ -73,6 +93,17 @@ public class AuthenticationHelperImpl implements AuthenticationHelper {
 	) {
         // Terminate when already initialized
         if (this.status != Status.UNAUTHENTICATED) {
+            return;
+        }
+
+        // Since 26.1 mod configs load before the Minecraft instance (and its user) exists:
+        // log in on the first client tick instead.
+        if (Minecraft.getInstance() == null) {
+            if (pendingInitialization == null) {
+                NeoForge.EVENT_BUS.register(PendingInitialization.class);
+            }
+
+            pendingInitialization = () -> this.initialize(accessToken, refreshToken, provider);
             return;
         }
 
@@ -263,7 +294,7 @@ public class AuthenticationHelperImpl implements AuthenticationHelper {
     public void loadPlayerSkin() {
         this.playerInfo = new PlayerInfo(Minecraft.getInstance().getGameProfile(), false);
         // Indirectly call registerTextures that loads the player's skin textures
-        ResourceLocation rl = this.playerInfo.getSkin().texture();
+        Identifier rl = this.playerInfo.getSkin().body().texturePath();
     }
 
 	public void setStatus(Status status) {

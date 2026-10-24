@@ -1,11 +1,9 @@
 package yesman.epicfight.client.platform.neoforge.event;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
+import yesman.epicfight.client.gui.render.ModelPreviewRenderer;
+import yesman.epicfight.client.gui.render.ModelPreviewRenderState;
+import yesman.epicfight.client.renderer.patched.item.SkillCategoryItemModelProperty;
 import net.minecraft.client.renderer.entity.NoopRenderer;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -21,16 +19,12 @@ import yesman.epicfight.client.renderer.blockentity.FractureBlockRenderer;
 import yesman.epicfight.client.renderer.entity.DroppedNetherStarRenderer;
 import yesman.epicfight.client.renderer.entity.WitherGhostRenderer;
 import yesman.epicfight.client.renderer.entity.WitherSkeletonMinionRenderer;
-import yesman.epicfight.client.renderer.patched.item.RenderItemBase;
 import yesman.epicfight.client.renderer.patched.layer.WearableItemLayer;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.registry.entries.EpicFightBlockEntities;
 import yesman.epicfight.registry.entries.EpicFightEntityTypes;
 import yesman.epicfight.registry.entries.EpicFightParticles;
-import yesman.epicfight.skill.SkillCategory;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT)
 public final class ClientModBusEvent {
@@ -68,6 +62,16 @@ public final class ClientModBusEvent {
     }
 	
 	@SubscribeEvent
+	public static void epicfight$registerPictureInPictureRenderers(RegisterPictureInPictureRenderersEvent event) {
+		event.register(ModelPreviewRenderState.class, ModelPreviewRenderer::new);
+	}
+	
+	@SubscribeEvent
+	public static void epicfight$registerParticleGroups(RegisterParticleGroupsEvent event) {
+		event.register(EpicFightParticleRenderTypes.CUSTOM, CustomRenderParticleGroup::new);
+	}
+	
+	@SubscribeEvent
 	public static void epicfight$registerRenderers(RegisterRenderers event) {
 		event.registerEntityRenderer(EpicFightEntityTypes.AREA_EFFECT_BREATH.get(), NoopRenderer::new);
 		event.registerEntityRenderer(EpicFightEntityTypes.DROPPED_NETHER_STAR.get(), DroppedNetherStarRenderer::new);
@@ -77,14 +81,6 @@ public final class ClientModBusEvent {
 		event.registerEntityRenderer(EpicFightEntityTypes.WITHER_SKELETON_MINION.get(), WitherSkeletonMinionRenderer::new);
 		event.registerBlockEntityRenderer(EpicFightBlockEntities.FRACTURE.get(), FractureBlockRenderer::new);
         ClientEngine.getInstance().getAuthHelper().loadPlayerSkin();
-	}
-	
-	/**
-	 * Not directly related, but used this method to initialize {@link RenderItemBase#itemRenderer} and {@link RenderItemBase#itemInHandRenderer} because the event called right after gameRenerer created
-	 */
-	@SubscribeEvent
-	public static void epicfight$registerStage(RenderLevelStageEvent.RegisterStageEvent event) {
-		RenderItemBase.initItemRenderers(Minecraft.getInstance());
 	}
 	
 	@SubscribeEvent
@@ -107,37 +103,8 @@ public final class ClientModBusEvent {
 		event.registerAboveAll(EpicFightMod.identifier("charging_bar"), RenderEngine.getInstance().battleModeHUD::renderChargingBar);
 	}
 	
-	private static ResourceLocation wrapItemModelPath(ResourceLocation rl) {
-		return ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), "item/" + rl.getPath());
-	}
-	
 	@SubscribeEvent
-	public static void registerAdditionalEvent(ModelEvent.RegisterAdditional event) {
-		SkillCategory.ENUM_MANAGER.universalValues().stream().filter(skillCategory -> !skillCategory.bookIcon().equals(SkillCategory.DEFAULT_BOOK_ICON)).forEach(skillCategory -> {
-			event.register(new ModelResourceLocation(wrapItemModelPath(skillCategory.bookIcon()), ModelResourceLocation.STANDALONE_VARIANT));
-		});
-	}
-	
-	@SubscribeEvent
-	public static void modifyBakingResultEvent(ModelEvent.ModifyBakingResult event) {
-		ModelResourceLocation skillbookLocation = new ModelResourceLocation(SkillCategory.DEFAULT_BOOK_ICON, ModelResourceLocation.INVENTORY_VARIANT);
-		
-		if (event.getModels().containsKey(skillbookLocation)) {
-			List<ItemOverrides.BakedOverride> skillCategoryOverrides = new ArrayList<> ();
-			
-			SkillCategory.ENUM_MANAGER.universalValues().stream().filter(skillCategory -> !skillCategory.bookIcon().equals(SkillCategory.DEFAULT_BOOK_ICON)).sorted((c1, c2) -> {
-				return Integer.compare(c2.universalOrdinal(), c1.universalOrdinal());
-			}).forEach(skillCategory -> {
-				ModelResourceLocation model = new ModelResourceLocation(wrapItemModelPath(skillCategory.bookIcon()), ModelResourceLocation.STANDALONE_VARIANT);
-				ItemOverrides.PropertyMatcher[] propertyMatchers = new ItemOverrides.PropertyMatcher[1];
-				propertyMatchers[0] = new ItemOverrides.PropertyMatcher(0, skillCategory.universalOrdinal());
-				BakedModel bakedModel = event.getModelBakery().getBakedTopLevelModels().get(model);
-				skillCategoryOverrides.add(new ItemOverrides.BakedOverride(propertyMatchers, bakedModel));
-			});
-			
-			ItemOverrides overrides = event.getModels().get(skillbookLocation).getOverrides();
-			overrides.overrides = skillCategoryOverrides.toArray(ItemOverrides.BakedOverride[]::new);
-			overrides.properties = new ResourceLocation[] {EpicFightMod.identifier("skill")};
-		}
+	public static void epicfight$registerSelectItemModelProperties(RegisterSelectItemModelPropertyEvent event) {
+		event.register(SkillCategoryItemModelProperty.ID, SkillCategoryItemModelProperty.TYPE);
 	}
 }

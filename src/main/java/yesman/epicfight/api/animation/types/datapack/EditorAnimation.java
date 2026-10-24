@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
@@ -36,7 +36,7 @@ public class EditorAnimation extends StaticAnimation implements AnimationAccesso
 	private JsonObject properties = new JsonObject();
 	
 	public EditorAnimation(String path, AssetAccessor<? extends Armature> armature, AnimationClip clip, JsonAssetLoader.TransformFormat transformFormat, JsonArray rawAnimation) {
-		super(ResourceLocation.withDefaultNamespace(""), 0.0F, false, "", armature);
+		super(Identifier.withDefaultNamespace(""), 0.0F, false, "", armature);
 		
 		this.animationClip = clip;
         this.transformFormat = transformFormat;
@@ -98,8 +98,8 @@ public class EditorAnimation extends StaticAnimation implements AnimationAccesso
 	}
 	
 	@Override
-	public ResourceLocation getRegistryName() {
-		return ResourceLocation.parse((String)this.constructorParams.get("path"));
+	public Identifier getRegistryName() {
+		return Identifier.parse((String)this.constructorParams.get("path"));
 	}
 	
 	@Override
@@ -129,29 +129,29 @@ public class EditorAnimation extends StaticAnimation implements AnimationAccesso
 			
 			
 			for (int i = 0; i < phasesTag.size(); i++) {
-				CompoundTag phaseCompound = phasesTag.getCompound(i);
-				float antic = phaseCompound.getFloat("antic");
-				float preDelay = phaseCompound.getFloat("preDelay");
-				float contact = phaseCompound.getFloat("contact");
-				float recovery = phaseCompound.getFloat("recovery");
+				CompoundTag phaseCompound = phasesTag.getCompoundOrEmpty(i);
+				float antic = phaseCompound.getFloatOr("antic", 0.0F);
+				float preDelay = phaseCompound.getFloatOr("preDelay", 0.0F);
+				float contact = phaseCompound.getFloatOr("contact", 0.0F);
+				float recovery = phaseCompound.getFloatOr("recovery", 0.0F);
 				float end;
 				
 				if (i < phasesTag.size() - 1) {
-					CompoundTag nextTag = phasesTag.getCompound(i + 1);
-					end = nextTag.getFloat("antic");
+					CompoundTag nextTag = phasesTag.getCompoundOrEmpty(i + 1);
+					end = nextTag.getFloatOr("antic", 0.0F);
 				} else {
 					end = recovery;
 				}
 				
-				String hand = phaseCompound.getString("hand");
-				String joint = phaseCompound.getString("joint");
+				String hand = phaseCompound.getStringOr("hand", "");
+				String joint = phaseCompound.getStringOr("joint", "");
 				String colliderInvokeCommand;
 				
 				if (phaseCompound.contains("collider")) {
-					CompoundTag colliderTag = phaseCompound.getCompound("collider");
-					int colliderCount = colliderTag.getInt("number");
-					ListTag center = colliderTag.getList("center", Tag.TAG_DOUBLE);
-					ListTag size = colliderTag.getList("size", Tag.TAG_DOUBLE);
+					CompoundTag colliderTag = phaseCompound.getCompoundOrEmpty("collider");
+					int colliderCount = colliderTag.getIntOr("number", 0);
+					ListTag center = colliderTag.getListOrEmpty("center");
+					ListTag size = colliderTag.getListOrEmpty("size");
 					
 					if (colliderCount == 1) {
 						colliderInvokeCommand = String.format("(%s#D,%s#D,%s#D,%s#D,%s#D,%s#D)#%s", size.get(0), size.get(1), size.get(2), center.get(0), center.get(1), center.get(2), OBBCollider.class.getTypeName());
@@ -326,7 +326,7 @@ public class EditorAnimation extends StaticAnimation implements AnimationAccesso
 	}
 
 	@Override
-	public ResourceLocation registryName() {
+	public Identifier registryName() {
 		return this.getRegistryName();
 	}
 

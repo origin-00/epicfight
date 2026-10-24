@@ -12,7 +12,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec3;
@@ -37,11 +37,11 @@ public record TrailInfo(
 	, int updateInterval
 	, int blockLight
 	, int skyLight
-	, ResourceLocation texturePath
+	, Identifier texturePath
 	, InteractionHand hand
 ) {
-    public static final ResourceLocation GENERIC_TRAIL_TEXTURE = EpicFightMod.identifier("textures/particle/swing_trail.png");
-    public static final ResourceLocation SWORDMASTER_SWING_TRAIL_TEX = EpicFightMod.identifier("textures/particle/swordmaster_trail.png");
+    public static final Identifier GENERIC_TRAIL_TEXTURE = EpicFightMod.identifier("textures/particle/swing_trail.png");
+    public static final Identifier SWORDMASTER_SWING_TRAIL_TEX = EpicFightMod.identifier("textures/particle/swordmaster_trail.png");
 	
 	public static final TrailInfo PREVIEWER_DEFAULT_TRAIL = TrailInfo.builder()
 			.startPos(new Vec3(0.0D, 0.0D, 0.0D))
@@ -192,7 +192,7 @@ public record TrailInfo(
 		
 		if (trailObj.has("particle_type")) {
 			String particleTypeName = GsonHelper.getAsString(trailObj, "particle_type");
-			SimpleParticleType particleType = (SimpleParticleType)BuiltInRegistries.PARTICLE_TYPE.get(ResourceLocation.parse(particleTypeName));
+			SimpleParticleType particleType = (SimpleParticleType)BuiltInRegistries.PARTICLE_TYPE.getValue(Identifier.parse(particleTypeName));
 			trailBuilder.type(particleType);
 		}
 		
@@ -239,72 +239,72 @@ public record TrailInfo(
 		TrailInfo.Builder trailBuilder = TrailInfo.builder();
 		
 		if (compoundTag.contains("start_time") && compoundTag.contains("end_time")) {
-			float startTime = compoundTag.getFloat("start_time");
-			float endTime = compoundTag.getFloat("end_time");
+			float startTime = compoundTag.getFloatOr("start_time", 0.0F);
+			float endTime = compoundTag.getFloatOr("end_time", 0.0F);
 			trailBuilder.time(startTime, endTime);
 		}
 		
 		if (compoundTag.contains("fade_time")) {
-			float fadeTime = compoundTag.getFloat("fade_time");
+			float fadeTime = compoundTag.getFloatOr("fade_time", 0.0F);
 			trailBuilder.fadeTime(fadeTime);
 		}
 		
 		if (compoundTag.contains("lifetime")) {
-			trailBuilder.lifetime(compoundTag.getInt("lifetime"));
+			trailBuilder.lifetime(compoundTag.getIntOr("lifetime", 0));
 		}
 		
 		if (compoundTag.contains("interpolations")) {
-			trailBuilder.interpolations(compoundTag.getInt("interpolations"));
+			trailBuilder.interpolations(compoundTag.getIntOr("interpolations", 0));
 		}
 		
 		if (compoundTag.contains("update_interval")) {
-			trailBuilder.updateInterval(compoundTag.getInt("update_interval"));
+			trailBuilder.updateInterval(compoundTag.getIntOr("update_interval", 0));
 		}
 		
 		if (compoundTag.contains("joint")) {
-			trailBuilder.joint(compoundTag.getString("joint"));
+			trailBuilder.joint(compoundTag.getStringOr("joint", ""));
 		}
 		
 		if (compoundTag.contains("texture_path")) {
-			trailBuilder.texture(compoundTag.getString("texture_path"));
+			trailBuilder.texture(compoundTag.getStringOr("texture_path", ""));
 		}
 		
 		if (compoundTag.contains("particle_type")) {
-			String particleTypeName = compoundTag.getString("particle_type");
+			String particleTypeName = compoundTag.getStringOr("particle_type", "");
 			
-			SimpleParticleType particleType = (SimpleParticleType)BuiltInRegistries.PARTICLE_TYPE.get(ResourceLocation.parse(particleTypeName));
+			SimpleParticleType particleType = (SimpleParticleType)BuiltInRegistries.PARTICLE_TYPE.getValue(Identifier.parse(particleTypeName));
 			trailBuilder.type(particleType);
 		}
 		
 		if (compoundTag.contains("color")) {
-			ListTag color = compoundTag.getList("color", Tag.TAG_INT);
-			trailBuilder.r(color.getInt(0) / 255F);
-			trailBuilder.g(color.getInt(1) / 255F);
-			trailBuilder.b(color.getInt(2) / 255F);
+			ListTag color = compoundTag.getListOrEmpty("color");
+			trailBuilder.r(color.getIntOr(0, 0) / 255F);
+			trailBuilder.g(color.getIntOr(1, 0) / 255F);
+			trailBuilder.b(color.getIntOr(2, 0) / 255F);
 		}
 		
 		if (compoundTag.contains("begin_pos")) {
-			ListTag beginPos = compoundTag.getList("begin_pos", Tag.TAG_DOUBLE);
-			trailBuilder.startPos(new Vec3(beginPos.getDouble(0), beginPos.getDouble(1), beginPos.getDouble(2)));
+			ListTag beginPos = compoundTag.getListOrEmpty("begin_pos");
+			trailBuilder.startPos(new Vec3(beginPos.getDoubleOr(0, 0.0D), beginPos.getDoubleOr(1, 0.0D), beginPos.getDoubleOr(2, 0.0D)));
 		}
 		
 		if (compoundTag.contains("end_pos")) {
-			ListTag endPos = compoundTag.getList("end_pos", Tag.TAG_DOUBLE);
-			trailBuilder.endPos(new Vec3(endPos.getDouble(0), endPos.getDouble(1), endPos.getDouble(2)));
+			ListTag endPos = compoundTag.getListOrEmpty("end_pos");
+			trailBuilder.endPos(new Vec3(endPos.getDoubleOr(0, 0.0D), endPos.getDoubleOr(1, 0.0D), endPos.getDoubleOr(2, 0.0D)));
 		}
 		
 		if (compoundTag.contains("block_light")) {
-			int blockLight = compoundTag.getInt("block_light");
+			int blockLight = compoundTag.getIntOr("block_light", 0);
 			trailBuilder.blockLight(blockLight);
 		}
 		
 		if (compoundTag.contains("sky_light")) {
-			int skyLight = compoundTag.getInt("sky_light");
+			int skyLight = compoundTag.getIntOr("sky_light", 0);
 			trailBuilder.skyLight(skyLight);
 		}
 		
 		if (compoundTag.contains("item_skin_hand")) {
-			String itemSkinHand = compoundTag.getString("item_skin_hand");
+			String itemSkinHand = compoundTag.getStringOr("item_skin_hand", "");
 			InteractionHand hand = InteractionHand.valueOf(itemSkinHand.toUpperCase(Locale.ROOT));
 			trailBuilder.itemSkinHand(hand);
 		}
@@ -328,7 +328,7 @@ public record TrailInfo(
 		private int updateInterval = 1;
 		private int blockLight;
 		private int skyLight;
-		private ResourceLocation texturePath;
+		private Identifier texturePath;
 		private InteractionHand hand = InteractionHand.MAIN_HAND;
 		
 		public TrailInfo.Builder startPos(Vec3 start) {
@@ -403,11 +403,11 @@ public record TrailInfo(
 		}
 		
 		public TrailInfo.Builder texture(String texturePath) {
-			this.texturePath = ResourceLocation.parse(texturePath);
+			this.texturePath = Identifier.parse(texturePath);
 			return this;
 		}
 		
-		public TrailInfo.Builder texture(ResourceLocation texturePath) {
+		public TrailInfo.Builder texture(Identifier texturePath) {
 			this.texturePath = texturePath;
 			return this;
 		}

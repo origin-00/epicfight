@@ -1,6 +1,8 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
@@ -28,8 +30,8 @@ public class RowSpliter implements ResizableComponent {
 	}
 	
 	@Override
-	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		guiGraphics.blit(Screen.HEADER_SEPARATOR, this.x, this.y + this.height / 2, 0.0F, 0.0F, this.width, 2, 32, 2);
+	public void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.HEADER_SEPARATOR, this.x, this.y + this.height / 2, 0.0F, 0.0F, this.width, 2, 32, 2);
 	}
 	
 	@Override
@@ -44,16 +46,25 @@ public class RowSpliter implements ResizableComponent {
 	}
 	
 	@Override
-	public boolean mouseClicked(double p_93641_, double p_93642_, int p_93643_) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double p_93641_ = event.x();
+		double p_93642_ = event.y();
+		int p_93643_ = event.button();
 		return false;
 	}
 	
 	@Override
-	public boolean mouseReleased(double p_93684_, double p_93685_, int p_93686_) {
+	public boolean mouseReleased(MouseButtonEvent event) {
+		double p_93684_ = event.x();
+		double p_93685_ = event.y();
+		int p_93686_ = event.button();
 		return false;
 	}
 	
-	public boolean mouseDragged(double p_93645_, double p_93646_, int p_93647_, double p_93648_, double p_93649_) {
+	public boolean mouseDragged(MouseButtonEvent event, double p_93648_, double p_93649_) {
+		double p_93645_ = event.x();
+		double p_93646_ = event.y();
+		int p_93647_ = event.button();
 		return false;
 	}
 	

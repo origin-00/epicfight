@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -36,7 +36,7 @@ import yesman.epicfight.client.mesh.WitherMesh;
 import yesman.epicfight.main.EpicFightMod;
 
 public class Meshes implements PreparableReloadListener {
-	private static final Map<ResourceLocation, MeshAccessor<? extends Mesh>> ACCESSORS = new HashMap<> ();
+	private static final Map<Identifier, MeshAccessor<? extends Mesh>> ACCESSORS = new HashMap<> ();
 	private static final Map<MeshAccessor<? extends Mesh>, Mesh> MESHES = new HashMap<> ();
 	private static ResourceManager resourceManager = null;
 	
@@ -95,12 +95,12 @@ public class Meshes implements PreparableReloadListener {
 	
 	@SuppressWarnings("unchecked")
 	@Nullable
-	public static <M extends Mesh> AssetAccessor<M> get(ResourceLocation id) {
+	public static <M extends Mesh> AssetAccessor<M> get(Identifier id) {
 		return (AssetAccessor<M>) ACCESSORS.get(id);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <M extends Mesh> AssetAccessor<M> getOrCreate(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader) {
+	public static <M extends Mesh> AssetAccessor<M> getOrCreate(Identifier id, Function<JsonAssetLoader, M> jsonLoader) {
 		return ACCESSORS.containsKey(id) ? (AssetAccessor<M>)ACCESSORS.get(id) : MeshAccessor.create(id, jsonLoader, false);
 	}
 	
@@ -109,14 +109,14 @@ public class Meshes implements PreparableReloadListener {
 		return ACCESSORS.values().stream().filter((accessor) -> filter.isAssignableFrom(accessor.get().getClass())).map((accessor) -> (AssetAccessor<M>)accessor).collect(Collectors.toSet());
 	}
 	
-	public static ResourceLocation wrapLocation(ResourceLocation rl) {
-		return rl.getPath().matches("animmodels/.*\\.json") ? rl : ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
+	public static Identifier wrapLocation(Identifier rl) {
+		return rl.getPath().matches("animmodels/.*\\.json") ? rl : Identifier.fromNamespaceAndPath(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
 	}
 	
 	@Override
-	public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier stage, ResourceManager resourceManager, ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler, Executor backgroundExecutor, Executor gameExecutor) {
+	public CompletableFuture<Void> reload(PreparableReloadListener.SharedState currentReload, Executor backgroundExecutor, PreparableReloadListener.PreparationBarrier stage, Executor gameExecutor) {
 		return CompletableFuture.runAsync(() -> {
-			Meshes.reload(resourceManager);
+			Meshes.reload(currentReload.resourceManager());
 		}, gameExecutor).thenCompose(stage::wait);
 	}
 	
@@ -125,12 +125,12 @@ public class Meshes implements PreparableReloadListener {
 		M invoke(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<V>> parts, M parent, RenderProperties properties);
 	}
 	
-	public static record MeshAccessor<M extends Mesh> (ResourceLocation registryName, Function<JsonAssetLoader, M> jsonLoader, boolean inRegistry) implements AssetAccessor<M>, SoftBodyTranslatable {
+	public static record MeshAccessor<M extends Mesh> (Identifier registryName, Function<JsonAssetLoader, M> jsonLoader, boolean inRegistry) implements AssetAccessor<M>, SoftBodyTranslatable {
 		public static <M extends Mesh> MeshAccessor<M> create(String namespaceId, String path, Function<JsonAssetLoader, M> jsonLoader) {
-			return create(ResourceLocation.fromNamespaceAndPath(namespaceId, path), jsonLoader, true);
+			return create(Identifier.fromNamespaceAndPath(namespaceId, path), jsonLoader, true);
 		}
 		
-		private static <M extends Mesh> MeshAccessor<M> create(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader, boolean inRegistry) {
+		private static <M extends Mesh> MeshAccessor<M> create(Identifier id, Function<JsonAssetLoader, M> jsonLoader, boolean inRegistry) {
 			MeshAccessor<M> accessor = new MeshAccessor<M> (id, jsonLoader, inRegistry);
 			ACCESSORS.put(id, accessor);
 			return accessor;
@@ -160,7 +160,7 @@ public class Meshes implements PreparableReloadListener {
 				return true;
 			} else if (obj instanceof MeshAccessor armatureAccessor) {
 				return this.registryName.equals(armatureAccessor.registryName());
-			} else if (obj instanceof ResourceLocation rl) {
+			} else if (obj instanceof Identifier rl) {
 				return this.registryName.equals(rl);
 			} else if (obj instanceof String name) {
 				return this.registryName.toString().equals(name);

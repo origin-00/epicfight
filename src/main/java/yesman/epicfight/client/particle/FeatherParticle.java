@@ -1,16 +1,18 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.RandomSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 
-public class FeatherParticle extends TextureSheetParticle {
-	protected FeatherParticle(ClientLevel level, double x, double y, double z, double dx, double dy, double dz) {
-		super(level, x, y, z, dx, dy, dz);
+public class FeatherParticle extends SingleQuadParticle {
+	protected FeatherParticle(ClientLevel level, double x, double y, double z, double dx, double dy, double dz, TextureAtlasSprite sprite) {
+		super(level, x, y, z, dx, dy, dz, sprite);
 		
 		this.lifetime = 8 + this.random.nextInt(22);
 		this.hasPhysics = true;
@@ -27,8 +29,8 @@ public class FeatherParticle extends TextureSheetParticle {
 	}
 	
 	@Override
-	public ParticleRenderType getRenderType() {
-		return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
+	protected SingleQuadParticle.Layer getLayer() {
+		return SingleQuadParticle.Layer.OPAQUE;
 	}
 	
 	public static class Provider implements ParticleProvider<SimpleParticleType> {
@@ -39,9 +41,8 @@ public class FeatherParticle extends TextureSheetParticle {
 		}
 		
 		@Override
-		public Particle createParticle(SimpleParticleType particleType, ClientLevel level, double x, double y, double z, double dx, double dy, double dz) {
-			FeatherParticle featuerparticle = new FeatherParticle(level, x, y, z, dx, dy, dz);
-			featuerparticle.pickSprite(this.sprite);
+		public Particle createParticle(SimpleParticleType particleType, ClientLevel level, double x, double y, double z, double dx, double dy, double dz, RandomSource random) {
+			FeatherParticle featuerparticle = new FeatherParticle(level, x, y, z, dx, dy, dz, this.sprite.get(random));
 			return featuerparticle;
 		}
 	}

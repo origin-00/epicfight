@@ -1,7 +1,8 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import org.joml.Vector4f;
@@ -18,14 +19,14 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public final class EntityDecorations {
-    private final Map<ResourceLocation, RenderAttributeModifier<Vec2i>> overlay = new HashMap<> ();
-    private final Map<ResourceLocation, RenderAttributeModifier<Vector4f>> colors = new HashMap<> ();
-    private final Map<ResourceLocation, RenderAttributeModifier<Vec2i>> lights = new HashMap<> ();
-    private final Map<ResourceLocation, AnimationPropertyModifier<SoundEvent, CapabilityItem>> swingSound = new HashMap<> ();
-    private final Map<ResourceLocation, AnimationPropertyModifier<SoundEvent, CapabilityItem>> hurtSound = new HashMap<> ();
-    private final Map<ResourceLocation, AnimationPropertyModifier<TrailInfo, CapabilityItem>> trail = new HashMap<> ();
-    private final Map<ResourceLocation, ParticleGenerator> particleGenerator = new HashMap<> ();
-    private final Map<ResourceLocation, DecorationOverlay> decorationOverlays = new HashMap<> ();
+    private final Map<Identifier, RenderAttributeModifier<Vec2i>> overlay = new HashMap<> ();
+    private final Map<Identifier, RenderAttributeModifier<Vector4f>> colors = new HashMap<> ();
+    private final Map<Identifier, RenderAttributeModifier<Vec2i>> lights = new HashMap<> ();
+    private final Map<Identifier, AnimationPropertyModifier<SoundEvent, CapabilityItem>> swingSound = new HashMap<> ();
+    private final Map<Identifier, AnimationPropertyModifier<SoundEvent, CapabilityItem>> hurtSound = new HashMap<> ();
+    private final Map<Identifier, AnimationPropertyModifier<TrailInfo, CapabilityItem>> trail = new HashMap<> ();
+    private final Map<Identifier, ParticleGenerator> particleGenerator = new HashMap<> ();
+    private final Map<Identifier, DecorationOverlay> decorationOverlays = new HashMap<> ();
 
     public void addOverlayCoordModifier(IdentifierProvider identifierProvider, RenderAttributeModifier<Vec2i> overlayModifier) {
         this.overlay.put(identifierProvider.getId(), overlayModifier);
@@ -149,7 +150,7 @@ public final class EntityDecorations {
     }
 
     public void removeAll(IdentifierProvider identifierProvider) {
-        ResourceLocation identifier = identifierProvider.getId();
+        Identifier identifier = identifierProvider.getId();
 
         this.colors.remove(identifier);
         this.overlay.remove(identifier);
@@ -188,7 +189,7 @@ public final class EntityDecorations {
 
     @ClientOnly
     public interface DecorationOverlay {
-        ResourceLocation GENERIC = EpicFightMod.identifier("textures/common/white.png");
+        Identifier GENERIC = EpicFightMod.identifier("textures/common/white.png");
         Vector4f NO_COLOR = new Vector4f(1.0F);
 
         default Vector4f color(float partialTick) {

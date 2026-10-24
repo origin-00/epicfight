@@ -8,7 +8,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.CrossbowItem;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
@@ -93,17 +93,17 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 		
 		if (this.original.isUsingItem()) {
 			CapabilityItem activeItem = this.getHoldingItemCapability(this.original.getUsedItemHand());
-			UseAnim useAnim = this.original.getItemInHand(this.original.getUsedItemHand()).getUseAnimation();
-			UseAnim secondUseAnim = activeItem.getUseAnimation(this);
+			ItemUseAnimation useAnim = this.original.getItemInHand(this.original.getUsedItemHand()).getUseAnimation();
+			ItemUseAnimation secondUseAnim = activeItem.getUseAnimation(this);
 			
-			if (useAnim == UseAnim.BLOCK || secondUseAnim == UseAnim.BLOCK)
+			if (useAnim == ItemUseAnimation.BLOCK || secondUseAnim == ItemUseAnimation.BLOCK)
 				if (activeItem.getWeaponCategory() == WeaponCategories.SHIELD)
 					currentCompositeMotion = LivingMotions.BLOCK_SHIELD;
 				else
 					currentCompositeMotion = LivingMotions.BLOCK;
-			else if (useAnim == UseAnim.BOW || useAnim == UseAnim.SPEAR)
+			else if (useAnim == ItemUseAnimation.BOW || useAnim == ItemUseAnimation.SPEAR)
 				currentCompositeMotion = LivingMotions.AIM;
-			else if (useAnim == UseAnim.CROSSBOW)
+			else if (useAnim == ItemUseAnimation.CROSSBOW)
 				currentCompositeMotion = LivingMotions.RELOAD;
 			else
 				currentCompositeMotion = currentLivingMotion;

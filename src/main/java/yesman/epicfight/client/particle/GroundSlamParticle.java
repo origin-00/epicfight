@@ -1,5 +1,7 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.client.particle.SingleQuadParticle;
+import net.minecraft.util.RandomSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.NoRenderParticle;
@@ -52,7 +54,11 @@ public class GroundSlamParticle extends NoRenderParticle {
 			Particle smokeParticle = mc.particleEngine.createParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE, x + positionVec.x * 0.5D, y + 1.5D, z + positionVec.z * 0.5D, 0, 0, 0); 
 			smokeParticle.setParticleSpeed(moveVec.x * 0.1D, Math.random() * 0.05D, moveVec.z * 0.1D);
 			smokeParticle.scale(3.0F);
-			smokeParticle.alpha = 0.33F;
+			
+			if (smokeParticle instanceof SingleQuadParticle quadParticle) {
+				quadParticle.alpha = 0.33F;
+			}
+
 			mc.particleEngine.add(blockParticle);
 			mc.particleEngine.add(smokeParticle);
 		}
@@ -60,7 +66,7 @@ public class GroundSlamParticle extends NoRenderParticle {
 	
 	public static class Provider implements ParticleProvider<SimpleParticleType> {
 		@Override
-		public Particle createParticle(SimpleParticleType particleOption, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+		public Particle createParticle(SimpleParticleType particleOption, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
 			BlockPos blockpos = new BlockPos.MutableBlockPos(x, y, z);
 			BlockState blockstate = level.getBlockState(blockpos);
 			if (blockstate == null) return null; 
@@ -71,10 +77,10 @@ public class GroundSlamParticle extends NoRenderParticle {
 
     public static class BlockParticleProvider implements ParticleProvider<BlockParticleOption> {
         @Override
-        public @Nullable Particle createParticle(BlockParticleOption particleOption, ClientLevel clientLevel, double x, double y, double z, double dx, double dy, double dz) {
+        public @Nullable Particle createParticle(BlockParticleOption particleOption, ClientLevel clientLevel, double x, double y, double z, double dx, double dy, double dz, RandomSource random) {
             TerrainParticle blockParticle = new TerrainParticle(clientLevel, x, y, z, dx, dy, dz, particleOption.getState(), particleOption.getPos());
             blockParticle.setParticleSpeed((Math.random() - 0.5D) * 0.3D, Math.random() * 0.5D, (Math.random() - 0.5D) * 0.3D);
-            blockParticle.setLifetime(10 + new Random().nextInt(60));
+            blockParticle.setLifetime(10 + random.nextInt(60));
 
             return blockParticle;
         }

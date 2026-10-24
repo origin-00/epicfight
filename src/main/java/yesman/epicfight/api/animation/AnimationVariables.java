@@ -8,12 +8,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.jetbrains.annotations.ApiStatus;
 
 import com.google.common.collect.HashMultimap;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -57,7 +57,7 @@ public class AnimationVariables {
 			return Optional.empty();
 		}
 		
-		Map<ResourceLocation, Object> subMap = this.animationVariables.get(key);
+		Map<Identifier, Object> subMap = this.animationVariables.get(key);
 		
 		if (subMap == null) {
 			return Optional.empty();
@@ -75,7 +75,7 @@ public class AnimationVariables {
 			return Objects.requireNonNull(key.defaultValue(this.animator), "Null value returned by default provider.");
 		}
 		
-		Map<ResourceLocation, Object> subMap = this.animationVariables.get(key);
+		Map<Identifier, Object> subMap = this.animationVariables.get(key);
 		
 		if (subMap == null) {
 			return Objects.requireNonNull(key.defaultValue(this.animator), "Null value returned by default provider.");
@@ -140,7 +140,7 @@ public class AnimationVariables {
 		}
 		
 		this.animationVariables.computeIfPresent(key, (k, v) -> {
-			Map<ResourceLocation, Object> variablesByAnimations = ((Map<ResourceLocation, Object>)v);
+			Map<Identifier, Object> variablesByAnimations = ((Map<Identifier, Object>)v);
 			
 			if (!key.mutable() && variablesByAnimations.containsKey(animation.registryName())) {
 				throw new UnsupportedOperationException("Can't modify a const variable");
@@ -200,7 +200,7 @@ public class AnimationVariables {
 				continue;
 			}
 			
-			Map<ResourceLocation, Object> map = (Map<ResourceLocation, Object>)entry.getValue();
+			Map<Identifier, Object> map = (Map<Identifier, Object>)entry.getValue();
 			
 			if (map != null) {
 				map.remove(animation.registryName());
@@ -228,7 +228,7 @@ public class AnimationVariables {
 			throw new UnsupportedOperationException("Can't remove a const variable");
 		}
 		
-		Map<ResourceLocation, Object> map = (Map<ResourceLocation, Object>)this.animationVariables.get(key);
+		Map<Identifier, Object> map = (Map<Identifier, Object>)this.animationVariables.get(key);
 		
 		if (map != null) {
 			map.remove(animation.registryName());

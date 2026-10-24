@@ -34,8 +34,8 @@ public class FractureBlockState extends BlockState {
 		ORIGINAL_BLOCK_STATE_CACHE.clear();
 	}
 	
-	public FractureBlockState(Block block, Reference2ObjectArrayMap<Property<?>, Comparable<?>> propertyMap, MapCodec<BlockState> mapCodec) {
-		super(block, propertyMap, mapCodec);
+	public FractureBlockState(Block block, Property<?>[] propertyKeys, Comparable<?>[] propertyValues) {
+		super(block, propertyKeys, propertyValues);
 	}
 	
 	public void setFractureInfo(BlockPos bp, BlockState originalState, Vector3f translate, Quaternionf rotation, double bouncing, int maxLifeTime) {

@@ -2,7 +2,7 @@ package yesman.epicfight.registry.deferred;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import yesman.epicfight.api.ex_cap.data.modifier.WeaponModifier;
 import yesman.epicfight.registry.EpicFightRegistries;
@@ -26,7 +26,7 @@ public final class ModifierRegister extends DeferredRegister<WeaponModifier.Buil
 
         ResourceKey<WeaponModifier.Builder> key = ResourceKey.create(
                 this.getRegistryKey(),
-                ResourceLocation.fromNamespaceAndPath(this.getNamespace(), name)
+                Identifier.fromNamespaceAndPath(this.getNamespace(), name)
         );
 
         return new DeferredModifier(key);

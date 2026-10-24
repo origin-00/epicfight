@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import yesman.epicfight.api.ex_cap.managers.ConditionalManager;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.NotNull;
@@ -286,7 +286,7 @@ public class ProviderConditional
 		private Holder<SkillDataKey<?>> key;
 		private InteractionHand hand;
 		private Predicate<LivingEntityPatch<?>> customFunction;
-		protected ResourceLocation parent;
+		protected Identifier parent;
 
 		public Style getWieldStyle()
 		{
@@ -309,7 +309,7 @@ public class ProviderConditional
 			visibleOffHand = false;
 		}
 
-		public Builder setParent(ResourceLocation parent)
+		public Builder setParent(Identifier parent)
 		{
 			this.parent = parent;
 			return this;
@@ -332,16 +332,16 @@ public class ProviderConditional
 							.setHand(InteractionHand.valueOf(gsonObject.get("hand").getAsString().toUpperCase()));
 					case SPECIFIC_WEAPON -> builder
 							.setType(type).setWieldStyle(wieldStyle).isVisibleOffHand(visibleOffHand)
-							.setWeapon(BuiltInRegistries.ITEM.get(ResourceLocation.parse(gsonObject.get("specific_weapon").getAsString())))
+							.setWeapon(BuiltInRegistries.ITEM.getValue(Identifier.parse(gsonObject.get("specific_weapon").getAsString())))
 							.setHand(InteractionHand.valueOf(gsonObject.get("hand").getAsString().toUpperCase()));
 					case SKILL_EXISTENCE, SKILL_ACTIVATION -> builder
 							.setType(type).setWieldStyle(wieldStyle).isVisibleOffHand(visibleOffHand)
-							.setSkillToCheck(EpicFightRegistries.SKILL.getHolder(ResourceLocation.parse(gsonObject.get("skill").getAsString())).get())
+							.setSkillToCheck(EpicFightRegistries.SKILL.get(Identifier.parse(gsonObject.get("skill").getAsString())).get())
 							.setSlot(SkillSlot.ENUM_MANAGER.get(gsonObject.get("slot").getAsString().toUpperCase()));
 					case DATA_KEY -> builder
 							.setType(type).setWieldStyle(wieldStyle).isVisibleOffHand(visibleOffHand)
-							.setSkillToCheck(EpicFightRegistries.SKILL.getHolder(ResourceLocation.parse(gsonObject.get("skill").getAsString())).get())
-							.setKey(EpicFightRegistries.SKILL_DATA_KEY.getHolder(ResourceLocation.parse(gsonObject.get("boolean_key").getAsString())).get())
+							.setSkillToCheck(EpicFightRegistries.SKILL.get(Identifier.parse(gsonObject.get("skill").getAsString())).get())
+							.setKey(EpicFightRegistries.SKILL_DATA_KEY.get(Identifier.parse(gsonObject.get("boolean_key").getAsString())).get())
 							.setSlot(SkillSlot.ENUM_MANAGER.get(gsonObject.get("slot").getAsString().toUpperCase()));
 				}
 			}

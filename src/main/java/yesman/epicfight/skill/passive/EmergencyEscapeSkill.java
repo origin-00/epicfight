@@ -121,7 +121,7 @@ public class EmergencyEscapeSkill extends PassiveSkill {
         float yRot = container.getExecutor().getYRot();
 
         if (arguments.contains("yRot")) {
-            yRot = arguments.getFloat("yRot");
+            yRot = arguments.getFloatOr("yRot", 0.0F);
         }
 
         container.getExecutor().playSound(EpicFightSounds.EMERGENCY_ESCAPE.get(), 1.0F, 1.0F);

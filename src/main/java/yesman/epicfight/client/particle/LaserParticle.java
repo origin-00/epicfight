@@ -1,5 +1,8 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.util.RandomSource;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Camera;
@@ -51,7 +54,7 @@ public class LaserParticle extends CustomModelParticle<ClassicMesh> {
 	@Override
 	protected void setupPoseStack(PoseStack poseStack, Camera camera, float partialTick) {
 		poseStack.pushPose();
-		Vec3 cameraPosition = camera.getPosition();
+		Vec3 cameraPosition = camera.position();
 		float x = (float)(Mth.lerp(partialTick, this.xo, this.x) - cameraPosition.x());
 		float y = (float)(Mth.lerp(partialTick, this.yo, this.y) - cameraPosition.y());
 		float z = (float)(Mth.lerp(partialTick, this.zo, this.z) - cameraPosition.z());
@@ -67,13 +70,13 @@ public class LaserParticle extends CustomModelParticle<ClassicMesh> {
 	}
 	
 	@Override
-	public ParticleRenderType getRenderType() {
-		return EpicFightParticleRenderTypes.TRANSLUCENT_GLOWING;
+	public RenderType getRenderType() {
+		return EpicFightParticleRenderTypes.translucentGlowing();
 	}
 	
 	public static class Provider implements ParticleProvider<SimpleParticleType> {
 		@Override
-		public Particle createParticle(SimpleParticleType typeIn, ClientLevel level, double startX, double startY, double startZ, double endX, double endY, double endZ) {
+		public Particle createParticle(SimpleParticleType typeIn, ClientLevel level, double startX, double startY, double startZ, double endX, double endY, double endZ, RandomSource random) {
 			return new LaserParticle(level, startX, startY, startZ, endX, endY, endZ);
 		}
 	}

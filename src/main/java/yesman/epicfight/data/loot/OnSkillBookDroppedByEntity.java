@@ -40,8 +40,8 @@ public class OnSkillBookDroppedByEntity extends LootModifier {
 		});
 	}
 
-	public OnSkillBookDroppedByEntity(LootItemCondition[] lootItemConditions) {
-		super(lootItemConditions);
+	public OnSkillBookDroppedByEntity(LootItemCondition[] lootItemConditions, int priority) {
+		super(lootItemConditions, priority);
 	}
 
 	/// Applies the modifier to the generated loot (all loot conditions have already been checked
@@ -53,7 +53,7 @@ public class OnSkillBookDroppedByEntity extends LootModifier {
 	@SuppressWarnings("deprecation")
 	@Override
 	protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
-		Entity entity = context.getParamOrNull(LootContextParams.THIS_ENTITY);
+		Entity entity = context.getOptionalParameter(LootContextParams.THIS_ENTITY);
 
 		if (entity != null && SKILL_LOOT_TABLE.containsKey(entity.getType())) {
 			// Call getRandomItemsRaw to avoid recursive call of global loot modifier

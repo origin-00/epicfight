@@ -1,18 +1,23 @@
 package yesman.epicfight.client.gui.widgets;
 
+import org.joml.Matrix3x2fStack;
+import net.minecraft.client.gui.components.AbstractScrollArea;
+import net.minecraft.world.entity.player.PlayerModelType;
+import yesman.epicfight.client.gui.GuiInputs;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.KeyEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.navigation.CommonInputs;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
@@ -33,6 +38,12 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWidget {
+
+    /// AbstractContainerWidget is a scroll area since 1.21.9: the content always fits, so it never scrolls.
+    @Override
+    protected int contentHeight() {
+        return this.getHeight();
+    }
     private final List<TabButton> tabButtons = new ArrayList<>();
     private final List<WheelPage> wheelPages = new ArrayList<>();
     private final Consumer<Holder.Reference<Emote>> onPressWheelButton;
@@ -69,7 +80,7 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
         Consumer<Holder.Reference<Emote>> onPressWheelButton,
         boolean editable
     ) {
-        super(0, 0, 0, 0, Component.empty());
+        super(0, 0, 0, 0, Component.empty(), AbstractScrollArea.defaultSettings(0));
 
         this.font = font;
         this.playerSkin = playerSkin;
@@ -150,21 +161,21 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         WheelPage currentPage = this.wheelPages.get(this.pageIndex);
-        currentPage.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+        currentPage.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
         if (this.transitionTime > 0) {
             return;
         }
 
         for (TabButton tabButton : this.tabButtons) {
-            tabButton.render(guiGraphics, mouseX, mouseY, partialTick);
+            tabButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
 
         if (this.addPageButton != null && this.removePageButton != null) {
-            this.addPageButton.render(guiGraphics, mouseX, mouseY, partialTick);
-            this.removePageButton.render(guiGraphics, mouseX, mouseY, partialTick);
+            this.addPageButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+            this.removePageButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
 
         String emoteTitle = null;
@@ -176,7 +187,7 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
         }
 
         if (emoteTitle != null) {
-            guiGraphics.drawCenteredString(this.font, Component.translatable(emoteTitle), this.getX() + this.width / 2, this.getY() + this.height / 2 - 4, 0xFFFFFFFF);
+            guiGraphics.centeredText(this.font, Component.translatable(emoteTitle), this.getX() + this.width / 2, this.getY() + this.height / 2 - 4, 0xFFFFFFFF);
         }
     }
 
@@ -341,15 +352,16 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
     }
 
     public enum TransitionType {
-        ZOOM_IN((PoseStack poseStack, AbstractWidget widget, ScreenRectangle parentRectangle, float interpolation) -> {
+        ZOOM_IN((Matrix3x2fStack poseStack, AbstractWidget widget, ScreenRectangle parentRectangle, float interpolation) -> {
             float centerX = parentRectangle.left() + parentRectangle.width() / 2.0F;
             float centerY = parentRectangle.top() + parentRectangle.height() / 2.0F;
 
-            poseStack.translate(centerX, centerY, 0);
-            poseStack.scale(interpolation, interpolation, interpolation);
-            poseStack.translate(-centerX, -centerY, 0);
+            // GUI poses are 2D since 1.21.6.
+            poseStack.translate(centerX, centerY);
+            poseStack.scale(interpolation, interpolation);
+            poseStack.translate(-centerX, -centerY);
         }),
-        SLIDE((PoseStack poseStack, AbstractWidget widget, ScreenRectangle parentRectangle, float interpolation) -> {
+        SLIDE((Matrix3x2fStack poseStack, AbstractWidget widget, ScreenRectangle parentRectangle, float interpolation) -> {
 
         });
 
@@ -362,7 +374,7 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
 
     @FunctionalInterface
     interface TransitionApplier {
-        void apply(PoseStack poseStack, AbstractWidget widget, ScreenRectangle parentRectangle, float interpolation);
+        void apply(Matrix3x2fStack poseStack, AbstractWidget widget, ScreenRectangle parentRectangle, float interpolation);
     }
 
     private class TabButton extends AnchoredButton {
@@ -391,26 +403,25 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
         }
 
         @Override
-        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             this.theme.renderBackground(this, guiGraphics, mouseX, mouseY, partialTick);
             boolean pageWidget = this.getMessage().getContents() == PlainTextContents.EMPTY;
 
-            guiGraphics.drawString(
-                font,
-                pageWidget ? Component.literal(String.valueOf(tabButtons.indexOf(this) + 1)) : this.getMessage(),
-                this.getX() + Math.round(this.getWidth() / 2.0F - font.width("0") / 2.0F),
-                this.getY() + Math.round(this.getHeight() / 2.0F - font.lineHeight / 2.0F),
-                this.isActive() ? -1 : 0xFFB6B6B6,
-                false
-            );
+            guiGraphics.text(font, pageWidget ? Component.literal(String.valueOf(tabButtons.indexOf(this) + 1)) : this.getMessage(), this.getX() + Math.round(this.getWidth() / 2.0F - font.width("0") / 2.0F), this.getY() + Math.round(this.getHeight() / 2.0F - font.lineHeight / 2.0F), GuiColors.text(this.isActive() ? -1 : 0xFFB6B6B6), false);
         }
     }
 
     public class WheelPage extends AbstractContainerWidget {
+
+        /// AbstractContainerWidget is a scroll area since 1.21.9: the content always fits, so it never scrolls.
+        @Override
+        protected int contentHeight() {
+            return this.getHeight();
+        }
         private final EmoteWheelButton[] wheelButtons;
 
         public WheelPage(PlayerSkin playerSkin) {
-            super(0, 0, 0, 0, Component.empty());
+            super(0, 0, 0, 0, Component.empty(), AbstractScrollArea.defaultSettings(0));
 
             this.wheelButtons = new EmoteWheelButton[] {
                 new EmoteWheelButton(-51, 45, -29, 54, AnchoredButton.BuiltInTheme.UPSIDE_EMOTE_WHEEL, playerSkin),
@@ -423,18 +434,18 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
         }
 
         @Override
-        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             for (EmoteWheelButton emoteWheelButton : this.wheelButtons) {
                 if (transitionType != null && transitionTime > 0) {
                     float animationScale = MathUtils.bezierCurve(1.0F - Math.max(transitionTime - partialTick, 0) / maxTransitionTime);
-                    guiGraphics.pose().pushPose();
+                    guiGraphics.pose().pushMatrix();
                     transitionType.transitionApplier.apply(guiGraphics.pose(), emoteWheelButton, getRectangle(), animationScale);
                 }
 
-                emoteWheelButton.render(guiGraphics, mouseX, mouseY, partialTick);
+                emoteWheelButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
                 if (transitionType != null && transitionTime > 0) {
-                    guiGraphics.pose().popPose();
+                    guiGraphics.pose().popMatrix();
                 }
             }
         }
@@ -501,8 +512,8 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
             );
 
             this.modelPreviewer.setBackgroundClearColor(new Vec4f(0.0F, 0.0F, 0.0F, 0.0F));
-            this.modelPreviewer.setFigureTexture(playerSkin.texture());
-            this.modelPreviewer.setMesh(playerSkin.model() == PlayerSkin.Model.SLIM ? Meshes.ALEX : Meshes.BIPED);
+            this.modelPreviewer.setFigureTexture(playerSkin.body().texturePath());
+            this.modelPreviewer.setMesh(playerSkin.model() == PlayerModelType.SLIM ? Meshes.ALEX : Meshes.BIPED);
             this.active = editable;
         }
 
@@ -512,7 +523,7 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
         }
 
         @Override
-        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             if (this.isActive() && this.isHovered() && hoveringWheel != this && (!editable || lastPressedWheel != this)) {
                 setHoveringWidget(this);
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(EpicFightSounds.HOVER_WIDGET.get(), 1.0F));
@@ -523,7 +534,7 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
             this.theme.renderBackground(this, guiGraphics, mouseX, mouseY, partialTick);
 
             if (this.emote != null) {
-                this.modelPreviewer.render(guiGraphics, mouseX, mouseY, partialTick);
+                this.modelPreviewer.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
             }
         }
 
@@ -542,17 +553,20 @@ public class EmoteWheelTab extends AbstractContainerWidget implements AnchoredWi
         }
 
         @Override
-        public void onPress() {
+        public void onPress(InputWithModifiers input) {
             onPressWheelButton.accept(this.emote);
             lastPressedWheel = this;
         }
 
         @Override
-        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        public boolean keyPressed(KeyEvent event) {
+            int keyCode = event.key();
+            int scanCode = event.scancode();
+            int modifiers = event.modifiers();
             if (this.active && this.visible) {
-                if (CommonInputs.selected(keyCode)) {
+                if (new KeyEvent(keyCode, 0, 0).isSelection()) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
-                    this.onPress();
+                    this.onPress(GuiInputs.PROGRAMMATIC);
                     return true;
                 } else if (keyCode == InputConstants.KEY_DELETE && this.emote != null) {
                     this.setEmote(null);

@@ -1,6 +1,6 @@
 package yesman.epicfight.world.capabilities.item;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Map;
 
@@ -9,5 +9,5 @@ import java.util.Map;
  */
 public class StyleManager
 {
-    public static Map<ResourceLocation, Boolean> styleMap;
+    public static Map<Identifier, Boolean> styleMap;
 }

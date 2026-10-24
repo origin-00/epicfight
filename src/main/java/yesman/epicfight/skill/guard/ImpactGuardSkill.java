@@ -54,8 +54,8 @@ public class ImpactGuardSkill extends GuardSkill {
 	public void loadDatapackParameters(CompoundTag parameters) {
 		super.loadDatapackParameters(parameters);
 		
-		this.superiorPenalizer = parameters.getFloat("superior_penalizer");
-		this.damageReducer = parameters.getFloat("damage_reducer");
+		this.superiorPenalizer = parameters.getFloatOr("superior_penalizer", 0.0F);
+		this.damageReducer = parameters.getFloatOr("damage_reducer", 0.0F);
 	}
 
 	@Override

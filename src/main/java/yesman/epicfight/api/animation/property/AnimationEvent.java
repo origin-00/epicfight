@@ -105,8 +105,8 @@ public abstract class AnimationEvent<EVENT extends AnimationEvent.Event<?, ?, ?,
 	}
 	
 	public enum Side {
-		CLIENT((entity) -> entity.level().isClientSide),
-		SERVER((entity) -> !entity.level().isClientSide), BOTH((entity) -> true),
+		CLIENT((entity) -> entity.level().isClientSide()),
+		SERVER((entity) -> !entity.level().isClientSide()), BOTH((entity) -> true),
 		LOCAL_CLIENT((entity) -> {
 			if (entity instanceof Player player) {
 				return player.isLocalPlayer();

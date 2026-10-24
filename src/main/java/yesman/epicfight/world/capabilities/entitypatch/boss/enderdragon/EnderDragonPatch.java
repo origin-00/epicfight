@@ -1,5 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon;
 
+import net.minecraft.world.level.dimension.end.EnderDragonFight;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -24,7 +25,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.dimension.end.EndDragonFight;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -330,7 +330,7 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> implements InverseKi
 				.build()
 				.apply(skillbook,
 					new LootContext.Builder(
-						new LootParams.Builder(((ServerPlayer)player).serverLevel())
+						new LootParams.Builder(((ServerPlayer)player).level())
 							.withParameter(LootContextParams.THIS_ENTITY, this.original)
 							.withParameter(LootContextParams.ORIGIN, player.position())
 							.create(LootContextParamSets.ADVANCEMENT_ENTITY)
@@ -379,7 +379,7 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> implements InverseKi
 	}
 	
 	public int getNearbyCrystals() {
-		return this.original.getDragonFight() != null ? this.original.getDragonFight().getCrystalsAlive() : 0;
+		return this.original.getDragonFight() != null ? this.original.getDragonFight().aliveCrystals() : 0;
 	}
 	
 	public void setFlyingPhase() {
@@ -485,11 +485,11 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> implements InverseKi
 		/**
 		 * A copy from {@link EnderDragon#aiStep()}
 		**/
-		if (this.original.getDragonFight() == null && !this.original.level().isClientSide) {
+		if (this.original.getDragonFight() == null && !this.original.level().isClientSide()) {
 			ServerLevel serverlevel = (ServerLevel)this.original.level();
-            EndDragonFight enddragonfight = serverlevel.getDragonFight();
+            EnderDragonFight enddragonfight = serverlevel.getDragonFight();
             
-            if (enddragonfight != null && this.original.getUUID().equals(enddragonfight.getDragonUUID())) {
+            if (enddragonfight != null && this.original.getUUID().equals(enddragonfight.dragonUUID())) {
             	this.original.setDragonFight(enddragonfight);
             }
 		}

@@ -1,12 +1,15 @@
 package yesman.epicfight.client.gui.widgets;
 
+import yesman.epicfight.client.gui.render.ColoredQuadRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import yesman.epicfight.client.gui.GuiColors;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 import yesman.epicfight.client.gui.widgets.common.AnchoredWidget;
@@ -73,7 +76,7 @@ public class ColorDeterminator extends AbstractSliderButton implements AnchoredW
     }
 
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.theme.backgroundRenderer.render(this, guiGraphics);
         this.theme.selectorRenderer.render(this, guiGraphics);
         this.theme.titleRenderer.render(this, guiGraphics, this.font);
@@ -151,56 +154,22 @@ public class ColorDeterminator extends AbstractSliderButton implements AnchoredW
         return positionToPackedRGBA(position, RGB_COMBINATIONS);
     }
 
-    private static void fillGradient(GuiGraphics guiGraphics, int x1, int y1, int x2, int y2, int startColor, int endColor) {
-        float f = (float) FastColor.ARGB32.alpha(startColor) / 255.0F;
-        float f1 = (float) FastColor.ARGB32.red(startColor) / 255.0F;
-        float f2 = (float) FastColor.ARGB32.green(startColor) / 255.0F;
-        float f3 = (float) FastColor.ARGB32.blue(startColor) / 255.0F;
-        float f4 = (float) FastColor.ARGB32.alpha(endColor) / 255.0F;
-        float f5 = (float) FastColor.ARGB32.red(endColor) / 255.0F;
-        float f6 = (float) FastColor.ARGB32.green(endColor) / 255.0F;
-        float f7 = (float) FastColor.ARGB32.blue(endColor) / 255.0F;
-
-        Matrix4f matrix4f = guiGraphics.pose().last().pose();
-        VertexConsumer consumer = guiGraphics.bufferSource().getBuffer(RenderType.gui());
-
-        consumer.addVertex(matrix4f, (float)x1, (float)y2, 0.0F).setColor(f1, f2, f3, f);
-        consumer.addVertex(matrix4f, (float)x2, (float)y2, 0.0F).setColor(f5, f6, f7, f4);
-        consumer.addVertex(matrix4f, (float)x2, (float)y1, 0.0F).setColor(f5, f6, f7, f4);
-        consumer.addVertex(matrix4f, (float)x1, (float)y1, 0.0F).setColor(f1, f2, f3, f);
-
-        guiGraphics.flush();
+    private static void fillGradient(GuiGraphicsExtractor guiGraphics, int x1, int y1, int x2, int y2, int startColor, int endColor) {
+        ColoredQuadRenderState.horizontalGradient(guiGraphics, x1, y1, x2, y2, startColor, endColor);
     }
 
-    private static void fillRhombus(GuiGraphics guiGraphics, int minX, int minY, int maxX, int maxY, int color) {
-        Matrix4f matrix4f = guiGraphics.pose().last().pose();
-
-        float a = (float)FastColor.ARGB32.alpha(color) / 255.0F;
-        float r = (float)FastColor.ARGB32.red(color) / 255.0F;
-        float g = (float)FastColor.ARGB32.green(color) / 255.0F;
-        float b = (float)FastColor.ARGB32.blue(color) / 255.0F;
-        int centerX = minX + (maxX - minX) / 2;
-        int centerY = minY + (maxY - minY) / 2;
-
-        VertexConsumer vertexconsumer = guiGraphics.bufferSource().getBuffer(EpicFightRenderTypes.guiTriangle());
-        vertexconsumer.addVertex(matrix4f, (float) centerX, (float) minY, (float) 0).setColor(r, g, b, a);
-        vertexconsumer.addVertex(matrix4f, (float) minX, (float) centerY, (float) 0).setColor(r, g, b, a);
-        vertexconsumer.addVertex(matrix4f, (float) centerX, (float) maxY, (float) 0).setColor(r, g, b, a);
-        vertexconsumer.addVertex(matrix4f, (float) centerX, (float) maxY, (float) 0).setColor(r, g, b, a);
-        vertexconsumer.addVertex(matrix4f, (float) maxX, (float) centerY, (float) 0).setColor(r, g, b, a);
-        vertexconsumer.addVertex(matrix4f, (float) centerX, (float) minY, (float) 0).setColor(r, g, b, a);
-
-        guiGraphics.flush();
+    private static void fillRhombus(GuiGraphicsExtractor guiGraphics, int minX, int minY, int maxX, int maxY, int color) {
+        ColoredQuadRenderState.rhombus(guiGraphics, minX, minY, maxX, maxY, color);
     }
 
     public enum Theme implements WidgetTheme {
         CLASSIC(
-            (ColorDeterminator widget, GuiGraphics guiGraphics) -> {
+            (ColorDeterminator widget, GuiGraphicsExtractor guiGraphics) -> {
                 int minX = widget.getX() + (int) (widget.value * (double) (widget.width - 8));
                 guiGraphics.fill(minX, widget.getY(), minX + 8, widget.getY() + 20, 0xFFFFFFFF);
                 guiGraphics.fill(minX + 1, widget.getY() + 1, minX + 7, widget.getY() + 19, positionToPackedRGBA(widget.value, widget.colors));
             },
-            (ColorDeterminator widget, GuiGraphics guiGraphics) -> {
+            (ColorDeterminator widget, GuiGraphicsExtractor guiGraphics) -> {
                 int y1 = widget.getY();
                 int y2 = widget.getY() + widget.height;
                 int blocks = widget.colors.length - 1;
@@ -212,20 +181,20 @@ public class ColorDeterminator extends AbstractSliderButton implements AnchoredW
                     prevEnd = nextX;
                 }
             },
-            (ColorDeterminator widget, GuiGraphics guiGraphics, Font font) -> {
+            (ColorDeterminator widget, GuiGraphicsExtractor guiGraphics, Font font) -> {
                 int j = widget.getFGColor();
-                guiGraphics.drawCenteredString(widget.font, widget.getMessage(), widget.getX() + widget.width / 2, widget.getY() + (widget.height - 8) / 2, j | Mth.ceil(widget.alpha * 255.0F) << 24);
+                guiGraphics.centeredText(widget.font, widget.getMessage(), widget.getX() + widget.width / 2, widget.getY() + (widget.height - 8) / 2, GuiColors.text(j | Mth.ceil(widget.alpha * 255.0F) << 24));
             }
         ),
         SIMPLE(
-            (ColorDeterminator widget, GuiGraphics guiGraphics) -> {
+            (ColorDeterminator widget, GuiGraphicsExtractor guiGraphics) -> {
                 int outlineColor = widget.isHoveredOrFocused() ? 0xFFFFFFFF : 0xFF000000;
                 int minX = widget.getX() + (int)(widget.value * (widget.width - 8));
                 int centerY = widget.getY() + widget.getHeight() / 2;
                 fillRhombus(guiGraphics, minX, centerY - 5, minX + 10, centerY + 5, outlineColor);
                 fillRhombus(guiGraphics, minX + 1, centerY - 4, minX + 9, centerY + 4, positionToPackedRGBA(widget.value, widget.colors));
             },
-            (ColorDeterminator widget, GuiGraphics guiGraphics) -> {
+            (ColorDeterminator widget, GuiGraphicsExtractor guiGraphics) -> {
                 int y1 = widget.getY() + widget.height / 2 - 1;
                 int y2 = widget.getY() + widget.height / 2 + 1;
                 int blocks = widget.colors.length - 1;
@@ -239,7 +208,7 @@ public class ColorDeterminator extends AbstractSliderButton implements AnchoredW
                     prevEnd = nextX;
                 }
             },
-            (ColorDeterminator widget, GuiGraphics guiGraphics, Font font) -> {
+            (ColorDeterminator widget, GuiGraphicsExtractor guiGraphics, Font font) -> {
             }
         );
 
@@ -257,17 +226,17 @@ public class ColorDeterminator extends AbstractSliderButton implements AnchoredW
 
         @FunctionalInterface
         interface SelectorRenderer {
-            void render(ColorDeterminator widget, GuiGraphics guiGraphics);
+            void render(ColorDeterminator widget, GuiGraphicsExtractor guiGraphics);
         }
 
         @FunctionalInterface
         interface BackgroundRenderer {
-            void render(ColorDeterminator widget, GuiGraphics guiGraphics);
+            void render(ColorDeterminator widget, GuiGraphicsExtractor guiGraphics);
         }
 
         @FunctionalInterface
         interface TextRenderer {
-            void render(ColorDeterminator widget, GuiGraphics guiGraphics, Font font);
+            void render(ColorDeterminator widget, GuiGraphicsExtractor guiGraphics, Font font);
         }
 
         @Override

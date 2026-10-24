@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	"key.epicfight.gui": "Interfaccia Epic Fight",
 	"key.epicfight.combat": "Combattimento Epic Fight",
+	"key.category.epicfight.combat": "Combattimento Epic Fight",
+	"key.category.epicfight.gui": "Interfaccia Epic Fight",
 	"key.epicfight.show_tooltip": "Mostra Suggerimento Di Abilità Innate Con Le Armi",
 	"key.epicfight.switch_mode": "Attiva/Disattiva Modalita Combattimento/Minatore",
 	"key.epicfight.attack": "Attack",

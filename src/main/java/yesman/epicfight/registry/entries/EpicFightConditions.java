@@ -3,7 +3,7 @@ package yesman.epicfight.registry.entries;
 import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import yesman.epicfight.data.conditions.Condition;
@@ -23,7 +23,7 @@ public final class EpicFightConditions {
 	
 	public static final DeferredRegister<Supplier<Condition<?>>> REGISTRY = DeferredRegister.create(EpicFightRegistries.CONDITION, EpicFightMod.MODID);
 	
-	public static <T extends Condition<?>> Supplier<T> getConditionOrThrow(ResourceLocation key) throws NoSuchElementException, ClassCastException {
+	public static <T extends Condition<?>> Supplier<T> getConditionOrThrow(Identifier key) throws NoSuchElementException, ClassCastException {
 		if (!EpicFightRegistries.CONDITION.containsKey(key)) {
 			throw new NoSuchElementException("No condition named " + key);
 		}
@@ -32,8 +32,8 @@ public final class EpicFightConditions {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T extends Condition<?>> Supplier<T> getConditionOrNull(ResourceLocation key) throws ClassCastException {
-		return (Supplier<T>) EpicFightRegistries.CONDITION.get(key);
+	public static <T extends Condition<?>> Supplier<T> getConditionOrNull(Identifier key) throws ClassCastException {
+		return (Supplier<T>) EpicFightRegistries.CONDITION.getValue(key);
 	}
 	
 	//EntityPatch conditions

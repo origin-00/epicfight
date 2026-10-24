@@ -1,10 +1,12 @@
 package yesman.epicfight.client.gui.widgets;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.navigation.CommonInputs;
 import net.minecraft.network.chat.Component;
 import yesman.epicfight.client.gui.widgets.common.AnchoredWidget;
 import yesman.epicfight.client.gui.widgets.common.DataBoundWidget;
@@ -46,10 +48,13 @@ public class CheckBox extends AbstractWidget implements AnchoredWidget, DataBoun
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int button = event.button();
         if (this.active && this.visible) {
-            if (this.isValidClickButton(button)) {
-                boolean flag = this.clicked(x, y);
+            if (this.isValidClickButton(event.buttonInfo())) {
+                boolean flag = this.isInClickArea(x, y);
 
                 if (flag) {
                     // No play sound
@@ -63,9 +68,12 @@ public class CheckBox extends AbstractWidget implements AnchoredWidget, DataBoun
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
         if (this.active && this.visible) {
-            if (CommonInputs.selected(keyCode)) {
+            if (new KeyEvent(keyCode, 0, 0).isSelection()) {
                 this.onPressed();
                 return true;
             } else {
@@ -76,8 +84,8 @@ public class CheckBox extends AbstractWidget implements AnchoredWidget, DataBoun
         }
     }
 
-    @Override
-    protected boolean clicked(double x, double y) {
+    /// The click area (`AbstractWidget#clicked` before 1.21.9).
+    protected boolean isInClickArea(double x, double y) {
         return this.active && this.visible && x >= (double)this.getX() && y >= (double) this.getY() && x < (double) (this.getX() + this.width) && y < (double) (this.getY() + this.height);
     }
 
@@ -94,7 +102,7 @@ public class CheckBox extends AbstractWidget implements AnchoredWidget, DataBoun
     }
 
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
         int rectangleLength = Math.min(this.getWidth(), this.getHeight());
         int outlineColor = this.isFocused() ? -1 : this.isActive() ? -6250336 : -12566463;
 
@@ -107,7 +115,7 @@ public class CheckBox extends AbstractWidget implements AnchoredWidget, DataBoun
 
         int fontColor = this.isActive() ? 16777215 : 4210752;
 
-        if (this.showMessage) guiGraphics.drawString(this.font, this.getMessage(), this.getX() + rectangleLength + 4, this.getY() + this.height / 2 - this.font.lineHeight / 2 + 1, fontColor, false);
+        if (this.showMessage) guiGraphics.text(this.font, this.getMessage(), this.getX() + rectangleLength + 4, this.getY() + this.height / 2 - this.font.lineHeight / 2 + 1, GuiColors.text(fontColor), false);
     }
 
     @Override

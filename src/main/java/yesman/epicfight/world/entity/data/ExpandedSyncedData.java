@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.jetbrains.annotations.ApiStatus;
 
 import com.mojang.serialization.MapLike;
@@ -45,7 +45,7 @@ public final class ExpandedSyncedData {
 	
 	@ApiStatus.Internal
 	public void load(CompoundTag compound) {
-		CompoundTag synchedDataCompound = compound.getCompound("expanded_sycned_data");
+		CompoundTag synchedDataCompound = compound.getCompoundOrEmpty("expanded_sycned_data");
 		
 		if (synchedDataCompound != null) {
 			MapLike<Tag> compoundConverted = NbtOps.INSTANCE.getMap(synchedDataCompound).result().orElseThrow();

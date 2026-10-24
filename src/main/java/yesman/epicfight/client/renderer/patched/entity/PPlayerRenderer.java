@@ -1,14 +1,14 @@
 package yesman.epicfight.client.renderer.patched.entity;
 
-import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.layers.ArrowLayer;
 import net.minecraft.client.renderer.entity.layers.BeeStingerLayer;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
-import net.minecraft.client.renderer.entity.player.PlayerRenderer;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.EntityType;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
@@ -19,7 +19,7 @@ import yesman.epicfight.client.renderer.patched.layer.PatchedCapeLayer;
 import yesman.epicfight.client.renderer.patched.layer.PatchedItemInHandLayer;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
 
-public class PPlayerRenderer extends PHumanoidRenderer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, PlayerRenderer, HumanoidMesh> {
+public class PPlayerRenderer extends PHumanoidRenderer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel, AvatarRenderer<AbstractClientPlayer>, HumanoidMesh> {
 	public PPlayerRenderer(EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(Meshes.BIPED, context, entityType);
 		
@@ -30,11 +30,9 @@ public class PPlayerRenderer extends PHumanoidRenderer<AbstractClientPlayer, Abs
 	}
 	
 	@Override
-	protected void prepareModel(HumanoidMesh mesh, AbstractClientPlayer entity, AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch, PlayerRenderer renderer) {
+	protected void prepareModel(HumanoidMesh mesh, AbstractClientPlayer entity, AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch, AvatarRenderer<AbstractClientPlayer> renderer) {
 		super.prepareModel(mesh, entity, entitypatch, renderer);
-		
-		renderer.setModelProperties(entity);
-		PlayerModel<AbstractClientPlayer> model = renderer.getModel();
+		PlayerModel model = renderer.getModel();
 		
 		mesh.head.setHidden(!model.head.visible);
 		mesh.hat.setHidden(!model.hat.visible);
@@ -52,7 +50,7 @@ public class PPlayerRenderer extends PHumanoidRenderer<AbstractClientPlayer, Abs
 	
 	@Override
 	public AssetAccessor<HumanoidMesh> getMeshProvider(AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch) {
-		return PlayerSkin.Model.SLIM.equals(entitypatch.getOriginal().getSkin().model()) ? Meshes.ALEX : Meshes.BIPED;
+		return PlayerModelType.SLIM == entitypatch.getOriginal().getSkin().model() ? Meshes.ALEX : Meshes.BIPED;
 	}
 	
 	@Override

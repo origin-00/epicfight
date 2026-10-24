@@ -1,6 +1,6 @@
 package yesman.epicfight.api.ex_cap.modules.core.data;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Represents a single entry in the ExCap data file.
@@ -9,4 +9,4 @@ import net.minecraft.resources.ResourceLocation;
  * @deprecated For Removal. All this has been delegated to the WeaponModifier.
  */
 @Deprecated(forRemoval = true)
-public record ExCapDataEntry(ResourceLocation id, ExCapData.Builder data) { }
+public record ExCapDataEntry(Identifier id, ExCapData.Builder data) { }

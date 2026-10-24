@@ -1,5 +1,8 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -10,19 +13,19 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
 import yesman.epicfight.client.gui.datapack.widgets.Grid;
@@ -54,8 +57,6 @@ public class StylesScreen extends Screen {
 		super(Component.translatable("datapack_edit.weapon_type.styles"));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		this.rootTag = rootTag;
 		
 		this.stylesGrid = Grid.builder(this, parentScreen.getMinecraft())
@@ -69,10 +70,10 @@ public class StylesScreen extends Screen {
 									CompoundTag caseCompound = this.cases.get(rowposition);
 									Grid.PackImporter parameters = new Grid.PackImporter();
 									
-									for (Tag tag : caseCompound.getList("conditions", Tag.TAG_COMPOUND)) {
+									for (Tag tag : caseCompound.getListOrEmpty("conditions")) {
 										CompoundTag conditionCompound = (CompoundTag)tag;
 										parameters.newRow();
-										parameters.newValue("condition", EpicFightConditions.getConditionOrNull(ResourceLocation.parse(conditionCompound.getString("predicate"))));
+										parameters.newValue("condition", EpicFightConditions.getConditionOrNull(Identifier.parse(conditionCompound.getStringOr("predicate", ""))));
 									}
 									
 									this.conditionGrid._setValue(parameters);
@@ -108,7 +109,6 @@ public class StylesScreen extends Screen {
 		this.defaultStyle = new ComboBox<>(parentScreen, this.font, 55, 116, 15, 53, HorizontalSizing.LEFT_WIDTH, VerticalSizing.HEIGHT_BOTTOM, 8, Component.translatable("datapack_edit.weapon_type.styles.default"),
 											new ArrayList<>(ParseUtil.remove(Style.ENUM_MANAGER.universalValues(), CapabilityItem.Styles.COMMON)), ParseUtil::snakeToSpacedCamel, null);
 		
-		this.font = parentScreen.getMinecraft().font;
 		
 		this.conditionGrid = Grid.builder(this, parentScreen.getMinecraft())
 									.xy1(187, 60)
@@ -126,7 +126,7 @@ public class StylesScreen extends Screen {
 										if (conditionProvider != null) {
 											Condition<?> condition = conditionProvider.get();
 											ListTag conditionList = ParseUtil.getOrDefaultTag(this.cases.get(this.stylesGrid.getRowposition()), "conditions", new ListTag());
-											CompoundTag conditionCompound = conditionList.getCompound(rowposition);
+											CompoundTag conditionCompound = conditionList.getCompoundOrEmpty(rowposition);
 											Grid.PackImporter parameters = new Grid.PackImporter();
 											
 											for (ParameterEditor editor : condition.getAcceptingParameters(this)) {
@@ -144,7 +144,7 @@ public class StylesScreen extends Screen {
 													.toDisplayText((condition) -> ParseUtil.getRegistryName(condition, EpicFightRegistries.CONDITION))
 													.valueChanged((event) -> {
 														ListTag conditionList = ParseUtil.getOrDefaultTag(this.cases.get(this.stylesGrid.getRowposition()), "conditions", new ListTag());
-														CompoundTag conditionCompound = conditionList.getCompound(event.rowposition);
+														CompoundTag conditionCompound = conditionList.getCompoundOrEmpty(event.rowposition);
 														
 														conditionCompound.putString("predicate", ParseUtil.getRegistryName(event.postValue, EpicFightRegistries.CONDITION));
 														this.parameterGrid.reset();
@@ -205,7 +205,7 @@ public class StylesScreen extends Screen {
 													.editable(true)
 													.valueChanged((event) -> {
 														ListTag conditionList = ParseUtil.getOrDefaultTag(this.cases.get(this.stylesGrid.getRowposition()), "conditions", new ListTag());
-														CompoundTag conditionCompound = conditionList.getCompound(this.conditionGrid.getRowposition());
+														CompoundTag conditionCompound = conditionList.getCompoundOrEmpty(this.conditionGrid.getRowposition());
 														
 														ParameterEditor editor = event.grid.getValue(event.rowposition, "parameter_key");
 														conditionCompound.put(editor.editWidget.getMessage().getString(), editor.toTag.apply(event.postValue));
@@ -216,10 +216,10 @@ public class StylesScreen extends Screen {
 		this.parameterGrid._setActive(false);
 		
 		if (rootTag.contains("styles")) {
-			CompoundTag stylesCompound = rootTag.getCompound("styles");
+			CompoundTag stylesCompound = rootTag.getCompoundOrEmpty("styles");
 			Grid.PackImporter packImporter = new Grid.PackImporter();
 			
-			for (Tag caseTag : stylesCompound.getList("cases", Tag.TAG_COMPOUND)) {
+			for (Tag caseTag : stylesCompound.getListOrEmpty("cases")) {
 				CompoundTag caseComp = (CompoundTag)caseTag;
 				CompoundTag caseComp$2 = new CompoundTag();
 				
@@ -232,13 +232,13 @@ public class StylesScreen extends Screen {
 				}
 				
 				packImporter.newRow();
-				packImporter.newValue("style", Style.ENUM_MANAGER.get(caseComp$2.getString("style")));
+				packImporter.newValue("style", Style.ENUM_MANAGER.get(caseComp$2.getStringOr("style", "")));
 				
 				this.cases.add(caseComp$2);
 			}
 			
 			this.stylesGrid._setValue(packImporter);
-			this.defaultStyle._setValue(Style.ENUM_MANAGER.get(stylesCompound.getString("default")));
+			this.defaultStyle._setValue(Style.ENUM_MANAGER.get(stylesCompound.getStringOr("default", "")));
 		}
 	}
 	
@@ -266,7 +266,7 @@ public class StylesScreen extends Screen {
 			
 			try {
 				for (CompoundTag tag : this.cases) {
-					currentStyle = tag.getString("style");
+					currentStyle = tag.getStringOr("style", "");
 					
 					this.validateTagSave(tag);
 					
@@ -275,7 +275,7 @@ public class StylesScreen extends Screen {
 					}
 					
 					caseListTag.add(tag);
-					styleNames.add(tag.getString("style"));
+					styleNames.add(tag.getStringOr("style", ""));
 				}
 				
 				if (this.defaultStyle._getValue() == null) {
@@ -328,9 +328,12 @@ public class StylesScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int action) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int action = event.button();
 		if (this.getFocused() != null) {
-			if (this.getFocused().mouseClicked(mouseX, mouseY, action)) {
+			if (this.getFocused().mouseClicked(event, doubleClick)) {
 				if (action == 0) {
 					this.setDragging(true);
 				}
@@ -344,7 +347,7 @@ public class StylesScreen extends Screen {
 				continue;
 			}
 			
-			if (guieventlistener.mouseClicked(mouseX, mouseY, action)) {
+			if (guieventlistener.mouseClicked(event, doubleClick)) {
 				this.setFocused(guieventlistener);
 				
 				if (action == 0) {
@@ -359,25 +362,25 @@ public class StylesScreen extends Screen {
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int yBegin = 32;
 		int yEnd = this.height - 45;
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
-		guiGraphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.125F, 0.125F, 0.125F, 1.0F);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yBegin, (float)this.width, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
 		
-		guiGraphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-		guiGraphics.blit(Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
-        guiGraphics.blit(Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+		GuiColors.setColor(guiGraphics, 0.25F, 0.25F, 0.25F, 1.0F);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, yBegin, 32, 32);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.MENU_BACKGROUND, 0, yEnd, 0.0F, (float)yEnd - yBegin, this.width, yEnd, 32, 32);
+        GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         
-        guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yBegin, this.width, yBegin + 4, -16777216, 0, 0);
-		guiGraphics.fillGradient(RenderType.guiOverlay(), 0, yEnd, this.width, yEnd + 1, 0, -16777216, 0);
+        guiGraphics.fillGradient(0, yBegin, this.width, yBegin + 4, -16777216, 0);
+		guiGraphics.fillGradient(0, yEnd, this.width, yEnd + 1, 0, -16777216);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	
 	private void validateTagSave(CompoundTag tag) throws IllegalStateException {
@@ -386,13 +389,13 @@ public class StylesScreen extends Screen {
 				throw new IllegalStateException("Define conditions");
 			}
 			
-			for (Tag conditionTag : tag.getList("conditions", Tag.TAG_COMPOUND)) {
+			for (Tag conditionTag : tag.getListOrEmpty("conditions")) {
 				CompoundTag conditionCompound = (CompoundTag)conditionTag;
-				Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(conditionCompound.getString("predicate")));
+				Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(Identifier.parse(conditionCompound.getStringOr("predicate", "")));
 				condition.get().read(conditionCompound);
 			}
 			
-			if (!tag.contains("style") || StringUtil.isNullOrEmpty(tag.getString("style"))) {
+			if (!tag.contains("style") || StringUtil.isNullOrEmpty(tag.getStringOr("style", ""))) {
 				throw new IllegalStateException("Define a style");
 			}
 		} catch (Exception e) {

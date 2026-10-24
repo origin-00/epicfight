@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "Silah yeteneğini görmek için [%s]'e bas",
 	"key.epicfight.gui": "Epic Fight GUI",
 	"key.epicfight.combat": "Epic Fight Dövüş",
+	"key.category.epicfight.combat": "Epic Fight Dövüş",
+	"key.category.epicfight.gui": "Epic Fight GUI",
 	"key.epicfight.show_tooltip": "Silah Yeteneği Araç Çubuğunu Göster",
 	"key.epicfight.switch_mode": "Savaş/Maden Modunu Aç/Kapat",
 	"key.epicfight.attack": "Saldırı",

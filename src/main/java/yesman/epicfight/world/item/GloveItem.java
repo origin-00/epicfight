@@ -5,17 +5,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public class GloveItem extends WeaponItem {
-	public GloveItem(Item.Properties properties) {
-		super(properties);
+	/// Enchantability and the iron-nugget repair material used to be method overrides; since
+	/// 1.21.2 they are item properties.
+	public static Item.Properties properties(Item.Properties properties) {
+		return swordBehavior(properties).enchantable(22).repairable(Items.IRON_NUGGET);
 	}
 	
-	@Override
-    public int getEnchantmentValue() {
-        return 22;
-    }
-	
-	@Override
-	public boolean isValidRepairItem(ItemStack toRepair, ItemStack repair) {
-		return toRepair.getItem() == Items.IRON_NUGGET;
+	public GloveItem(Item.Properties properties) {
+		super(properties);
 	}
 }

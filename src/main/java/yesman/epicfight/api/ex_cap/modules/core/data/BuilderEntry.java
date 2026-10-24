@@ -1,6 +1,6 @@
 package yesman.epicfight.api.ex_cap.modules.core.data;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import yesman.epicfight.registry.deferred.holders.DeferredPreset;
 import yesman.epicfight.world.capabilities.item.WeaponCapability;
@@ -12,4 +12,4 @@ import yesman.epicfight.world.capabilities.item.WeaponCapability;
  * @deprecated For Removal. DeferredHolder does exactly the same thing. So this has been removed and transferred to {@link DeferredPreset} which extends {@link DeferredHolder}
  */
 @Deprecated(forRemoval = true)
-public record BuilderEntry(ResourceLocation id, WeaponCapability.Builder template) { }
+public record BuilderEntry(Identifier id, WeaponCapability.Builder template) { }

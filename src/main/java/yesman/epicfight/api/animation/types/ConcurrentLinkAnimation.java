@@ -1,6 +1,6 @@
 package yesman.epicfight.api.animation.types;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Pose;
@@ -144,7 +144,7 @@ public class ConcurrentLinkAnimation extends DynamicAnimation implements Animati
 	}
 
 	@Override
-	public ResourceLocation registryName() {
+	public Identifier registryName() {
 		return null;
 	}
 

@@ -7,13 +7,13 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import de.teamlapen.werewolves.client.render.layer.HumanWerewolfLayer;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 
 @Mixin(value = HumanWerewolfLayer.class, remap = false)
 public interface MixinHumanWerewolfLayer<T extends LivingEntity, A extends HumanoidModel<T>> {
 	@Accessor(remap = false)
-	public List<ResourceLocation> getTextures();
+	public List<Identifier> getTextures();
 
 	@Accessor(remap = false)
 	public A getModel();

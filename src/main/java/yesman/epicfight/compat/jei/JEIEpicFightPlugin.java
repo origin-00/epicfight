@@ -5,13 +5,13 @@ import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.main.EpicFightMod;
 
 @JeiPlugin
 public class JEIEpicFightPlugin implements IModPlugin{
 	@Override
-	public ResourceLocation getPluginUid() {
+	public Identifier getPluginUid() {
         return EpicFightMod.identifier("jei_plugin");
 	}
 	

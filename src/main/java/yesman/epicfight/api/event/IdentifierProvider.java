@@ -1,7 +1,7 @@
 package yesman.epicfight.api.event;
 
-import net.minecraft.Util;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Util;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.world.capabilities.entitypatch.EntityDecorations;
 
@@ -16,23 +16,23 @@ import java.util.function.Function;
 /// @see EntityDecorations usage of this inherits
 /// @see Skill implementation of this interface
 public interface IdentifierProvider {
-    Function<ResourceLocation, IdentifierProvider> CONSTANT_IDENTIFIER_PROVIDERS = Util.memoize(identifier -> {
+    Function<Identifier, IdentifierProvider> CONSTANT_IDENTIFIER_PROVIDERS = Util.memoize(identifier -> {
         return new IdentifierProvider() {
-            final ResourceLocation constIdentifier = identifier;
+            final Identifier constIdentifier = identifier;
 
             @Override
-            public ResourceLocation getId() {
+            public Identifier getId() {
                 return this.constIdentifier;
             }
         };
     });
 
-    static IdentifierProvider constant(ResourceLocation constantIdentifier) {
+    static IdentifierProvider constant(Identifier constantIdentifier) {
         return CONSTANT_IDENTIFIER_PROVIDERS.apply(constantIdentifier);
     }
 
     static IdentifierProvider constant(String constantIdentifier) {
-        return constant(ResourceLocation.parse(constantIdentifier));
+        return constant(Identifier.parse(constantIdentifier));
     }
 
     IdentifierProvider PERMANENT_LISTENER = constant("permanent_subscriber");;
@@ -41,7 +41,7 @@ public interface IdentifierProvider {
         return PERMANENT_LISTENER;
     }
 
-    ResourceLocation getId();
+    Identifier getId();
 
     default String getStringId() {
         return this.getId().toString();

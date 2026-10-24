@@ -13,7 +13,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -29,8 +29,8 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.effect.VisibleMobEffect;
 
 public class HealthBar extends EntityUI {
-    public static final ResourceLocation HEALTHBARS1 = EpicFightMod.identifier("textures/gui/healthbars1.png");
-    public static final ResourceLocation HEALTHBARS2 = EpicFightMod.identifier("textures/gui/healthbars2.png");
+    public static final Identifier HEALTHBARS1 = EpicFightMod.identifier("textures/gui/healthbars1.png");
+    public static final Identifier HEALTHBARS2 = EpicFightMod.identifier("textures/gui/healthbars2.png");
 	
 	private final Map<LivingEntity, EntityAttributeTracker> trackingEntities = Maps.newConcurrentMap();
 	
@@ -41,7 +41,7 @@ public class HealthBar extends EntityUI {
 		
 		if (healthBarVisibility == HealthBarVisibility.NONE) {
 			return false;
-		} else if (entity.getType().is(EntityTypes.BOSSES)) {
+		} else if (entity.getType().builtInRegistryHolder().is(EntityTypes.BOSSES)) {
 			return false;
 		}
 		
@@ -92,12 +92,12 @@ public class HealthBar extends EntityUI {
 				for (int j = 0; j <= row; j++) {
 					MobEffectInstance effectInstance = iter.next();
 					MobEffect effect = effectInstance.getEffect().value();
-					ResourceLocation rl;
+					Identifier rl;
 					
 					if (effect instanceof VisibleMobEffect visibleMobEffect) {
 						rl = visibleMobEffect.getIcon(effectInstance);
 					} else {
-						rl = ResourceLocation.fromNamespaceAndPath(BuiltInRegistries.MOB_EFFECT.getKey(effect).getNamespace(), "textures/mob_effect/" + BuiltInRegistries.MOB_EFFECT.getKey(effect).getPath() + ".png");
+						rl = Identifier.fromNamespaceAndPath(BuiltInRegistries.MOB_EFFECT.getKey(effect).getNamespace(), "textures/mob_effect/" + BuiltInRegistries.MOB_EFFECT.getKey(effect).getPath() + ".png");
 					}
 					
 					float x = startX + 0.3F * j;
@@ -112,7 +112,7 @@ public class HealthBar extends EntityUI {
 		}
 		
 		EntityAttributeTracker attributeTracker = this.trackingEntities.get(entity);
-		ResourceLocation healthBarTexture;
+		Identifier healthBarTexture;
 		int damageColor;
 		int textureIndex;
 		

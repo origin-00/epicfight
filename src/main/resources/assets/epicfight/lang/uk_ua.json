@@ -238,6 +238,8 @@
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	"key.epicfight.gui": "Інтерфейс Epic Fight",
 	"key.epicfight.combat": "Бойовка Epic Fight",
+	"key.category.epicfight.combat": "Бойовка Epic Fight",
+	"key.category.epicfight.gui": "Інтерфейс Epic Fight",
 	"key.epicfight.show_tooltip": "Показати Підказку Властивого Вміння Зброї",
 	"key.epicfight.switch_mode": "Перемкнути режим Бою/Добування",
 	"key.epicfight.attack": "Атака",

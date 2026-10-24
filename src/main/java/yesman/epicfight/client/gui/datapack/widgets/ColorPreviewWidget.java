@@ -1,6 +1,6 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -24,7 +24,7 @@ public class ColorPreviewWidget extends AbstractWidget implements ResizableCompo
 	}
 	
 	@Override
-	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+	public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		guiGraphics.fill(this._getX(), this._getY(), this._getX() + this._getWidth(), this._getY() + this._getHeight(), -1);
 		guiGraphics.fill(this._getX() + 1, this._getY() + 1, this._getX() + this._getWidth() - 1, this._getY() + this._getHeight() - 1, -16777216);
 		guiGraphics.fill(this._getX() + 2, this._getY() + 2, this._getX() + this._getWidth() - 2, this._getY() + this._getHeight() - 2, this.packedColor);
@@ -145,7 +145,7 @@ public class ColorPreviewWidget extends AbstractWidget implements ResizableCompo
 	}
 	
 	@Override
-	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+	public void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 }

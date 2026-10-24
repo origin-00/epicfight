@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.ThrownTrident;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -23,7 +23,7 @@ public abstract class MixinThrownTrident extends AbstractArrow {
 		super(p_36721_, p_36722_);
 	}
 	
-	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/ThrownTrident;setPosRaw(DDD)V"), method = "tick()V")
+	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/arrow/ThrownTrident;setPosRaw(DDD)V"), method = "tick()V")
 	private void epicfight_setPosRawInTick(ThrownTrident entity, double x, double y, double z, Operation<Void> operation) {
 		ThrownTridentPatch tridentPatch = EpicFightCapabilities.getEntityPatch(entity, ThrownTridentPatch.class);
 		
@@ -32,7 +32,7 @@ public abstract class MixinThrownTrident extends AbstractArrow {
 		}
 	}
 	
-	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/ThrownTrident;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V"), method = "tick()V")
+	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/arrow/ThrownTrident;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V"), method = "tick()V")
 	private void epicfight_setDeltaMovementInTick(ThrownTrident entity, Vec3 vec3, Operation<Void> operation) {
 		ThrownTridentPatch tridentPatch = EpicFightCapabilities.getEntityPatch(entity, ThrownTridentPatch.class);
 		
@@ -50,7 +50,7 @@ public abstract class MixinThrownTrident extends AbstractArrow {
 		}
 	}
 	
-	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/AbstractArrow;playerTouch(Lnet/minecraft/world/entity/player/Player;)V")
+	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/arrow/AbstractArrow;playerTouch(Lnet/minecraft/world/entity/player/Player;)V")
 	         , method = "playerTouch(Lnet/minecraft/world/entity/player/Player;)V")
 	private void epicfight_playerTouch(ThrownTrident entity, Player player, Operation<Void> original) {
 		ThrownTridentPatch tridentPatch = EpicFightCapabilities.getEntityPatch(entity, ThrownTridentPatch.class);

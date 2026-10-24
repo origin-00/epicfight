@@ -2,7 +2,7 @@ package yesman.epicfight.registry.deferred;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public final class ItemPresetRegister extends DeferredRegister<CapabilityItem.Bu
 
         ResourceKey<CapabilityItem.Builder<?>> key = ResourceKey.create(
                 EpicFightRegistries.Keys.BUILDERS,
-                ResourceLocation.fromNamespaceAndPath(this.getNamespace(), name)
+                Identifier.fromNamespaceAndPath(this.getNamespace(), name)
         );
         this.register(name, builder);
 
@@ -46,7 +46,7 @@ public final class ItemPresetRegister extends DeferredRegister<CapabilityItem.Bu
     public <T extends CapabilityItem.Builder<?>> DeferredPreset<T> registerPreset(String name, Supplier<T> builder) {
         ResourceKey<CapabilityItem.Builder<?>> key = ResourceKey.create(
                 this.getRegistryKey(),
-                ResourceLocation.fromNamespaceAndPath(this.getNamespace(), name)
+                Identifier.fromNamespaceAndPath(this.getNamespace(), name)
         );
 
         this.register(name, builder);

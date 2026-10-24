@@ -1,5 +1,6 @@
 package yesman.epicfight.client.renderer.patched.layer;
 
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.EntityModel;
@@ -15,32 +16,28 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
-public class PatchedHeadLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E> & HeadedModel> extends PatchedLayer<E, T, M, CustomHeadLayer<E, M>> {
+public class PatchedHeadLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<?> & HeadedModel> extends PatchedLayer<E, T, M, CustomHeadLayer<?, ?>> {
 	@Override
-	protected void renderLayer(T entitypatch, E entityliving, CustomHeadLayer<E, M> vanillaLayer, PoseStack postStack, MultiBufferSource buffer, int packedLightIn, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
-		ItemStack itemstack = entityliving.getItemBySlot(EquipmentSlot.HEAD);
-		
-		if (!itemstack.isEmpty()) {
-			ModelPart model = vanillaLayer.getParentModel().getHead();
-			E entity = entitypatch.getOriginal();
+	protected void renderLayer(T entitypatch, E entityliving, CustomHeadLayer<?, ?> vanillaLayer, LivingEntityRenderState renderState, PoseStack postStack, MultiBufferSource buffer, int packedLightIn, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
+		if (!renderState.headItem.isEmpty() || renderState.wornHeadType != null) {
+			// The vanilla layer positions the item with the head part; the Epic Fight head joint
+			// replaces that, so the part is reset to the origin first.
+			ModelPart head = ((HeadedModel)vanillaLayer.getParentModel()).getHead();
+			head.setPos(0.0F, 0.0F, 0.0F);
+			head.setRotation(0.0F, 0.0F, 0.0F);
+
 			OpenMatrix4f modelMatrix = new OpenMatrix4f();
 			modelMatrix.scale(new Vec3f(-1.0F, -1.0F, 1.0F)).mulFront(poses[9]).translate(0, 0.02F, 0);
-			model.x = 0;
-			model.y = 0;
-			model.z = 0;
-			model.xRot = 0;
-			model.yRot = 0;
-			model.zRot = 0;
 			postStack.pushPose();
-			
+
 			MathUtils.mulStack(postStack, modelMatrix);
-			
+
 			if (entitypatch.getOriginal().isBaby()) {
 				postStack.translate(0.0F, -1.2F, 0.0F);
 				postStack.scale(1.6F, 1.6F, 1.6F);
 			}
-			
-			vanillaLayer.render(postStack, buffer, packedLightIn, entity, entity.walkAnimation.position(), entity.walkAnimation.speed(), packedLightIn, entity.tickCount, yRot, xRot);
+
+			submitVanillaLayer(vanillaLayer, postStack, buffer, packedLightIn, renderState, yRot, xRot);
 			postStack.popPose();
 		}
 	}

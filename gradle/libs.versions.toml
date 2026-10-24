@@ -1,17 +1,17 @@
 [versions]
 mod = "21.17.3"
-java = "21"
+java = "25"
 
 # Minecraft
-minecraft = "1.21.1"
+minecraft = "26.1.2"
 parchmentMappings = "2024.11.17"
 
 # NeoForge
-neoforge = "21.1.219"
-neoforgeRange = "[21,)"
-moddevgradle = "2.0.134"
+neoforge = "26.1.2.122"
+neoforgeRange = "[26.1,)"
+moddevgradle = "2.0.148"
 # https://projects.neoforged.net/neoforged/neoform
-neoform = "1.21.1-20240808.144430"
+neoform = "26.1.2-1"
 
 # SpongePowered Mixin
 mixin = "0.8.7"

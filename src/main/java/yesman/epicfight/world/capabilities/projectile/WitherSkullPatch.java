@@ -4,11 +4,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.WitherSkull;
+import net.minecraft.world.entity.projectile.hurtingprojectile.WitherSkull;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -53,12 +53,12 @@ public class WitherSkullPatch extends ProjectilePatch<WitherSkull> {
 
                 if (
                     SpawnPlacements.isSpawnPositionOk(entityType, serverLevel, blockpos) &&
-                    SpawnPlacements.checkSpawnRules(entityType, serverLevel, MobSpawnType.REINFORCEMENT, blockpos, serverLevel.random) &&
+                    SpawnPlacements.checkSpawnRules(entityType, serverLevel, EntitySpawnReason.REINFORCEMENT, blockpos, serverLevel.getRandom()) &&
                     !EpicFightGameRules.NO_MOBS_IN_BOSSFIGHT.getRuleValue(serverLevel)
                 ) {
                     WitherBoss summoner = (projectile.getOwner() instanceof WitherBoss) ? ((WitherBoss)projectile.getOwner()) : null;
                     WitherSkeletonMinion witherskeletonminion = new WitherSkeletonMinion(serverLevel, summoner, projectile.getX(), projectile.getY() + 0.1D, projectile.getZ());
-                    witherskeletonminion.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(blockpos), MobSpawnType.REINFORCEMENT, null);
+                    witherskeletonminion.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(blockpos), EntitySpawnReason.REINFORCEMENT, null);
                     witherskeletonminion.setYRot(projectile.getYRot() - 180.0F);
                     serverLevel.addFreshEntity(witherskeletonminion);
 

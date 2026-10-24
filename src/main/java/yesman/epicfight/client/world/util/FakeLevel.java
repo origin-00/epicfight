@@ -1,5 +1,6 @@
 package yesman.epicfight.client.world.util;
 
+import net.minecraft.network.chat.Component;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -60,13 +61,13 @@ public class FakeLevel extends ClientLevel {
 			// new FakeClientPacketListener(refLevel, minecraft), << the original approach, making a fake connection
 			new ClientLevel.ClientLevelData(Difficulty.NORMAL, false, false),
 			Level.OVERWORLD,
-			refLevel.registryAccess().registryOrThrow(Registries.DIMENSION_TYPE).getHolderOrThrow(BuiltinDimensionTypes.OVERWORLD),
+			refLevel.registryAccess().lookupOrThrow(Registries.DIMENSION_TYPE).getOrThrow(BuiltinDimensionTypes.OVERWORLD),
 			0,
 			0,
-			minecraft::getProfiler,
 			minecraft.levelRenderer,
 			true,
-			0
+			0,
+			refLevel.getSeaLevel()
 		);
 		
 		this.refLevel = refLevel;
@@ -77,7 +78,7 @@ public class FakeLevel extends ClientLevel {
     ///
     /// Left only getter methods as is: [#enabledFeatures]. [#potionBrewing], [#getScoreboard], [#getRecipeManager]
     @Override
-    public void disconnect() {
+    public void disconnect(Component message) {
     }
 
     @Override

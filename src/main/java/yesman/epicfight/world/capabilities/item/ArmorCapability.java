@@ -5,25 +5,25 @@ import com.google.common.collect.Multimap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import yesman.epicfight.registry.entries.EpicFightAttributes;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.item.ArmorItems;
 
 import java.util.List;
 
 public class ArmorCapability extends CapabilityItem {
 	protected final double weight;
 	protected final double stunArmor;
-	protected final ArmorItem.Type armorType;
+	protected final ArmorType armorType;
 	
 	protected ArmorCapability(ArmorCapability.Builder builder) {
 		super(builder);
@@ -80,7 +80,7 @@ public class ArmorCapability extends CapabilityItem {
 	public Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiersForArmor() {
 		Multimap<Holder<Attribute>, AttributeModifier> map = HashMultimap.create();
 		
-		ResourceLocation modifierId = ResourceLocation.withDefaultNamespace("armor." + this.armorType.getName());
+		Identifier modifierId = Identifier.withDefaultNamespace("armor." + this.armorType.getName());
 		map.put(EpicFightAttributes.WEIGHT, new AttributeModifier(modifierId, this.weight, Operation.ADD_VALUE));
 		map.put(EpicFightAttributes.STUN_ARMOR, new AttributeModifier(modifierId, this.stunArmor, Operation.ADD_VALUE));
 		
@@ -106,7 +106,7 @@ public class ArmorCapability extends CapabilityItem {
 	}
 	
 	public static class Builder extends CapabilityItem.Builder<Builder> {
-		private ArmorItem.Type armorType;
+		private ArmorType armorType;
 		private double weight;
 		private double stunArmor;
 		
@@ -117,16 +117,19 @@ public class ArmorCapability extends CapabilityItem {
 		}
 		
 		public Builder byItem(Item item) {
-			if (item instanceof ArmorItem armorItem) {
-				Holder<ArmorMaterial> armorMaterial = armorItem.getMaterial();
-				this.armorType = armorItem.getType();
+			ArmorType armorType = ArmorItems.getArmorType(item);
+			
+			if (armorType != null) {
+				// The old ArmorMaterial#defense() value for this piece, read from its armor modifier.
+				double defense = ArmorItems.getDefense(item);
+				this.armorType = armorType;
 				
 				if (this.weight < 0.0D) {
-					this.weight = armorMaterial.value().defense().getOrDefault(this.armorType, 1) * 2.5F;
+					this.weight = defense * 2.5F;
 				}
 				
 				if (this.stunArmor < 0.0D) {
-					this.stunArmor = armorMaterial.value().defense().getOrDefault(this.armorType, 1) * 0.375F;
+					this.stunArmor = defense * 0.375F;
 				}
 			}
 			

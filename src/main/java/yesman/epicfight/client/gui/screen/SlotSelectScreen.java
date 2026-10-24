@@ -1,13 +1,15 @@
 package yesman.epicfight.client.gui.screen;
 
+import yesman.epicfight.client.gui.GuiColors;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +49,7 @@ public class SlotSelectScreen extends Screen {
 
     @Override
     protected void init() {
-        this.parent.init(this.minecraft, this.width, this.height);
+        this.parent.init(this.width, this.height);
         int buttonX = this.width / 2 - 84;
         int buttonY = this.height / 2 - 40;
         int columns = 0;
@@ -161,17 +163,17 @@ public class SlotSelectScreen extends Screen {
     }
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         int boxWidth = 192;
         int boxHeight = 160;
         int left = (this.width - boxWidth) / 2;
         int top = (this.height - boxHeight) / 2;
 
-        this.parent.render(guiGraphics, mouseX, mouseY, partialTick, true);
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        this.parent.extractRenderState(guiGraphics, mouseX, mouseY, partialTick, true);
+        this.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         // move z level, to prevent the button text displayed above the screen.
-        guiGraphics.pose().translate(0, 0, 5000);
+        guiGraphics.pose().translate(0F, 0F);
         guiGraphics.fill(left, top, left + boxWidth, top + boxHeight, -6250336);
         guiGraphics.fill(left + 1, top + 1, left + boxWidth - 1, top + boxHeight - 1, -16777215);
 
@@ -179,12 +181,12 @@ public class SlotSelectScreen extends Screen {
         int lineHeight = 0;
 
         for (FormattedCharSequence s : this.font.split(component, 250)) {
-            guiGraphics.drawString(font, s, (this.width - boxWidth) / 2 + 8, this.height / 2 - 70 + lineHeight, 0xFFE8E8E8, false);
+            guiGraphics.text(font, s, (this.width - boxWidth) / 2 + 8, this.height / 2 - 70 + lineHeight, 0xFFE8E8E8, false);
             lineHeight += 10;
         }
 
         for (Renderable renderable : this.renderables) {
-            renderable.render(guiGraphics, mouseX, mouseY, partialTick);
+            renderable.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
@@ -198,38 +200,36 @@ public class SlotSelectScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             if (this.up && scroll != 0) {
-                guiGraphics.blit(SkillEditScreen.SCROLL_ARROW_UP, this.getX(), this.getY(), this.width, this.height, 0, 0, 16, 16, 16, 16);
+                guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SkillEditScreen.SCROLL_ARROW_UP, this.getX(), this.getY(), 0, 0, this.width, this.height, 16, 16, 16, 16);
             } else if (!this.up && scroll != maxScroll) {
-                guiGraphics.blit(SkillEditScreen.SCROLL_ARROW_DOWN, this.getX(), this.getY(), this.width, this.height, 0, 0, 16, 16, 16, 16);
+                guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SkillEditScreen.SCROLL_ARROW_DOWN, this.getX(), this.getY(), 0, 0, this.width, this.height, 16, 16, 16, 16);
             }
         }
 
         @Override
-        protected boolean clicked(double mouseX, double mouseY) {
-            return super.clicked(mouseX, mouseY) && (this.up && scroll != 0 || !this.up && scroll != maxScroll);
+        public boolean isMouseOver(double mouseX, double mouseY) {
+            return super.isMouseOver(mouseX, mouseY) && (this.up && scroll != 0 || !this.up && scroll != maxScroll);
         }
     }
 
     static class SlotButton extends Button {
-        final ResourceLocation texture;
+        final Identifier texture;
 
-        protected SlotButton(int x, int y, int width, int height, Component tooltip, ResourceLocation textureLocation, Button.OnPress onPress) {
+        protected SlotButton(int x, int y, int width, int height, Component tooltip, Identifier textureLocation, Button.OnPress onPress) {
             super(x, y, width, height, Component.empty(), onPress, Button.DEFAULT_NARRATION);
             this.texture = textureLocation;
             this.setTooltip(Tooltip.create(tooltip));
         }
 
         @Override
-        public void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-            super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+        protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+            super.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
-            RenderSystem.enableBlend();
-            if (!this.active) RenderSystem.setShaderColor(0.5F, 0.5F, 0.5F, 1.0F);
-            guiGraphics.blit(this.texture, this.getX() + 2, this.getY() + 2, this.width - 4, this.height - 4, 0, 0, 32, 32, 32, 32);
-            if (!this.active) RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.disableBlend();
+            if (!this.active) GuiColors.setColor(guiGraphics, 0.5F, 0.5F, 0.5F, 1.0F);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.texture, this.getX() + 2, this.getY() + 2, 0, 0, this.width - 4, this.height - 4, 32, 32, 32, 32);
+            if (!this.active) GuiColors.setColor(guiGraphics, 1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 }

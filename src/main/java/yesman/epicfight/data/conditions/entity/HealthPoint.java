@@ -32,7 +32,7 @@ public class HealthPoint extends EntityPatchCondition {
 	
 	@Override
 	public HealthPoint read(CompoundTag tag) {
-		this.health = this.assertTag("health", "decimal", tag, NumericTag.class, CompoundTag::getDouble);
+		this.health = this.assertTag("health", "decimal", tag, NumericTag.class, (compoundTag, key) -> compoundTag.getDoubleOr(key, 0.0D));
 		this.comparator = this.assertEnumTag("comparator", Comparator.class, tag);
 		
 		return this;
@@ -72,8 +72,8 @@ public class HealthPoint extends EntityPatchCondition {
 		editbox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsable(context, Double::parseDouble));
 		
 		return List.of(
-			ParameterEditor.of((value) -> ParseUtil.parseOrGet(value.toString(), (v) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), StringTag.valueOf("")), (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, Tag::getAsString)), editbox),
-			ParameterEditor.of((value) -> StringTag.valueOf(value.toString().toLowerCase(Locale.ROOT)), (tag) -> ParseUtil.enumValueOfOrNull(Comparator.class, ParseUtil.nullOrToString(tag, Tag::getAsString)), comboBox)
+			ParameterEditor.of((value) -> ParseUtil.parseOrGet(value.toString(), (v) -> DoubleTag.valueOf(Double.parseDouble(value.toString())), StringTag.valueOf("")), (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, ParseUtil::tagAsString)), editbox),
+			ParameterEditor.of((value) -> StringTag.valueOf(value.toString().toLowerCase(Locale.ROOT)), (tag) -> ParseUtil.enumValueOfOrNull(Comparator.class, ParseUtil.nullOrToString(tag, ParseUtil::tagAsString)), comboBox)
 		);
 	}
 	

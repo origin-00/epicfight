@@ -1,5 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
+import net.minecraft.server.level.ServerLevel;
 import com.google.common.collect.Sets;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -16,7 +17,7 @@ import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ProjectileWeaponItem;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -119,12 +120,12 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 
     protected final void commonAggressiveRangedMobUpdateMotion(boolean considerInaction) {
         this.commonAggressiveMobUpdateMotion(considerInaction);
-        UseAnim useAction = this.original.getItemInHand(this.original.getUsedItemHand()).getUseAnimation();
+        ItemUseAnimation useAction = this.original.getItemInHand(this.original.getUsedItemHand()).getUseAnimation();
 
         if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getRealAnimation().get().isReboundAnimation())
             currentCompositeMotion = LivingMotions.SHOT;
         else if (this.original.isUsingItem()) {
-            if (useAction == UseAnim.CROSSBOW)
+            if (useAction == ItemUseAnimation.CROSSBOW)
                 currentCompositeMotion = LivingMotions.RELOAD;
             else
                 currentCompositeMotion = LivingMotions.AIM;
@@ -171,7 +172,7 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 
         this.epicFightDamageSource = damageSource;
         this.setOffhandDamage(hand, mainHandItem, offHandItem, offhandValid, mainHandAttributes, offHandAttributes);
-        this.original.doHurtTarget(target);
+        if (this.original.level() instanceof ServerLevel serverLevel) this.original.doHurtTarget(serverLevel, target);
         this.recoverMainhandDamage(hand, mainHandItem, offHandItem, mainHandAttributes, offHandAttributes);
         this.epicFightDamageSource = null;
 

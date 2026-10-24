@@ -1,6 +1,7 @@
 package yesman.epicfight.client.gui.widgets;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -23,8 +24,8 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
     @Nullable
     private WidgetTable.WidgetEntry lastEntry;
 
-    public WidgetTable(Screen parentScreen, int x1, int x2, int y1, int y2, AnchoredWidget.HorizontalAnchorType horizontalAnchor, VerticalAnchorType verticalAnchor, int itemHeight) {
-        super(parentScreen.getMinecraft(), 0, 0, 0, itemHeight);
+    public WidgetTable(Screen parentScreen, int x1, int x2, int y1, int y2, AnchoredWidget.HorizontalAnchorType horizontalAnchor, VerticalAnchorType verticalAnchor, int defaultEntryHeight) {
+        super(parentScreen.getMinecraft(), 0, 0, 0, defaultEntryHeight);
 
         this.x1 = x1;
         this.x2 = x2;
@@ -35,11 +36,11 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
     }
 
     @Override
-    protected void renderListBackground(GuiGraphics guiGraphics) {
+    protected void extractListBackground(GuiGraphicsExtractor guiGraphics) {
     }
 
     @Override
-    protected void renderListSeparators(GuiGraphics guiGraphics) {
+    protected void extractListSeparators(GuiGraphicsExtractor guiGraphics) {
     }
 
     @Override
@@ -48,7 +49,7 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
     }
 
     @Override
-    protected int getScrollbarPosition() {
+    protected int scrollBarX() {
         return this.getRight() - 6;
     }
 
@@ -138,7 +139,7 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
                 /// Locate the widget at the vertical center of the current row, as we don't allow anchoring
                 /// rather than [VerticalAnchorType.TOP_HEIGHT] in [#addWidget], the
                 /// operation is expected as same as [AbstractWidget#setY]
-                int top = this.getRowTop(widgetIndex) + this.itemHeight / 2 - height / 2 - tableRectangle.top();
+                int top = this.getRowTop(widgetIndex) + this.defaultEntryHeight / 2 - height / 2 - tableRectangle.top();
                 widget.setY1(top);
                 widget.relocate(tableRectangle);
             }
@@ -148,8 +149,11 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int button) {
-        this.updateScrollingState(x, y, button);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int button = event.button();
+        this.updateScrolling(event);
 
         if (!this.isMouseOver(x, y)) {
             return false;
@@ -164,7 +168,7 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
             // When the focused entry is in a visible area
             if (focusTop <= this.getBottom() && focusBottom >= this.getY()) {
                 for (GuiEventListener e : this.getFocused().children()) {
-                    if (e.mouseClicked(x, y, button)) {
+                    if (e.mouseClicked(event, doubleClick)) {
                         if (this.getFocused() != null && this.getFocused() != e) {
                             this.getFocused().setFocused(false);
                             this.getFocused().setFocused(e);
@@ -176,7 +180,7 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
             }
         }
 
-        return super.mouseClicked(x, y, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
@@ -208,20 +212,23 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         for (int i = 0; i < this.children().size(); i++) {
             WidgetEntry entry = this.children().get(i);
             int j1 = this.getRowTop(i);
             int k1 = this.getRowBottom(i);
 
             if (k1 >= this.getY() && j1 <= this.getBottom()) {
-                if (entry.getChildAt(mouseX, mouseY).filter((component) -> component.mouseDragged(mouseX, mouseY, button, dx, dy)).isPresent()) {
+                if (entry.getChildAt(mouseX, mouseY).filter((component) -> component.mouseDragged(event, dx, dy)).isPresent()) {
                     return true;
                 }
             }
         }
 
-        return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+        return super.mouseDragged(event, dx, dy);
     }
 
     public class WidgetEntry extends ContainerObjectSelectionList.Entry<WidgetTable.WidgetEntry> {
@@ -269,10 +276,14 @@ public class WidgetTable extends ContainerObjectSelectionList<WidgetTable.Widget
         }
 
         @Override
-        public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovering, float partialTick) {
+        public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean hovering, float partialTick) {
+            int top = this.getY();
+            int left = this.getX();
+            int width = this.getWidth();
+            int height = this.getContentHeight();
             for (AbstractWidget widget : this.widgets) {
-                widget.setY(top + WidgetTable.this.itemHeight / 2 - widget.getHeight() / 2);
-                widget.render(guiGraphics, mouseX, mouseY, partialTick);
+                widget.setY(top + WidgetTable.this.defaultEntryHeight / 2 - widget.getHeight() / 2);
+                widget.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
             }
         }
     }

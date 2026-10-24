@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.ApiStatus;
 import yesman.epicfight.api.ex_cap.data.Moveset;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.EpicFight;
 import yesman.epicfight.api.ex_cap.data.modifier.WeaponModifier;
 import yesman.epicfight.api.ex_cap.modules.core.events.ExCapMovesetRegistryEvent;
@@ -16,25 +16,25 @@ import java.util.Map;
 @ApiStatus.Experimental
 public class MovesetManager
 {
-    private static final Map<ResourceLocation, Moveset.Builder> MOVESETS = Maps.newHashMap();
-    private static final Map<ResourceLocation, Moveset.Builder> BUILDER_DECLARED_MOVESETS = Maps.newHashMap();
+    private static final Map<Identifier, Moveset.Builder> MOVESETS = Maps.newHashMap();
+    private static final Map<Identifier, Moveset.Builder> BUILDER_DECLARED_MOVESETS = Maps.newHashMap();
 
     public static void acceptEvent(@Deprecated ExCapMovesetRegistryEvent event)
     {
         MOVESETS.clear();
-        EpicFightRegistries.MOVESETS.entrySet().forEach(entry -> MOVESETS.put(entry.getKey().location(), entry.getValue()));
+        EpicFightRegistries.MOVESETS.entrySet().forEach(entry -> MOVESETS.put(entry.getKey().identifier(), entry.getValue()));
         MOVESETS.putAll(BUILDER_DECLARED_MOVESETS);
         MOVESETS.putAll(event.getMovesets());
-        MOVESETS.values().forEach( builder -> EpicFightRegistries.MOVESET_DATA.holders().forEach(builder::registerCustomData));
+        MOVESETS.values().forEach( builder -> EpicFightRegistries.MOVESET_DATA.listElements().forEach(builder::registerCustomData));
         ModifierManager.modifyMovesets();
     }
 
-    public static void addMoveset(ResourceLocation rl, Moveset.Builder builder)
+    public static void addMoveset(Identifier rl, Moveset.Builder builder)
     {
         BUILDER_DECLARED_MOVESETS.put(rl, builder);
     }
 
-    public static void add(ResourceLocation id, JsonElement jsonElement)
+    public static void add(Identifier id, JsonElement jsonElement)
     {
         try {
             Moveset.Builder builder = Moveset.Builder.deserialize(jsonElement);
@@ -50,7 +50,7 @@ public class MovesetManager
                 MOVESETS.get(resourceLocation).addCustomData(deferredCustomDataObjectMap));
     }
 
-    public static Moveset.Builder getBuilder(ResourceLocation id)
+    public static Moveset.Builder getBuilder(Identifier id)
     {
         return MOVESETS.get(id);
     }

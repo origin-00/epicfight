@@ -1,7 +1,9 @@
 package yesman.epicfight.skill.identity;
 
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import com.google.common.collect.Maps;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -76,18 +78,18 @@ public class RevelationSkill extends Skill {
         super.loadDatapackParameters(parameters);
 
         this.maxRevelationStacks.clear();
-        this.blockStack = parameters.getInt("block_stacks");
-        this.parryStack = parameters.getInt("parry_stacks");
-        this.dodgeStack = parameters.getInt("dodge_stacks");
-        this.defaultRevelationStacks = parameters.getInt("default_revelation_stacks");
+        this.blockStack = parameters.getIntOr("block_stacks", 0);
+        this.parryStack = parameters.getIntOr("parry_stacks", 0);
+        this.dodgeStack = parameters.getIntOr("dodge_stacks", 0);
+        this.defaultRevelationStacks = parameters.getIntOr("default_revelation_stacks", 0);
 
-        CompoundTag maxStacks = parameters.getCompound("max_revelations");
+        CompoundTag maxStacks = parameters.getCompoundOrEmpty("max_revelations");
 
-        for (String registryName : maxStacks.getAllKeys()) {
+        for (String registryName : maxStacks.keySet()) {
             EntityType<?> entityType = EntityType.byString(registryName).orElse(null);
 
             if (entityType != null) {
-                this.maxRevelationStacks.put(entityType, maxStacks.getInt(registryName));
+                this.maxRevelationStacks.put(entityType, maxStacks.getIntOr(registryName, 0));
             } else {
                 EpicFightMod.LOGGER.warn("Revelation registry error: no entity type named {}", registryName);
             }
@@ -204,9 +206,9 @@ public class RevelationSkill extends Skill {
 	}
 
     @ClientOnly @Override
-	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphics guiGraphics, float x, float y, float partialTick) {
-		guiGraphics.blit(this.getSkillTexture(), (int)x, (int)y, 24, 24, 0, 0, 1, 1, 1, 1);
+	public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphicsExtractor guiGraphics, float x, float y, float partialTick) {
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.getSkillTexture(), (int)x, (int)y, 0, 0, 24, 24, 1, 1, 1, 1);
 		int stacks = container.getRemainDuration() > 0 ? 0 : this.maxRevelationStacks.getOrDefault(container.getExecutor().getTarget().getType(), this.defaultRevelationStacks) - container.getDataManager().getDataValue(EpicFightSkillDataKeys.STACKS);
-		guiGraphics.drawString(gui.getFont(), String.format("%d", stacks), x + 18, y + 14, 16777215, true);
+		guiGraphics.text(gui.getFont(), String.format("%d", stacks), (int)(x + 18), (int)(y + 14), GuiColors.text(16777215), true);
 	}
 }

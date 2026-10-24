@@ -1,5 +1,7 @@
 package yesman.epicfight.api.client.model.transformer;
 
+import java.util.Set;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +10,7 @@ import java.util.function.Supplier;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.joml.Vector4f;
 
 import com.google.common.collect.Lists;
@@ -30,7 +33,6 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.mixin.client.MixinAgeableListModel;
 
 public class VanillaModelTransformer extends HumanoidModelTransformer {
 	public static final SimpleTransformer HEAD = new SimpleTransformer(AABB.ofSize(new Vec3(0.0D, -4.0D, 0.0D), 8.0D, 8.0D, 8.0D), 9);
@@ -80,21 +82,8 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 		humanoidModel.leftLeg.loadPose(humanoidModel.leftLeg.getInitialPose());
 		humanoidModel.rightLeg.loadPose(humanoidModel.rightLeg.getInitialPose());
 		
-		List<ModelPart> modelParts = Lists.newArrayList();
-		MixinAgeableListModel accessorAgeableListModel = ((MixinAgeableListModel)humanoidModel);
-		
-		Iterable<ModelPart> headParts = accessorAgeableListModel.invoke_headParts();
-		Iterable<ModelPart> bodyParts = accessorAgeableListModel.invoke_bodyParts();
-		
-		if (headParts != null) {
-			headParts.forEach(modelParts::add);
-		}
-		
-		if (bodyParts != null) {
-			bodyParts.forEach(modelParts::add);
-		}
-		
-		modelParts.forEach((modelPart) -> modelPart.loadPose(modelPart.getInitialPose()));
+		// AgeableListModel (head/body part lists) was removed in 1.21.2; reset every part of the model.
+		humanoidModel.root().getAllParts().forEach(modelPart -> modelPart.loadPose(modelPart.getInitialPose()));
 		
 		if (humanoidModel.head.skipDraw || humanoidModel.head.visible) {
 			partitions.add(new VanillaModelPartition(HEAD, humanoidModel.head, "head"));
@@ -124,14 +113,17 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			partitions.add(new VanillaModelPartition(RIGHT_LEG, humanoidModel.rightLeg, "rightLeg"));
 		}
 		
-		modelParts.remove(humanoidModel.head);
-		modelParts.remove(humanoidModel.hat);
-		modelParts.remove(humanoidModel.body);
-		modelParts.remove(humanoidModel.rightArm);
-		modelParts.remove(humanoidModel.leftArm);
-		modelParts.remove(humanoidModel.rightLeg);
-		modelParts.remove(humanoidModel.leftLeg);
+		// Parts added by other models besides the humanoid ones. The head and body part lists of
+		// AgeableListModel are gone (1.21.2), so they are what remains of the root's descendants
+		// once the standard parts and their children are excluded.
+		Set<ModelPart> standardParts = new HashSet<> ();
+		standardParts.add(humanoidModel.root());
 		
+		for (ModelPart standardPart : List.of(humanoidModel.head, humanoidModel.hat, humanoidModel.body, humanoidModel.rightArm, humanoidModel.leftArm, humanoidModel.rightLeg, humanoidModel.leftLeg)) {
+			standardParts.addAll(standardPart.getAllParts());
+		}
+		
+		List<ModelPart> modelParts = humanoidModel.root().getAllParts().stream().filter(part -> !standardParts.contains(part)).toList();
 		int i = 0;
 		
 		for (ModelPart modelpart : modelParts) {
@@ -164,8 +156,8 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 		PartPose initialPose = part.getInitialPose();
 		
 		poseStack.pushPose();
-		poseStack.translate(initialPose.x, initialPose.y, initialPose.z);
-		poseStack.mulPose(new Quaternionf().rotationZYX(initialPose.zRot, initialPose.yRot, initialPose.xRot));
+		poseStack.translate(initialPose.x(), initialPose.y(), initialPose.z());
+		poseStack.mulPose(new Quaternionf().rotationZYX(initialPose.zRot(), initialPose.yRot(), initialPose.xRot()));
 		
 		if (!bindPart) {
 			poseStack.scale(part.xScale, part.yScale, part.zScale);
@@ -212,16 +204,16 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 		
 		public void bakeCube(PoseStack poseStack, MeshPartDefinition partDefinition, ModelPart.Cube cube, List<SingleGroupVertexBuilder> vertices, Map<MeshPartDefinition, IntList> indices, PartTransformer.IndexCounter indexCounter) {
 			for (ModelPart.Polygon quad : cube.polygons) {
-				Vector3f norm = new Vector3f(quad.normal);
+				Vector3f norm = new Vector3f(quad.normal());
 				norm.mul(poseStack.last().normal());
 				
-				for (ModelPart.Vertex vertex : quad.vertices) {
-					Vector4f pos = new Vector4f(vertex.pos, 1.0F);
+				for (ModelPart.Vertex vertex : quad.vertices()) {
+					Vector4f pos = new Vector4f(vertex.x(), vertex.y(), vertex.z(), 1.0F);
 					pos.mul(poseStack.last().pose());
 					vertices.add(new SingleGroupVertexBuilder()
 						.setPosition(new Vec3f(pos.x(), pos.y(), pos.z()).scale(0.0625F))
 						.setNormal(new Vec3f(norm.x(), norm.y(), norm.z()))
-						.setTextureCoordinate(new Vec2f(vertex.u, vertex.v))
+						.setTextureCoordinate(new Vec2f(vertex.u(), vertex.v()))
 						.setEffectiveJointIDs(new Vec3f(this.jointId, 0, 0))
 						.setEffectiveJointWeights(new Vec3f(1.0F, 0.0F, 0.0F))
 						.setEffectiveJointNumber(1)
@@ -271,11 +263,11 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			for (ModelPart.Polygon polygon : cube.polygons) {
 				Matrix4f matrix = poseStack.last().pose();
 				
-				ModelPart.Vertex pos0 = getTranslatedVertex(polygon.vertices[0], matrix);
-				ModelPart.Vertex pos1 = getTranslatedVertex(polygon.vertices[1], matrix);
-				ModelPart.Vertex pos2 = getTranslatedVertex(polygon.vertices[2], matrix);
-				ModelPart.Vertex pos3 = getTranslatedVertex(polygon.vertices[3], matrix);
-				Direction direction = getDirectionFromVector(polygon.normal);
+				PosTexVertex pos0 = getTranslatedVertex(polygon.vertices()[0], matrix);
+				PosTexVertex pos1 = getTranslatedVertex(polygon.vertices()[1], matrix);
+				PosTexVertex pos2 = getTranslatedVertex(polygon.vertices()[2], matrix);
+				PosTexVertex pos3 = getTranslatedVertex(polygon.vertices()[3], matrix);
+				Direction direction = getDirectionFromVector(polygon.normal());
 				
 				VertexWeight pos0Weight = getYClipWeight(pos0.pos.y());
 				VertexWeight pos1Weight = getYClipWeight(pos1.pos.y());
@@ -285,8 +277,8 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 				if (pos1.pos.x() > X_PLANE != pos2.pos.x() > X_PLANE) {
 					float distance = pos2.pos.x() - pos1.pos.x();
 					float textureU = pos1.u + (pos2.u - pos1.u) * ((X_PLANE - pos1.pos.x()) / distance);
-					ModelPart.Vertex pos4 = new ModelPart.Vertex(X_PLANE, pos0.pos.y(), pos0.pos.z(), textureU, pos0.v);
-					ModelPart.Vertex pos5 = new ModelPart.Vertex(X_PLANE, pos1.pos.y(), pos1.pos.z(), textureU, pos1.v);
+					PosTexVertex pos4 = new PosTexVertex(X_PLANE, pos0.pos.y(), pos0.pos.z(), textureU, pos0.v);
+					PosTexVertex pos5 = new PosTexVertex(X_PLANE, pos1.pos.y(), pos1.pos.z(), textureU, pos1.v);
 					
 					xClipPolygons.add(new AnimatedPolygon(new AnimatedVertex[] {
 						new AnimatedVertex(pos0, 8, 7, 0, pos0Weight.chestWeight, pos0Weight.torsoWeight, 0),
@@ -316,7 +308,7 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 				AnimatedVertex pos1 = upsideDown ? polygon.animatedVertexPositions[3] : polygon.animatedVertexPositions[1];
 				AnimatedVertex pos2 = upsideDown ? polygon.animatedVertexPositions[0] : polygon.animatedVertexPositions[2];
 				AnimatedVertex pos3 = upsideDown ? polygon.animatedVertexPositions[1] : polygon.animatedVertexPositions[3];
-				Direction direction = getDirectionFromVector(polygon.normal);
+				Direction direction = getDirectionFromVector(polygon.normal());
 				List<VertexWeight> vertexWeights = getMiddleYClipWeights(pos1.pos.y(), pos2.pos.y());
 				List<AnimatedVertex> animatedVertices = Lists.<AnimatedVertex>newArrayList();
 				animatedVertices.add(pos0);
@@ -328,8 +320,8 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 						float textureV = pos1.v + (pos2.v - pos1.v) * ((vertexWeight.yClipCoord - pos1.pos.y()) / distance);
 						Vector3f clipPos1 = getClipPoint(pos1.pos, pos2.pos, vertexWeight.yClipCoord);
 						Vector3f clipPos2 = getClipPoint(pos0.pos, pos3.pos, vertexWeight.yClipCoord);
-						ModelPart.Vertex pos4 = new ModelPart.Vertex(clipPos2, pos0.u, textureV);
-						ModelPart.Vertex pos5 = new ModelPart.Vertex(clipPos1, pos1.u, textureV);
+						PosTexVertex pos4 = new PosTexVertex(clipPos2, pos0.u, textureV);
+						PosTexVertex pos5 = new PosTexVertex(clipPos1, pos1.u, textureV);
 						animatedVertices.add(new AnimatedVertex(pos4, 8, 7, 0, vertexWeight.chestWeight, vertexWeight.torsoWeight, 0));
 						animatedVertices.add(new AnimatedVertex(pos5, 8, 7, 0, vertexWeight.chestWeight, vertexWeight.torsoWeight, 0));
 					}
@@ -354,7 +346,7 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			}
 			
 			for (AnimatedPolygon polygon : xyClipPolygons) {
-				Vector3f norm = new Vector3f(polygon.normal);
+				Vector3f norm = new Vector3f(polygon.normal());
 				norm.mul(poseStack.last().normal());
 				
 				for (AnimatedVertex vertex : polygon.animatedVertexPositions) {
@@ -454,19 +446,19 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			
 			for (ModelPart.Polygon quad : cube.polygons) {
 				Matrix4f matrix = poseStack.last().pose();
-				ModelPart.Vertex pos0 = getTranslatedVertex(quad.vertices[0], matrix);
-				ModelPart.Vertex pos1 = getTranslatedVertex(quad.vertices[1], matrix);
-				ModelPart.Vertex pos2 = getTranslatedVertex(quad.vertices[2], matrix);
-				ModelPart.Vertex pos3 = getTranslatedVertex(quad.vertices[3], matrix);
-				Direction direction = getDirectionFromVector(quad.normal);
+				PosTexVertex pos0 = getTranslatedVertex(quad.vertices()[0], matrix);
+				PosTexVertex pos1 = getTranslatedVertex(quad.vertices()[1], matrix);
+				PosTexVertex pos2 = getTranslatedVertex(quad.vertices()[2], matrix);
+				PosTexVertex pos3 = getTranslatedVertex(quad.vertices()[3], matrix);
+				Direction direction = getDirectionFromVector(quad.normal());
 				
 				if (pos1.pos.y() > this.yClipCoord != pos2.pos.y() > this.yClipCoord) {
 					float distance = pos2.pos.y() - pos1.pos.y();
 					float textureV = pos1.v + (pos2.v - pos1.v) * ((this.yClipCoord - pos1.pos.y()) / distance);
 					Vector3f clipPos1 = getClipPoint(pos1.pos, pos2.pos, this.yClipCoord);
 					Vector3f clipPos2 = getClipPoint(pos0.pos, pos3.pos, this.yClipCoord);
-					ModelPart.Vertex pos4 = new ModelPart.Vertex(clipPos2, pos0.u, textureV);
-					ModelPart.Vertex pos5 = new ModelPart.Vertex(clipPos1, pos1.u, textureV);
+					PosTexVertex pos4 = new PosTexVertex(clipPos2, pos0.u, textureV);
+					PosTexVertex pos5 = new PosTexVertex(clipPos1, pos1.u, textureV);
 					
 					int upperId, lowerId;
 					if (distance > 0) {
@@ -526,7 +518,7 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			}
 			
 			for (AnimatedPolygon quad : polygons) {
-				Vector3f norm = new Vector3f(quad.normal);
+				Vector3f norm = new Vector3f(quad.normal());
 				norm.mul(poseStack.last().normal());
 				
 				for (AnimatedVertex vertex : quad.animatedVertexPositions) {
@@ -546,7 +538,7 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 		}
 	}
 	
-	static Direction getDirectionFromVector(Vector3f directionVec) {
+	static Direction getDirectionFromVector(Vector3fc directionVec) {
 		for (Direction direction : Direction.values()) {
 			Vector3f direcVec = new Vector3f(Float.compare(directionVec.x(), -0.0F) == 0 ? 0.0F : directionVec.x(), directionVec.y(), directionVec.z());
 			if (direcVec.equals(direction.step())) {
@@ -568,8 +560,8 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 		Matrix4f matrix = poseStack.last().pose();
 		
 		for (ModelPart.Polygon quad : cube.polygons) {
-			for (ModelPart.Vertex v : quad.vertices) {
-				Vector4f translatedPosition = new Vector4f(v.pos, 1.0F);
+			for (ModelPart.Vertex v : quad.vertices()) {
+				Vector4f translatedPosition = new Vector4f(v.x(), v.y(), v.z(), 1.0F);
 				translatedPosition.mul(matrix);
 				
 				if (minX > translatedPosition.x()) {
@@ -612,30 +604,48 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 		return clipPoint;
 	}
 	
-	static ModelPart.Vertex getTranslatedVertex(ModelPart.Vertex original, Matrix4f matrix) {
-		Vector4f translatedPosition = new Vector4f(original.pos, 1.0F);
+	static PosTexVertex getTranslatedVertex(ModelPart.Vertex original, Matrix4f matrix) {
+		Vector4f translatedPosition = new Vector4f(original.x(), original.y(), original.z(), 1.0F);
 		translatedPosition.mul(matrix);
 		
-		return new ModelPart.Vertex(translatedPosition.x(), translatedPosition.y(), translatedPosition.z(), original.u, original.v);
+		return new PosTexVertex(translatedPosition.x(), translatedPosition.y(), translatedPosition.z(), original.u(), original.v());
 	}
 	
-	static class AnimatedVertex extends ModelPart.Vertex {
+	/// Position + texture coordinate in model units, as the pre-1.21.5 `ModelPart.Vertex` was
+	/// before it became a record. Clipping creates and tags vertices freely, so it keeps its own type.
+	static class PosTexVertex {
+		final Vector3f pos;
+		final float u;
+		final float v;
+		
+		PosTexVertex(float x, float y, float z, float u, float v) {
+			this(new Vector3f(x, y, z), u, v);
+		}
+		
+		PosTexVertex(Vector3f pos, float u, float v) {
+			this.pos = pos;
+			this.u = u;
+			this.v = v;
+		}
+	}
+	
+	static class AnimatedVertex extends PosTexVertex {
 		final Vec3i jointId;
 		final Vec3f weight;
 		
-		public AnimatedVertex(ModelPart.Vertex posTexVertx, int jointId) {
+		public AnimatedVertex(PosTexVertex posTexVertx, int jointId) {
 			this(posTexVertx, jointId, 0, 0, 1.0F, 0.0F, 0.0F);
 		}
 		
-		public AnimatedVertex(ModelPart.Vertex posTexVertx, int jointId1, int jointId2, int jointId3, float weight1, float weight2, float weight3) {
+		public AnimatedVertex(PosTexVertex posTexVertx, int jointId1, int jointId2, int jointId3, float weight1, float weight2, float weight3) {
 			this(posTexVertx, new Vec3i(jointId1, jointId2, jointId3), new Vec3f(weight1, weight2, weight3));
 		}
 		
-		public AnimatedVertex(ModelPart.Vertex posTexVertx, Vec3i ids, Vec3f weights) {
+		public AnimatedVertex(PosTexVertex posTexVertx, Vec3i ids, Vec3f weights) {
 			this(posTexVertx, posTexVertx.u, posTexVertx.v, ids, weights);
 		}
 		
-		public AnimatedVertex(ModelPart.Vertex posTexVertx, float u, float v, Vec3i ids, Vec3f weights) {
+		public AnimatedVertex(PosTexVertex posTexVertx, float u, float v, Vec3i ids, Vec3f weights) {
 			super(posTexVertx.pos.x(), posTexVertx.pos.y(), posTexVertx.pos.z(), u, v);
 			this.jointId = ids;
 			this.weight = weights;
@@ -658,6 +668,10 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			positionsIn[2] = new AnimatedVertex(positionsIn[2], positionsIn[2].u, positionsIn[2].v - cor, positionsIn[2].jointId, positionsIn[2].weight);
 			positionsIn[3] = new AnimatedVertex(positionsIn[3], positionsIn[3].u, positionsIn[3].v - cor, positionsIn[3].jointId, positionsIn[3].weight);
 			this.normal = directionIn.step();
+		}
+		
+		public Vector3f normal() {
+			return this.normal;
 		}
 	}
 	
@@ -707,10 +721,10 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 				ModelPart lastPart = part;
 				PartPose partPose = part.getInitialPose();
 				OpenMatrix4f partAnimation = OpenMatrix4f.mulMatrices(animParentTransform,
-																	  new OpenMatrix4f().mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(partPose.zRot, partPose.yRot, partPose.xRot)).transpose().invert())
-																						.translate(new Vec3f(lastPart.x - partPose.x, lastPart.y - partPose.y, lastPart.z - partPose.z).scale(0.0625F))
-																						.mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(partPose.zRot, partPose.yRot, partPose.xRot)).transpose())
-																						.mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(lastPart.zRot - partPose.zRot, lastPart.yRot - partPose.yRot, lastPart.xRot - partPose.xRot)).transpose())
+																	  new OpenMatrix4f().mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(partPose.zRot(), partPose.yRot(), partPose.xRot())).transpose().invert())
+																						.translate(new Vec3f(lastPart.x - partPose.x(), lastPart.y - partPose.y(), lastPart.z - partPose.z()).scale(0.0625F))
+																						.mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(partPose.zRot(), partPose.yRot(), partPose.xRot())).transpose())
+																						.mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(lastPart.zRot - partPose.zRot(), lastPart.yRot - partPose.yRot(), lastPart.xRot - partPose.xRot())).transpose())
 																						.scale(new Vec3f(lastPart.xScale, lastPart.yScale, lastPart.zScale)),
 																	  this.invertedParentTransform);
 				
@@ -722,8 +736,8 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			PartPose initialPose = part.getInitialPose();
 			
 			if (last) {
-				poseStack.translate(initialPose.x, initialPose.y, initialPose.z);
-				poseStack.mulPose(new Quaternionf().rotationZYX(initialPose.zRot, initialPose.yRot, initialPose.xRot));
+				poseStack.translate(initialPose.x(), initialPose.y(), initialPose.z());
+				poseStack.mulPose(new Quaternionf().rotationZYX(initialPose.zRot(), initialPose.yRot(), initialPose.xRot()));
 			} else {
 				poseStack.translate(part.x, part.y, part.z);
 				poseStack.mulPose(new Quaternionf().rotationZYX(part.zRot, part.yRot, part.xRot));

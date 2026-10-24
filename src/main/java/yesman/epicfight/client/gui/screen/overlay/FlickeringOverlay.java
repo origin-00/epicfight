@@ -1,5 +1,6 @@
 package yesman.epicfight.client.gui.screen.overlay;
 
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import yesman.epicfight.client.events.engine.RenderEngine;
@@ -18,7 +19,7 @@ public class FlickeringOverlay extends OverlayManager.Overlay {
 	}
 	
 	@Override
-	public boolean render(int xResolution, int yResolution) {
+	public boolean render(GuiGraphicsExtractor guiGraphics, int xResolution, int yResolution) {
 		this.time += this.deltaTime;
 		float darkenAmount = Mth.clamp((float)Math.sin(this.time), -1.0F, 0.0F);
 		

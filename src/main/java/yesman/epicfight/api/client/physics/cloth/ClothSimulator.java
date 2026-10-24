@@ -1,5 +1,6 @@
 package yesman.epicfight.api.client.physics.cloth;
 
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,8 +30,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -58,9 +59,9 @@ import yesman.epicfight.main.EpicFightSharedConstants;
  * 
  * https://www.youtube.com/@TenMinutePhysics
  **/
-public class ClothSimulator extends AbstractSimulator<ResourceLocation, ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable, ClothSimulator.ClothObject> {
-    public static final ResourceLocation PLAYER_CLOAK = EpicFightMod.identifier("ingame_cloak");
-    public static final ResourceLocation MODELPREVIEWER_CLOAK = EpicFightMod.identifier("previewer_cloak");
+public class ClothSimulator extends AbstractSimulator<Identifier, ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable, ClothSimulator.ClothObject> {
+    public static final Identifier PLAYER_CLOAK = EpicFightMod.identifier("ingame_cloak");
+    public static final Identifier MODELPREVIEWER_CLOAK = EpicFightMod.identifier("previewer_cloak");
 	private static final float SPATIAL_HASH_SPACING = 0.05F;
 	
 	public static class ClothObjectBuilder extends SimulationObject.SimulationObjectBuilder {
@@ -234,7 +235,7 @@ public class ClothSimulator extends AbstractSimulator<ResourceLocation, ClothObj
 					}
 				}
 				
-				float deltaFrameTime = Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
+				float deltaFrameTime = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks();
 				float subStebInvert = 1.0F / SUB_STEPS;
 				float subSteppingDeltaTime = deltaFrameTime * subStebInvert;
 				float gravity = simulatableObj.getGravity() * subSteppingDeltaTime * EpicFightSharedConstants.A_TICK;
@@ -386,8 +387,8 @@ public class ClothSimulator extends AbstractSimulator<ResourceLocation, ClothObj
 		@Override
 		public void draw(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 			if (DRAW_OUTLINES) {
-				this.drawOutline(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
-				//part.drawNormals(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
+				this.drawOutline(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderTypes.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
+				//part.drawNormals(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderTypes.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
 			} else {
 				this.drawParts(poseStack, bufferBuilder, drawingFunction, packedLight, r, g, b, a, overlay);
 			}
@@ -404,8 +405,8 @@ public class ClothSimulator extends AbstractSimulator<ResourceLocation, ClothObj
 		@Override
 		public void drawPosed(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
 			if (DRAW_OUTLINES) {
-				this.drawOutline(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
-				//part.drawNormals(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
+				this.drawOutline(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderTypes.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
+				//part.drawNormals(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderTypes.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
 			} else {
 				this.drawParts(poseStack, bufferBuilder, drawingFunction, packedLight, r, g, b, a, overlay);
 			}

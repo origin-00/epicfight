@@ -1,5 +1,9 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -12,15 +16,13 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import org.lwjgl.opengl.GL11;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -146,8 +148,8 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 		
 		this.children().remove(row);
 		
-		double scrollAmount = this.getScrollAmount();
-		this.setScrollAmount(Math.min(scrollAmount, this.getMaxScroll()));
+		double scrollAmount = this.scrollAmount();
+		this.setScrollAmount(Math.min(scrollAmount, this.maxScrollAmount()));
 		
 		this.resizeColumnWidth();
 		
@@ -246,7 +248,7 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 						, this.owner.getMinecraft().font
 						, this.getX() + startX + 2
 						, this.getRowTop(rowposition) + 2
-						, this.itemHeight - 3
+						, this.defaultEntryHeight - 3
 						, rowposition
 						, this.getSelected()
 						, columnName
@@ -293,7 +295,7 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 	}
 	
 	protected void resizeColumnWidth() {
-		int remainWidth = this.width - (this.getMaxScroll() > 0 ? 7 : 1);
+		int remainWidth = this.width - (this.maxScrollAmount() > 0 ? 7 : 1);
 		int idx = 0;
 		int size = this.columns.size();
 		
@@ -339,17 +341,7 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 		return this.getRowLeft() + this.getRowWidth();
 	}
 	
-	@Override
-	protected int getRowTop(int p_93512_) {
-		return this.getY() - (int) this.getScrollAmount() + p_93512_ * this.itemHeight + this.headerHeight;
-	}
-	
-	@Override
-	protected int getRowBottom(int p_93486_) {
-		return this.getRowTop(p_93486_) + this.itemHeight;
-	}
-	
-	@Override
+@Override
 	public void setFocused(boolean focused) {
 		if (!focused) {
 			this.editingColumn = null;
@@ -363,85 +355,68 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 	}
 	
 	@Override
-	public int getMaxScroll() {
-		return Math.max(0, this.getMaxPosition() - (this.height - 1));
+	public int maxScrollAmount() {
+		return Math.max(0, this.contentHeight() - (this.height - 1));
 	}
 	
 	@Override
-    protected void renderListBackground(GuiGraphics guiGraphics) {
+    protected void extractListBackground(GuiGraphicsExtractor guiGraphics) {
     }
 
     @Override
-    protected void renderListSeparators(GuiGraphics guiGraphics) {
+    protected void extractListSeparators(GuiGraphicsExtractor guiGraphics) {
     }
 	
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		this.rowEditButtons.forEach((button) -> button.render(guiGraphics, mouseX, mouseY, partialTick));
+    public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		this.rowEditButtons.forEach((button) -> button.extractRenderState(guiGraphics, mouseX, mouseY, partialTick));
 		
 		int color = this.isFocused() ? -1 : this.isActive() ? -6250336 : -12566463;
-		GL11.glEnable(GL11.GL_STENCIL_TEST);
-		
-		RenderSystem.stencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
-		RenderSystem.stencilFunc(GL11.GL_ALWAYS, 1, 0xFF);
-		RenderSystem.stencilMask(0xFF);
-		// Clear doesn't work if stencil mask is set to 0
-		RenderSystem.clear(GL11.GL_STENCIL_BUFFER_BIT, true);
-		
 		guiGraphics.fill(this.getX(), this.getY(), this.getRight(), this.getBottom(), color);
-		RenderSystem.stencilFunc(GL11.GL_EQUAL, 1, 0xFF);
-		RenderSystem.stencilMask(0x00);
 		
-		this.renderListItems(guiGraphics, mouseX, mouseY, partialTick);
-		
-		GL11.glDisable(GL11.GL_STENCIL_TEST);
+		// Rows are clipped to the grid area (a stencil mask up to 1.21.5).
+		guiGraphics.enableScissor(this.getX(), this.getY(), this.getRight(), this.getBottom());
+		this.extractListItems(guiGraphics, mouseX, mouseY, partialTick);
+		guiGraphics.disableScissor();
 		
 		if (this.editingWidget != null) {
 			int rowTop = this.getRowTop(this.rowposition);
-			int rowBottom = this.getRowTop(this.rowposition) + this.itemHeight;
+			int rowBottom = this.getRowTop(this.rowposition) + this.defaultEntryHeight;
 			
 			if (rowBottom >= this.getY() && rowTop <= this.getBottom()) {
-				guiGraphics.pose().pushPose();
-				guiGraphics.pose().translate(0, 0, 1);
+				guiGraphics.pose().pushMatrix();
+				guiGraphics.pose().translate(0F, 0F);
 				this.editingWidget._setY(this.getRowTop(this.rowposition) + 2);
-				this.editingWidget.asWidget().render(guiGraphics, mouseX, mouseY, partialTick);
-				guiGraphics.pose().popPose();
+				this.editingWidget.asWidget().extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+				guiGraphics.pose().popMatrix();
 			}
 		}
 	}
 	
 	@Override
-	protected void renderListItems(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+	protected void extractListItems(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		int rowLeft = this.getRowLeft() - 1;
 		int rowWidth = this.getRowWidth();
-		int itemHeight = this.itemHeight;
 		int itemCount = this.getItemCount();
-		int rowBottom = this.getY();
-		
-		for (int rowIndex = 0; rowIndex < itemCount; ++rowIndex) {
-			int rowTop = this.getRowTop(rowIndex);
-			rowBottom = this.getRowTop(rowIndex) + this.itemHeight;
-			
-			if (rowBottom >= this.getY() && rowTop <= this.getBottom()) {
-				this.renderItem(guiGraphics, mouseX, mouseY, partialTicks, rowIndex, rowLeft, rowTop, rowWidth, itemHeight);
-			}
-		}
+		// Rows are positioned by the list since 1.21.9.
+		super.extractListItems(guiGraphics, mouseX, mouseY, partialTicks);
+		int rowBottom = itemCount == 0 ? this.getY() : this.getRowBottom(itemCount - 1);
 		
 		if (rowBottom + 1 < this.getBottom() - 1) {
 			guiGraphics.fill(rowLeft, rowBottom + 1, rowLeft + rowWidth - 2, this.getBottom() - 1, -16777216);
 		}
 		
-		guiGraphics.pose().pushPose();
-		guiGraphics.pose().translate(0, 0, 1);
+		guiGraphics.pose().pushMatrix();
+		guiGraphics.pose().translate(0F, 0F);
 		
-		int i = this.getScrollbarPosition();
+		int i = this.scrollBarX();
 		int j = i + 6;
-		int i2 = this.getMaxScroll();
+		int i2 = this.maxScrollAmount();
 		
 		if (i2 > 0) {
-			int j2 = (int) ((float) (this.height * this.height) / (float) this.getMaxPosition());
+			int j2 = (int) ((float) (this.height * this.height) / (float) this.contentHeight());
 			j2 = Mth.clamp(j2, 32, this.height - 8);
-			int k1 = (int) this.getScrollAmount() * (this.height - j2) / i2 + this.getY();
+			int k1 = (int) this.scrollAmount() * (this.height - j2) / i2 + this.getY();
 			
 			if (k1 < this.getY()) {
 				k1 = this.getY();
@@ -452,27 +427,21 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 			guiGraphics.fill(i, k1, j - 1, k1 + j2 - 1, -4144960);
 		}
 		
-		guiGraphics.pose().popPose();
+		guiGraphics.pose().popMatrix();
 	}
 	
 	@Override
-	protected void renderItem(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks, int rowPosition, int rowLeft, int rowTop, int rowRight, int itemHeight) {
-		Row row = this.getEntry(rowPosition);
-		
-		if (this.isSelectedItem(rowPosition)) {
-			guiGraphics.pose().pushPose();
-			guiGraphics.pose().translate(0, 0, 1);
-			this.renderSelection(guiGraphics, rowTop, rowRight, itemHeight, 0, 0); // color params are not used
-			row.render(guiGraphics, rowPosition, rowTop, rowLeft, rowRight, itemHeight, mouseX, mouseY, false, partialTicks);
-			guiGraphics.pose().popPose();
-		} else {
-			row.render(guiGraphics, rowPosition, rowTop, rowLeft, rowRight, itemHeight, mouseX, mouseY, false, partialTicks);
+	protected void extractItem(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks, Row row) {
+		if (this.getSelected() == row) {
+			this.extractSelection(guiGraphics, row, -1);
 		}
+		
+		row.extractContent(guiGraphics, mouseX, mouseY, false, partialTicks);
 	}
 	
 	@Override
-	protected void renderSelection(GuiGraphics guiGraphics, int rowTop, int rowRight, int itemHeight, int color, int color2) {
-		guiGraphics.fill(this.getX(), rowTop, this.getRight(), rowTop + itemHeight + 1, -1);
+	protected void extractSelection(GuiGraphicsExtractor guiGraphics, Row row, int outlineColor) {
+		guiGraphics.fill(this.getX(), row.getY(), this.getRight(), row.getY() + this.defaultEntryHeight + 1, -1);
 	}
 	
 	@Override
@@ -482,19 +451,22 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 	}
 	
 	@Override
-	public boolean mouseClicked(double x, double y, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
+		int button = event.button();
 		if (!this.isActive()) {
 			return false;
 		}
 		
 		for (Button editButton : this.rowEditButtons) {
-			if (editButton.mouseClicked(x, y, button)) {
+			if (editButton.mouseClicked(event, doubleClick)) {
 				return true;
 			}
 		}
 		
 		if (this.editingWidget != null) {
-			if (this.editingWidget.mouseClicked(x, y, button)) {
+			if (this.editingWidget.mouseClicked(event, doubleClick)) {
 				return true;
 			}
 		}
@@ -503,7 +475,7 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 			return false;
 		}
 		
-		if (super.mouseClicked(x, y, button)) {
+		if (super.mouseClicked(event, doubleClick)) {
 			return true;
 		}
 		
@@ -518,8 +490,8 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 			}
 		}
 		
-		if (this.isFocused() && this.getMaxScroll() > 0) {
-			this.setScrollAmount(this.getScrollAmount() - scrollY * (double) this.itemHeight / 2.0D);
+		if (this.isFocused() && this.maxScrollAmount() > 0) {
+			this.setScrollAmount(this.scrollAmount() - scrollY * (double) this.defaultEntryHeight / 2.0D);
 			return true;
 		}
 		
@@ -527,29 +499,34 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
     }
 	
 	@Override
-	public boolean keyPressed(int keycode, int p_100876_, int p_100877_) {
+	public boolean keyPressed(KeyEvent event) {
+		int keycode = event.key();
+		int p_100876_ = event.scancode();
+		int p_100877_ = event.modifiers();
 		if (!this.isActive()) {
 			return false;
 		}
 		
 		if (this.editingWidget != null) {
-			return this.editingWidget.keyPressed(keycode, p_100876_, p_100877_);
+			return this.editingWidget.keyPressed(event);
 		}
 		
-		return super.keyPressed(keycode, p_100876_, p_100877_);
+		return super.keyPressed(event);
 	}
 	
 	@Override
-	public boolean charTyped(char c, int i) {
+	public boolean charTyped(CharacterEvent event) {
+		char c = (char)event.codepoint();
+		int i = 0;
 		if (!this.isActive()) {
 			return false;
 		}
 		
 		if (this.editingWidget != null) {
-			return this.editingWidget.charTyped(c, i);
+			return this.editingWidget.charTyped(event);
 		}
 		
-		return super.charTyped(c, i);
+		return super.charTyped(event);
 	}
 
 	@Override
@@ -563,7 +540,7 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 	}
 	
 	@Override
-	protected int getScrollbarPosition() {
+	protected int scrollBarX() {
 		return this.getRight() - 6;
 	}
 	
@@ -611,7 +588,11 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 		}
 		
 		@Override
-		public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
+		public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
+			int top = this.getY();
+			int left = this.getX();
+			int width = this.getWidth();
+			int height = this.getContentHeight();
 			int startX = Grid.this.getX();
 			int start = this.rowHighlight() ? 2 : 1;
 			int size = this.values.size();
@@ -626,7 +607,7 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 			
 				String displayText = column.toDisplayText(entry.getValue());
 				String correctedString = Grid.this.minecraft.font.plainSubstrByWidth(displayText, column.width - 1);
-				guiGraphics.drawString(Grid.this.minecraft.font, correctedString, startX + 3, top + Grid.this.itemHeight / 2 - 4, 16777215, false);
+				guiGraphics.text(Grid.this.minecraft.font, correctedString, startX + 3, top + Grid.this.defaultEntryHeight / 2 - 4, GuiColors.text(16777215), false);
 				
 				startX += column.width;
 				idx++;
@@ -634,7 +615,10 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 		}
 		
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+			double mouseX = event.x();
+			double mouseY = event.y();
+			int button = event.button();
 			if (button == 0) {
 				int rowposition = Grid.this.children().indexOf(this);
 				
@@ -1294,8 +1278,8 @@ public class Grid extends ObjectSelectionList<Grid.Row> implements DataBindingCo
 	}
 	
 	@Override
-	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.render(guiGraphics, mouseX, mouseY, partialTicks);
+	public void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 	
 	@Override

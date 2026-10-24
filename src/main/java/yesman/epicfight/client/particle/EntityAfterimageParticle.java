@@ -1,5 +1,8 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.util.RandomSource;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
@@ -26,6 +29,9 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import java.util.function.Consumer;
 
 public class EntityAfterimageParticle extends CustomModelParticle<SkinnedMesh> {
+	private static final int STENCIL_LAYER = 0;
+	private static final int COLOR_LAYER = 1;
+
 	protected final EntitySnapshot<?> entitySnapshot;
 	protected final Consumer<EntityAfterimageParticle> ticktask;
 	protected float alphaO;
@@ -52,32 +58,37 @@ public class EntityAfterimageParticle extends CustomModelParticle<SkinnedMesh> {
 	}
 	
 	@Override
-	public void render(VertexConsumer vertexConsumer, Camera camera, float partialTick) {
+	public void render(CustomRenderParticleGroup.LayeredBuffers buffers, Camera camera, float partialTick) {
 		float alpha = Mth.lerp(partialTick, this.alphaO, this.alpha);
-		int lightColor = this.getLightColor(partialTick);
+		int lightColor = this.getLightCoords(partialTick);
 		PoseStack poseStack = new PoseStack();
 		this.setupPoseStack(poseStack, camera, partialTick);
-		MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
-		this.entitySnapshot.renderTextured(poseStack, buffers, EpicFightRenderTypes::entityAfterimageStencil, Mesh.DrawingFunction.POSITION_TEX, 0, 0.0F, 0.0F, 0.0F, 1.0F);
-		this.entitySnapshot.renderItems(poseStack, buffers, EpicFightRenderTypes.itemAfterimageStencil(), Mesh.DrawingFunction.POSITION_TEX, lightColor, 1.0F);
-		buffers.endLastBatch();
-		
-		this.entitySnapshot.renderTextured(poseStack, buffers, EpicFightRenderTypes::entityAfterimageTranslucent, Mesh.DrawingFunction.NEW_ENTITY, lightColor, this.rCol, this.gCol, this.bCol, alpha);
-		this.entitySnapshot.renderItems(poseStack, buffers, EpicFightRenderTypes.itemAfterimageTranslucent(), Mesh.DrawingFunction.NEW_ENTITY, lightColor, alpha);
-		buffers.endLastBatch();
-		
+		this.renderStencil(poseStack, buffers.layer(STENCIL_LAYER), lightColor);
+		this.entitySnapshot.renderTextured(poseStack, buffers.layer(COLOR_LAYER), EpicFightRenderTypes::entityAfterimageTranslucent, Mesh.DrawingFunction.NEW_ENTITY, lightColor, this.rCol, this.gCol, this.bCol, alpha);
+		this.entitySnapshot.renderItems(poseStack, buffers.layer(COLOR_LAYER), EpicFightRenderTypes.itemAfterimageTranslucent(), Mesh.DrawingFunction.NEW_ENTITY, lightColor, alpha);
 		this.revert(poseStack);
 	}
 
+	/// Lays down the afterimage's depth for the equal-depth color pass of the next layer.
+	protected void renderStencil(PoseStack poseStack, MultiBufferSource buffers, int lightColor) {
+		this.entitySnapshot.renderTextured(poseStack, buffers, EpicFightRenderTypes::entityAfterimageStencil, Mesh.DrawingFunction.POSITION_TEX, 0, 0.0F, 0.0F, 0.0F, 1.0F);
+		this.entitySnapshot.renderItems(poseStack, buffers, EpicFightRenderTypes.itemAfterimageStencil(), Mesh.DrawingFunction.POSITION_TEX, lightColor, 1.0F);
+	}
+
 	@Override
-	public ParticleRenderType getRenderType() {
-		return EpicFightParticleRenderTypes.ENTITY_PARTICLE;
+	public void render(VertexConsumer vertexConsumer, Camera camera, float partialTick) {
+		// Drawn by render(LayeredBuffers, Camera, float).
+	}
+
+	@Override
+	public RenderType getRenderType() {
+		return EpicFightRenderTypes.entityAfterimageWhite();
 	}
 	
 	@Override
 	protected void setupPoseStack(PoseStack poseStack, Camera camera, float partialTick) {
 		poseStack.pushPose();
-		Vec3 cameraPosition = camera.getPosition();
+		Vec3 cameraPosition = camera.position();
 		float x = (float) (Mth.lerp(partialTick, this.xo, this.x) - cameraPosition.x());
 		float y = (float) (Mth.lerp(partialTick, this.yo, this.y) - cameraPosition.y());
 		float z = (float) (Mth.lerp(partialTick, this.zo, this.z) - cameraPosition.z());
@@ -109,25 +120,20 @@ public class EntityAfterimageParticle extends CustomModelParticle<SkinnedMesh> {
 		}
 
 		@Override
-		public void render(VertexConsumer vertexConsumer, Camera camera, float partialTick) {
+		public void render(CustomRenderParticleGroup.LayeredBuffers buffers, Camera camera, float partialTick) {
 			float alpha = Mth.lerp(partialTick, this.alphaO, this.alpha);
-			int lightColor = this.getLightColor(partialTick);
+			int lightColor = this.getLightCoords(partialTick);
 			PoseStack poseStack = new PoseStack();
 			this.setupPoseStack(poseStack, camera, partialTick);
-			MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
-			this.entitySnapshot.renderTextured(poseStack, buffers, EpicFightRenderTypes::entityAfterimageStencil, Mesh.DrawingFunction.POSITION_TEX, 0, 0.0F, 0.0F, 0.0F, 1.0F);
-			this.entitySnapshot.renderItems(poseStack, buffers, EpicFightRenderTypes.itemAfterimageStencil(), Mesh.DrawingFunction.POSITION_TEX, lightColor, 1.0F);
-			buffers.endLastBatch();
-			
-			this.entitySnapshot.render(poseStack, buffers, EpicFightRenderTypes.entityAfterimageWhite(), Mesh.DrawingFunction.POSITION_TEX_COLOR_LIGHTMAP, lightColor, this.rCol, this.gCol, this.bCol, alpha);
-			this.entitySnapshot.renderItems(poseStack, buffers, EpicFightRenderTypes.itemAfterimageWhite(), Mesh.DrawingFunction.POSITION_TEX_COLOR_LIGHTMAP, lightColor, alpha);
-			buffers.endLastBatch();
+			this.renderStencil(poseStack, buffers.layer(STENCIL_LAYER), lightColor);
+			this.entitySnapshot.render(poseStack, buffers.layer(COLOR_LAYER), EpicFightRenderTypes.entityAfterimageWhite(), Mesh.DrawingFunction.POSITION_TEX_COLOR_LIGHTMAP, lightColor, this.rCol, this.gCol, this.bCol, alpha);
+			this.entitySnapshot.renderItems(poseStack, buffers.layer(COLOR_LAYER), EpicFightRenderTypes.itemAfterimageWhite(), Mesh.DrawingFunction.POSITION_TEX_COLOR_LIGHTMAP, lightColor, alpha);
 			this.revert(poseStack);
 		}
 	}
 
 	public static class AdrenalineParticleProvider implements ParticleProvider<SimpleParticleType> {
-		public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+		public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
 			Entity entity = level.getEntity((int) Double.doubleToLongBits(xSpeed));
 			LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(entity, LivingEntityPatch.class);
 			
@@ -155,7 +161,7 @@ public class EntityAfterimageParticle extends CustomModelParticle<SkinnedMesh> {
 
 	public static class WhiteAfterimageProvider implements ParticleProvider<SimpleParticleType> {
 		@Override
-		public Particle createParticle(SimpleParticleType typeIn, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+		public Particle createParticle(SimpleParticleType typeIn, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
 			Entity entity = level.getEntity((int)Double.doubleToLongBits(xSpeed));
 			LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(entity, LivingEntityPatch.class);
 			

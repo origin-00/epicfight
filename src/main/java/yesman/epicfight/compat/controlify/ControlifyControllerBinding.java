@@ -1,7 +1,7 @@
 package yesman.epicfight.compat.controlify;
 
 import dev.isxander.controlify.api.bind.InputBinding;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import yesman.epicfight.api.client.input.controller.ControllerBinding;
@@ -11,7 +11,7 @@ public record ControlifyControllerBinding(@NotNull InputBinding inputBinding) im
 
     @Override
     @NotNull
-    public ResourceLocation id() {
+    public Identifier id() {
         return inputBinding.id();
     }
 

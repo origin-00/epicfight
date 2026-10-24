@@ -15,7 +15,7 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 
-public abstract class CustomModelParticle<M extends Mesh> extends Particle {
+public abstract class CustomModelParticle<M extends Mesh> extends CustomRenderParticle {
 	protected final AssetAccessor<M> particleMeshProvider;
 	protected float pitch;
 	protected float pitchO;
@@ -35,7 +35,7 @@ public abstract class CustomModelParticle<M extends Mesh> extends Particle {
 		poseStack.pushPose();
 		this.setupPoseStack(poseStack, camera, partialTicks);
 		this.prepareDraw(poseStack, partialTicks);
-		this.particleMeshProvider.get().draw(poseStack, vertexConsumer, Mesh.DrawingFunction.POSITION_TEX_COLOR_LIGHTMAP, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, this.alpha, OverlayTexture.NO_OVERLAY);
+		this.particleMeshProvider.get().draw(poseStack, vertexConsumer, Mesh.DrawingFunction.POSITION_TEX_COLOR_LIGHTMAP, this.getLightCoords(partialTicks), this.rCol, this.gCol, this.bCol, this.alpha, OverlayTexture.NO_OVERLAY);
 		this.revert(poseStack);
 		poseStack.popPose();
 	}
@@ -58,7 +58,7 @@ public abstract class CustomModelParticle<M extends Mesh> extends Particle {
 	protected void setupPoseStack(PoseStack poseStack, Camera camera, float partialTicks) {
 		poseStack.pushPose();
 		
-		Vec3 cameraPosition = camera.getPosition();
+		Vec3 cameraPosition = camera.position();
 		float x = (float)(Mth.lerp(partialTicks, this.xo, this.x) - cameraPosition.x());
 		float y = (float)(Mth.lerp(partialTicks, this.yo, this.y) - cameraPosition.y());
 		float z = (float)(Mth.lerp(partialTicks, this.zo, this.z) - cameraPosition.z());

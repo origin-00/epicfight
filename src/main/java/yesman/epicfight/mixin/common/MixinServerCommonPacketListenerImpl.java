@@ -31,7 +31,7 @@ public abstract class MixinServerCommonPacketListenerImpl {
 	@Inject(at = @At(value = "TAIL"), method = "handleResourcePackResponse(Lnet/minecraft/network/protocol/common/ServerboundResourcePackPacket;)V")
 	public void epicfight$handleResourcePackResponse(ServerboundResourcePackPacket packet, CallbackInfo info) {
 		if (packet.action() == ServerboundResourcePackPacket.Action.SUCCESSFULLY_LOADED) {
-			ServerPlayer serverPlayer = this.server.getPlayerList().getPlayer(this.playerProfile().getId());
+			ServerPlayer serverPlayer = this.server.getPlayerList().getPlayer(this.playerProfile().id());
 			
 			EpicFightCapabilities.getUnparameterizedEntityPatch(serverPlayer, ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				playerpatch.modifyLivingMotionByCurrentItem(false);

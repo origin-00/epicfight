@@ -5,7 +5,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
@@ -14,7 +14,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.fml.ModList;
@@ -107,7 +107,7 @@ public class CapabilityItem {
 	protected Map<Style, ItemAttributeModifiers> modifiers;
 	protected final Map<Holder<CustomData<?>>, Object> customData;
 	///For debugging only
-	protected ResourceLocation id;
+	protected Identifier id;
 	protected Collider collider;
 	
 	protected CapabilityItem(CapabilityItem.Builder<?> builder) {
@@ -518,8 +518,8 @@ public class CapabilityItem {
 	public void onStrike(LivingEntityPatch<?> entitypatch, AttackAnimation animation) {
 	}
 	
-	public UseAnim getUseAnimation(LivingEntityPatch<?> entitypatch) {
-		return UseAnim.NONE;
+	public ItemUseAnimation getUseAnimation(LivingEntityPatch<?> entitypatch) {
+		return ItemUseAnimation.NONE;
 	}
 	
 	public ZoomInType getZoomInType() {
@@ -607,12 +607,12 @@ public class CapabilityItem {
 	
 	@SuppressWarnings("unchecked")
 	public static class Builder<T extends Builder<T>> {
-		protected ResourceLocation parent;
+		protected Identifier parent;
 		protected Function<T, CapabilityItem> constructor;
 		protected Map<Style, Map<Holder<Attribute>, AttributeModifier>> attributeMap;
 		protected WeaponCategory category;
 		protected Collider collider;
-		protected ResourceLocation identifier;
+		protected Identifier identifier;
 		protected Map<Holder<CustomData<?>>, Object> customData;
 
 		protected Builder() {
@@ -644,7 +644,7 @@ public class CapabilityItem {
 			builder.customData = this.customData;
 		}
 
-		public T parent(ResourceLocation parent)
+		public T parent(Identifier parent)
 		{
 			this.parent = parent;
 			return (T) this;
@@ -655,7 +655,7 @@ public class CapabilityItem {
 			return this.parent(preset.getId());
 		}
 
-		public T identifier(ResourceLocation id)
+		public T identifier(Identifier id)
 		{
 			this.identifier = id;
 			return (T) this;

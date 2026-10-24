@@ -1,5 +1,8 @@
 package yesman.epicfight.client.renderer.patched.layer;
 
+import yesman.epicfight.client.renderer.submit.RecordingBufferSource;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import java.util.function.Function;
 
 import org.joml.Matrix4f;
@@ -7,14 +10,14 @@ import org.joml.Matrix4f;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
-import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -36,18 +39,18 @@ import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClie
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.gameasset.Armatures;
 
-public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CapeLayer> {
+public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel, CapeLayer> {
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void renderLayer(AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch, AbstractClientPlayer entityliving, CapeLayer vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTick) {
+	protected void renderLayer(AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch, AbstractClientPlayer entityliving, CapeLayer vanillaLayer, LivingEntityRenderState renderState, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTick) {
 		if (ClientConfig.enableCosmetics) {
 			// Prevent simulating cape in inventory screen
-			if (Minecraft.getInstance().screen instanceof EffectRenderingInventoryScreen && entityliving == Minecraft.getInstance().player && partialTick == 1.0F) {
+			if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> && entityliving == Minecraft.getInstance().player && partialTick == 1.0F) {
 				return;
 			}
 			
 			entitypatch.getClothSimulator().getRunningObject(ClothSimulator.PLAYER_CLOAK).ifPresent(clothObj -> {
-				ResourceLocation capeTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().capeTexture().get() : entityliving.getSkin().capeTexture();
+				Identifier capeTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().capeTexture().get() : (entityliving.getSkin().cape() != null ? entityliving.getSkin().cape().texturePath() : null);
 				
 				if (capeTexture != null) {
 					Function<Float, OpenMatrix4f> partialColliderTransformProvider = (partialFrame) -> {
@@ -72,14 +75,14 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 					
 					if (entitypatch.isEpicSkinsLoaded()) {
 						EpicSkins epicskinsInfo = entitypatch.getEpicSkinsInformation();
-						renderSimulatingCape(poseStack, buffer, RenderType.entityCutoutNoCull(capeTexture), Mesh.DrawingFunction.NEW_ENTITY, clothObj, entityX, entityY, entityZ, epicskinsInfo.r(), epicskinsInfo.g(), epicskinsInfo.b(), 1.0F, entitypatch, poses, packedLight, renderLocalPose, bodyYRot);
+						renderSimulatingCape(poseStack, buffer, RenderTypes.entityCutout(capeTexture), Mesh.DrawingFunction.NEW_ENTITY, clothObj, entityX, entityY, entityZ, epicskinsInfo.r(), epicskinsInfo.g(), epicskinsInfo.b(), 1.0F, entitypatch, poses, packedLight, renderLocalPose, bodyYRot);
 					} else {
-						renderSimulatingCape(poseStack, buffer, RenderType.entityCutoutNoCull(capeTexture), Mesh.DrawingFunction.NEW_ENTITY, clothObj, entityX, entityY, entityZ, 1.0F, 1.0F, 1.0F, 1.0F, entitypatch, poses, packedLight, renderLocalPose, bodyYRot);
+						renderSimulatingCape(poseStack, buffer, RenderTypes.entityCutout(capeTexture), Mesh.DrawingFunction.NEW_ENTITY, clothObj, entityX, entityY, entityZ, 1.0F, 1.0F, 1.0F, 1.0F, entitypatch, poses, packedLight, renderLocalPose, bodyYRot);
 					}
 				}
 			});
 		} else {
-			if (entityliving.getSkin().capeTexture() != null && !entityliving.isInvisible() && entityliving.isModelPartShown(PlayerModelPart.CAPE)) {
+			if (entityliving.getSkin().cape() != null && !entityliving.isInvisible() && entityliving.isModelPartShown(PlayerModelPart.CAPE)) {
 				ItemStack itemstack = entityliving.getItemBySlot(EquipmentSlot.CHEST);
 				
 				if (itemstack.getItem() != Items.ELYTRA) {
@@ -88,7 +91,7 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 					poseStack.pushPose();
 					MathUtils.mulStack(poseStack, modelMatrix);
 					poseStack.translate(0.0D, -0.4D, -0.025D);
-					vanillaLayer.render(poseStack, buffer, packedLight, entityliving, entityliving.walkAnimation.position(), entityliving.walkAnimation.speed(), partialTick, entityliving.tickCount, yRot, xRot);
+					submitVanillaLayer(vanillaLayer, poseStack, buffer, packedLight, renderState, yRot, xRot);
 					poseStack.popPose();
 				}
 			}
@@ -133,7 +136,7 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 		poseStack.translate(-renderLocalMatrix.m30() - x, -renderLocalMatrix.m31() - y, -renderLocalMatrix.m32() - z);
 		poseStack.last().normal().rotate(QuaternionUtils.YP.rotationDegrees(yBodyRot));
 		
-		clothObj.drawPosed(poseStack, buffers.getBuffer(EpicFightRenderTypes.getTriangulated(rendertype)), drawFunction, packedLight, r, g, b, a, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+		RecordingBufferSource.drawTriangles(buffers, rendertype, buffer -> clothObj.drawPosed(poseStack, buffer, drawFunction, packedLight, r, g, b, a, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses));
 		
 		poseStack.popPose();
 		poseStack.popPose();

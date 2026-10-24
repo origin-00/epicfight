@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerBossEvent;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -21,7 +22,6 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.PowerableMob;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.RangedAttackMob;
@@ -33,7 +33,7 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.boss.WitherPatch;
 
 @Mixin(value = WitherBoss.class)
-public abstract class MixinWitherBoss extends Monster implements PowerableMob, RangedAttackMob, MixinWitherBossAccessor {
+public abstract class MixinWitherBoss extends Monster implements RangedAttackMob, MixinWitherBossAccessor {
 	@Shadow private int[] nextHeadUpdate = new int[2];
 	@Shadow private int[] idleHeadUpdates = new int[2];
 	@Shadow private int destroyBlocksTick;
@@ -87,7 +87,7 @@ public abstract class MixinWitherBoss extends Monster implements PowerableMob, R
 				}
 			}
 			
-			boolean powered = this.isPowered();
+			boolean powered = self.isPowered();
 			
 			for (int l = 0; l < 3; ++l) {
 				double subHeadX = self$Accessor.invoke_getHeadX(l);
@@ -105,7 +105,7 @@ public abstract class MixinWitherBoss extends Monster implements PowerableMob, R
 						0.0D
 					);
 					
-					if (powered && this.level().random.nextInt(4) == 0) {
+					if (powered && this.level().getRandom().nextInt(4) == 0) {
 						this.level().addParticle(
 							ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, 0.7F, 0.7F, 0.5F),
 							subHeadX + this.random.nextGaussian() * (double) 0.3F,
@@ -151,8 +151,8 @@ public abstract class MixinWitherBoss extends Monster implements PowerableMob, R
 		self.getYRotHeads()[head] = this.rotlerp(self.getYRotHeads()[head], f, lerpY);
 	}
 	
-	@Inject(at = @At(value = "HEAD"), method = "customServerAiStep()V", cancellable = true)
-	private void epicfight$customServerAiStep(CallbackInfo info) {
+	@Inject(at = @At(value = "HEAD"), method = "customServerAiStep(Lnet/minecraft/server/level/ServerLevel;)V", cancellable = true)
+	private void epicfight$customServerAiStep(ServerLevel level, CallbackInfo info) {
 		if (this.epicFight$witherPatch != null) {
 			info.cancel();
 			WitherBoss self = this.epicFight$witherPatch.getOriginal();
@@ -163,7 +163,7 @@ public abstract class MixinWitherBoss extends Monster implements PowerableMob, R
 				this.bossEvent.setProgress(1.0F - (float) k1 / 220.0F);
 
 				if (k1 <= 0) {
-					Level.ExplosionInteraction explosion$blockinteraction = EventHooks.canEntityGrief(self.level(), this) ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.NONE;
+					Level.ExplosionInteraction explosion$blockinteraction = EventHooks.canEntityGrief(level, this) ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.NONE;
 					self.level().explode(this, self.getX(), self.getEyeY(), self.getZ(), 7.0F, false, explosion$blockinteraction);
 
 					if (!self.isSilent()) {
@@ -176,7 +176,7 @@ public abstract class MixinWitherBoss extends Monster implements PowerableMob, R
 					self.heal(10.0F);
 				}
 			} else {
-				super.customServerAiStep();
+				super.customServerAiStep(level);
 
 				for (int i = 1; i < 3; ++i) {
 					if (self.tickCount >= this.nextHeadUpdate[i - 1]) {
@@ -215,7 +215,7 @@ public abstract class MixinWitherBoss extends Monster implements PowerableMob, R
 								self.setAlternativeTarget(i, 0);
 							}
 						} else {
-							List<LivingEntity> list = self.level().getNearbyEntities(LivingEntity.class, WitherBoss.TARGETING_CONDITIONS, self, self.getBoundingBox().inflate(20.0D, 8.0D, 20.0D));
+							List<LivingEntity> list = level.getNearbyEntities(LivingEntity.class, WitherBoss.TARGETING_CONDITIONS, self, self.getBoundingBox().inflate(20.0D, 8.0D, 20.0D));
 							
 							if (!list.isEmpty()) {
 								LivingEntity livingentity1 = list.get(self.getRandom().nextInt(list.size()));
@@ -234,7 +234,7 @@ public abstract class MixinWitherBoss extends Monster implements PowerableMob, R
 				if (this.destroyBlocksTick > 0) {
 					--this.destroyBlocksTick;
 					
-					if (this.destroyBlocksTick == 0 && EventHooks.canEntityGrief(self.level(), this)) {
+					if (this.destroyBlocksTick == 0 && EventHooks.canEntityGrief(level, this)) {
 						int j1 = Mth.floor(self.getY());
 						int i2 = Mth.floor(self.getX());
 						int j2 = Mth.floor(self.getZ());

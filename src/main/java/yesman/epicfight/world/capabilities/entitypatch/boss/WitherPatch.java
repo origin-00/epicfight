@@ -17,9 +17,9 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
@@ -225,7 +225,7 @@ public class WitherPatch extends MobPatch<WitherBoss> implements BossPatch<Withe
 			}
 		}
 		
-		if (this.animator.getPlayerFor(null).getAnimation().equals(Animations.WITHER_CHARGE) && this.getEntityState().attacking() && EventHooks.canEntityGrief(this.original.level(), this.original)) {
+		if (this.animator.getPlayerFor(null).getAnimation().equals(Animations.WITHER_CHARGE) && this.getEntityState().attacking() && this.original.level() instanceof ServerLevel serverLevel && EventHooks.canEntityGrief(serverLevel, this.original)) {
 			int x = Mth.floor(this.original.getX());
 			int y = Mth.floor(this.original.getY());
 			int z = Mth.floor(this.original.getZ());
@@ -322,7 +322,7 @@ public class WitherPatch extends MobPatch<WitherBoss> implements BossPatch<Withe
 	public void onDeath(DamageSource damageSource) {
 		super.onDeath(damageSource);
 		
-		if (!this.isLogicalClient() && this.original.level().getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT) && EpicFightGameRules.EPIC_DROP.getRuleValue(this.original.level())) {
+		if (this.original.level() instanceof ServerLevel serverLevel && serverLevel.getGameRules().get(GameRules.MOB_DROPS) && EpicFightGameRules.EPIC_DROP.getRuleValue(this.original.level())) {
 			Vec3 startMovement = this.original.getLookAngle().scale(0.4D).add(0.0D, 0.63D, 0.0D);
 			ItemEntity itemEntity = new DroppedNetherStar(this.original.level(), this.original.position().add(0.0D, this.original.getBbHeight() * 0.5D, 0.0D), startMovement);
 			this.original.level().addFreshEntity(itemEntity);
@@ -524,7 +524,7 @@ public class WitherPatch extends MobPatch<WitherBoss> implements BossPatch<Withe
 		}
 		
 		public List<LivingEntity> getNearbyTargets() {
-			return WitherPatch.this.original.level().getNearbyEntities(LivingEntity.class, WTIHER_GHOST_TARGETING_CONDITIONS, WitherPatch.this.original, WitherPatch.this.original.getBoundingBox().inflate(20.0D, 5.0D, 20.0D));
+			return ((ServerLevel)WitherPatch.this.original.level()).getNearbyEntities(LivingEntity.class, WTIHER_GHOST_TARGETING_CONDITIONS, WitherPatch.this.original, WitherPatch.this.original.getBoundingBox().inflate(20.0D, 5.0D, 20.0D));
 		}
 	}
 	

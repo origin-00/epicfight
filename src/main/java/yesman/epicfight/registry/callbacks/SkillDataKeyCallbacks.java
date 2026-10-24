@@ -36,7 +36,7 @@ public class SkillDataKeyCallbacks implements BakeCallback<SkillDataKey<?>>, Add
 	@SuppressWarnings("unchecked")
 	@Override
 	public void onBake(Registry<SkillDataKey<?>> registry) {
-		EpicFightRegistries.SKILL.holders().forEach(holder -> {
+		EpicFightRegistries.SKILL.listElements().forEach(holder -> {
 			Class<? extends Skill> skillClass = holder.value().getClass();
 			Set<Holder<SkillDataKey<?>>> dataKeySet = CLASS_TO_DATA_KEYS.computeIfAbsent(skillClass, k -> new HashSet<> ());
 			
@@ -56,7 +56,7 @@ public class SkillDataKeyCallbacks implements BakeCallback<SkillDataKey<?>>, Add
 	
 	@Override
 	public void onAdd(Registry<SkillDataKey<?>> registry, int id, ResourceKey<SkillDataKey<?>> key, SkillDataKey<?> value) {
-		value.referencingSkillClasses().forEach(cls -> this.dataKeysBySkillClasses.put(cls, registry.getHolder(key).orElseThrow()));
+		value.referencingSkillClasses().forEach(cls -> this.dataKeysBySkillClasses.put(cls, registry.get(key).orElseThrow()));
 	}
 
 	@Override

@@ -2,7 +2,7 @@ package yesman.epicfight.api.client.animation.property;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.client.animation.property.JointMask.JointMaskSet;
@@ -82,7 +82,7 @@ public class JointMaskEntry {
 			builder.append(JointMaskReloadListener.getKey(entry.getValue()) + ", ");
 		}
 
-        ResourceLocation maskKey = JointMaskReloadListener.getKey(this.defaultMask);
+        Identifier maskKey = JointMaskReloadListener.getKey(this.defaultMask);
 
         if (maskKey == null) {
             builder.append("default: custom");

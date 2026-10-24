@@ -1,12 +1,14 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
@@ -16,7 +18,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -59,15 +61,13 @@ public class CombatBehaviorScreen extends Screen {
 		
 		this.isHumanoidSubTag = isHumanoidSubTag;
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		
 		this.rootTag = rootTag;
 		this.modelPreviewer = new ModelPreviewer(0, 10, 35, 50, HorizontalSizing.LEFT_RIGHT, VerticalSizing.TOP_BOTTOM, armature, mesh);
 		
 		final PopupBox.AnimationPopupBox animationPopupBox = new PopupBox.AnimationPopupBox(this, this.font, 0, 11, 0, 15, HorizontalSizing.LEFT_RIGHT, null, Component.literal("datapack_edit.mob_patch.combat_behavior.animation"), (pair) -> {
 			ListTag behaviorListTag = ParseUtil.getOrDefaultTag(this.movesetList.get(this.movesetGrid.getRowposition()), "behaviors", new ListTag());
-			CompoundTag behaviorTag = behaviorListTag.getCompound(this.behaviorGrid.getRowposition());
+			CompoundTag behaviorTag = behaviorListTag.getCompoundOrEmpty(this.behaviorGrid.getRowposition());
 			behaviorTag.putString("animation", pair.getFirst());
 			
 			this.rearrangeAttackAnimation();
@@ -126,15 +126,15 @@ public class CombatBehaviorScreen extends Screen {
 				.rowEditable(RowEditButton.ADD_REMOVE)
 				.rowpositionChanged((rowposition, values) -> {
 					ListTag behaviorListTag = ParseUtil.getOrDefaultTag(this.movesetList.get(this.movesetGrid.getRowposition()), "behaviors", new ListTag());
-					CompoundTag tag = behaviorListTag.getCompound(rowposition);
+					CompoundTag tag = behaviorListTag.getCompoundOrEmpty(rowposition);
 					
-					ListTag conditions = tag.getList("conditions", Tag.TAG_COMPOUND);
-					String animation = tag.getString("animation");
+					ListTag conditions = tag.getListOrEmpty("conditions");
+					String animation = tag.getStringOr("animation", "");
 					
 					Grid.PackImporter conditionImporter = new Grid.PackImporter();
 					
 					for (Tag conditionTag : conditions) {
-						String condtionName = ((CompoundTag)conditionTag).getString("predicate");
+						String condtionName = ((CompoundTag)conditionTag).getStringOr("predicate", "");
 						
 						if (!condtionName.contains(":")) {
 							condtionName = EpicFightMod.prefix(condtionName);
@@ -142,7 +142,7 @@ public class CombatBehaviorScreen extends Screen {
 						}
 						
 						conditionImporter.newRow();
-						conditionImporter.newValue("condition", EpicFightConditions.getConditionOrNull(ResourceLocation.parse(condtionName)));
+						conditionImporter.newValue("condition", EpicFightConditions.getConditionOrNull(Identifier.parse(condtionName)));
 					}
 					
 					this.parameterGrid.reset();
@@ -197,7 +197,7 @@ public class CombatBehaviorScreen extends Screen {
 				
 				Grid.PackImporter behaviorSet = new Grid.PackImporter();
 				
-				for (int i = 0; i < tag.getList("behaviors", Tag.TAG_COMPOUND).size(); i++) {
+				for (int i = 0; i < tag.getListOrEmpty("behaviors").size(); i++) {
 					behaviorSet.newRow();
 					behaviorSet.newValue("behavior", "behavior" + (i+1));
 				}
@@ -264,7 +264,7 @@ public class CombatBehaviorScreen extends Screen {
 										if (conditionProvider != null) {
 											Condition<?> condition = conditionProvider.get();
 											ListTag behaviorListTag = ParseUtil.getOrDefaultTag(this.movesetList.get(this.movesetGrid.getRowposition()), "behaviors", new ListTag());
-											ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompound(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
+											ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompoundOrEmpty(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
 											CompoundTag comp = (CompoundTag)conditionsList.get(rowposition);
 											Grid.PackImporter parameters = new Grid.PackImporter();
 											
@@ -283,7 +283,7 @@ public class CombatBehaviorScreen extends Screen {
 													.toDisplayText((condition) -> ParseUtil.getRegistryName(condition, EpicFightRegistries.CONDITION))
 													.valueChanged((event) -> {
 														ListTag behaviorListTag = ParseUtil.getOrDefaultTag(this.movesetList.get(this.movesetGrid.getRowposition()), "behaviors", new ListTag());
-														ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompound(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
+														ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompoundOrEmpty(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
 														CompoundTag comp = (CompoundTag)conditionsList.get(event.rowposition);
 														comp.putString("predicate", ParseUtil.getRegistryName(event.postValue, EpicFightRegistries.CONDITION));
 														
@@ -308,7 +308,7 @@ public class CombatBehaviorScreen extends Screen {
 										int rowposition = grid.addRow();
 										
 										ListTag behaviorListTag = ParseUtil.getOrDefaultTag(this.movesetList.get(this.movesetGrid.getRowposition()), "behaviors", new ListTag());
-										ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompound(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
+										ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompoundOrEmpty(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
 										conditionsList.add(rowposition, new CompoundTag());
 										
 										grid.setGridFocus(rowposition, "weapon_category");
@@ -317,7 +317,7 @@ public class CombatBehaviorScreen extends Screen {
 									.pressRemove((grid, button) -> {
 										grid.removeRow((removedRow) -> {
 											ListTag behaviorListTag = ParseUtil.getOrDefaultTag(this.movesetList.get(this.movesetGrid.getRowposition()), "behaviors", new ListTag());
-											ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompound(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
+											ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompoundOrEmpty(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
 											conditionsList.remove(removedRow);
 										});
 										
@@ -346,8 +346,8 @@ public class CombatBehaviorScreen extends Screen {
 													.editable(true)
 													.valueChanged((event) -> {
 														ListTag behaviorListTag = ParseUtil.getOrDefaultTag(this.movesetList.get(this.movesetGrid.getRowposition()), "behaviors", new ListTag());
-														ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompound(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
-														CompoundTag conditionTag = conditionsList.getCompound(this.conditionGrid.getRowposition());
+														ListTag conditionsList = ParseUtil.getOrDefaultTag(behaviorListTag.getCompoundOrEmpty(this.behaviorGrid.getRowposition()), "conditions", new ListTag());
+														CompoundTag conditionTag = conditionsList.getCompoundOrEmpty(this.conditionGrid.getRowposition());
 														ParameterEditor editor = event.grid.getValue(event.rowposition, "parameter_key");
 														
 														if (StringUtil.isNullOrEmpty(ParseUtil.nullParam(event.postValue))) {
@@ -404,10 +404,10 @@ public class CombatBehaviorScreen extends Screen {
 		
 		if (this.rootTag.contains("combat_behavior") || this.isHumanoidSubTag && this.rootTag.contains("behavior_series")) {
 			Grid.PackImporter packImporter = new Grid.PackImporter();
-			ListTag list = this.rootTag.getList(this.isHumanoidSubTag ? "behavior_series" : "combat_behavior", Tag.TAG_COMPOUND);
+			ListTag list = this.rootTag.getListOrEmpty(this.isHumanoidSubTag ? "behavior_series" : "combat_behavior");
 			
 			for (int i = 0; i < list.size(); i++) {
-				this.movesetList.add(list.getCompound(i));
+				this.movesetList.add(list.getCompoundOrEmpty(i));
 				packImporter.newRow();
 				packImporter.newValue("movement_set", "movement set" + (i+1));
 			}
@@ -480,26 +480,29 @@ public class CombatBehaviorScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-		if (this.modelPreviewer.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
+		if (this.modelPreviewer.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		if (this.inputComponentsList.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+		if (this.inputComponentsList.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
 		
-		guiGraphics.drawString(this.font, this.title, 20, 16, 16777215);
+		guiGraphics.text(this.font, this.title, 20, 16, GuiColors.text(16777215));
 		
 		for (Renderable renderable : this.renderables) {
-            renderable.render(guiGraphics, mouseX, mouseY, partialTick);
+            renderable.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
 	}
 	
@@ -512,9 +515,9 @@ public class CombatBehaviorScreen extends Screen {
 		this.modelPreviewer.clearAnimations();
 		CompoundTag tag = this.movesetList.get(this.movesetGrid.getRowposition());
 		
-		for (Tag behaviorTag : tag.getList("behaviors", Tag.TAG_COMPOUND)) {
+		for (Tag behaviorTag : tag.getListOrEmpty("behaviors")) {
 			CompoundTag behaviorCompound = (CompoundTag)behaviorTag;
-			AssetAccessor<? extends StaticAnimation> animation = DatapackEditScreen.animationByKey(behaviorCompound.getString("animation"));
+			AssetAccessor<? extends StaticAnimation> animation = DatapackEditScreen.animationByKey(behaviorCompound.getStringOr("animation", ""));
 			
 			if (animation != null) {
 				this.modelPreviewer.addAnimationToPlay(animation);
@@ -527,7 +530,7 @@ public class CombatBehaviorScreen extends Screen {
 			throw new IllegalStateException("Define a weight value");
 		}
 		
-		if (tag.getInt("cooldown") < 0) {
+		if (tag.getIntOr("cooldown", 0) < 0) {
 			throw new IllegalStateException("Cooldown can't be a negative value");
 		}
 		
@@ -539,32 +542,32 @@ public class CombatBehaviorScreen extends Screen {
 			throw new IllegalStateException("Define looping");
 		}
 		
-		if (!tag.contains("behaviors") || tag.getList("behaviors", Tag.TAG_COMPOUND).size() == 0) {
+		if (!tag.contains("behaviors") || tag.getListOrEmpty("behaviors").size() == 0) {
 			throw new IllegalStateException("Define at least one behavior");
 		}
 		
 		int idx = 1;
 		
-		for (Tag behaviorTag : tag.getList("behaviors", Tag.TAG_COMPOUND)) {
+		for (Tag behaviorTag : tag.getListOrEmpty("behaviors")) {
 			CompoundTag behaviorCompound = (CompoundTag)behaviorTag;
 			
-			if (!behaviorCompound.contains("animation") || StringUtil.isNullOrEmpty(behaviorCompound.getString("animation"))) {
+			if (!behaviorCompound.contains("animation") || StringUtil.isNullOrEmpty(behaviorCompound.getStringOr("animation", ""))) {
 				throw new IllegalStateException("Behavior" + idx + ": No animation defined.");
 			}
 			
-			if (!behaviorCompound.contains("conditions") || behaviorCompound.getList("conditions", Tag.TAG_COMPOUND).size() == 0) {
+			if (!behaviorCompound.contains("conditions") || behaviorCompound.getListOrEmpty("conditions").size() == 0) {
 				throw new IllegalStateException("Behavior" + idx + ": Define at least one condition");
 			}
 			
-			for (Tag conditionTag : behaviorCompound.getList("conditions", Tag.TAG_COMPOUND)) {
+			for (Tag conditionTag : behaviorCompound.getListOrEmpty("conditions")) {
 				CompoundTag conditionCompound = (CompoundTag)conditionTag;
 				
-				if (!conditionCompound.contains("predicate") || StringUtil.isNullOrEmpty(conditionCompound.getString("predicate"))) {
+				if (!conditionCompound.contains("predicate") || StringUtil.isNullOrEmpty(conditionCompound.getStringOr("predicate", ""))) {
 					throw new IllegalStateException("Behavior" + idx + ": Condition not specified");
 				}
 				
 				try {
-					Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(conditionCompound.getString("predicate")));
+					Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(Identifier.parse(conditionCompound.getStringOr("predicate", "")));
 					condition.get().read(conditionCompound);
 				} catch (Exception e) {
 					throw new IllegalStateException("Behavior" + idx + ": " + e.getMessage());

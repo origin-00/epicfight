@@ -1,12 +1,13 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.List;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Renderable;
@@ -53,7 +54,6 @@ public class MessageScreen<T> extends Screen {
 		this.messageBoxHeight = height;
 		this.onOkPressWithInput = null;
 		this.inputWidget = null;
-		this.minecraft = parentScreen.getMinecraft();
 	}
 	
 	public MessageScreen(String title, String message, Screen parentScreen, Consumer<T> onOkPressWithInput, @Nullable Button.OnPress onCancelPress, DataBindingComponent<T, ?> inputWidget, int width, int height) {
@@ -67,7 +67,6 @@ public class MessageScreen<T> extends Screen {
 		this.messageBoxHeight = height;
 		this.onOkPressWithInput = onOkPressWithInput;
 		this.inputWidget = inputWidget;
-		this.minecraft = parentScreen.getMinecraft();
 	}
 	
 	public MessageScreen<T> autoCalculateHeight() {
@@ -90,7 +89,7 @@ public class MessageScreen<T> extends Screen {
 	
 	@Override
 	protected void init() {
-		this.parentScreen.init(this.minecraft, this.width, this.height);
+		this.parentScreen.init(this.width, this.height);
 		int height = this.messageBoxHeight / 2;
 		
 		int stringWidthOk = this.minecraft.font.width(this.okButtomTitle != null ? this.okButtomTitle : CommonComponents.GUI_OK) + 10;
@@ -122,11 +121,11 @@ public class MessageScreen<T> extends Screen {
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		this.parentScreen.render(guiGraphics, mouseX, mouseY, partialTick);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		this.parentScreen.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 		
-		guiGraphics.pose().pushPose();
-		guiGraphics.pose().translate(0, 0, this.layerFarPlane);
+		guiGraphics.pose().pushMatrix();
+		guiGraphics.pose().translate(0F, 0F);
 		guiGraphics.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
 		
 		int width = this.messageBoxWidth / 2;
@@ -141,12 +140,12 @@ public class MessageScreen<T> extends Screen {
 		int y = this.height / 2 - height + 10;
 		
 		if (!StringUtil.isNullOrEmpty(this.title.getString())) {
-			guiGraphics.drawString(this.font, this.title, this.width / 2 - messageWidth / 2, y, 16777215);
+			guiGraphics.text(this.font, this.title, this.width / 2 - messageWidth / 2, y, GuiColors.text(16777215));
 			y += 20;
 		}
 		
 		for (FormattedCharSequence charSequence : messageLines) {
-			guiGraphics.drawString(this.font, charSequence, this.width / 2 - width + 8, y, 16777215);
+			guiGraphics.text(this.font, charSequence, this.width / 2 - width + 8, y, GuiColors.text(16777215));
 			y += 15;
 		}
 		
@@ -157,10 +156,10 @@ public class MessageScreen<T> extends Screen {
 		}
 		
 		for (Renderable renderable : this.renderables) {
-            renderable.render(guiGraphics, mouseX, mouseY, partialTick);
+            renderable.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
 		
-		guiGraphics.pose().popPose();
+		guiGraphics.pose().popMatrix();
 	}
 	
 	public MessageScreen<T> setLayerFarPlane(int i) {

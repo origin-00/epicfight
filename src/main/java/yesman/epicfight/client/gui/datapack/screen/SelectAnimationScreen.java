@@ -1,12 +1,14 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import yesman.epicfight.client.gui.GuiColors;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
@@ -34,8 +36,6 @@ public class SelectAnimationScreen extends Screen {
 		super(Component.translatable("gui.epicfight.select.animations"));
 		
 		this.parentScreen = parentScreen;
-		this.minecraft = parentScreen.getMinecraft();
-		this.font = parentScreen.getMinecraft().font;
 		
 		this.modelPreviewer = new ModelPreviewer(10, 20, 36, 60, null, null, armature, mesh);
 		this.animationList = new AnimationList(parentScreen.getMinecraft(), this.width, this.height - 52, 36, 21);
@@ -106,24 +106,27 @@ public class SelectAnimationScreen extends Screen {
 	}
 	
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-		if (this.modelPreviewer.mouseDragged(mouseX, mouseY, button, dx, dy)) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
+		if (this.modelPreviewer.mouseDragged(event, dx, dy)) {
 			return true;
 		}
 		
-		return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+		return super.mouseDragged(event, dx, dy);
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractBackground(guiGraphics, mouseX, mouseY, partialTicks);
 		
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 	
 	class AnimationList extends ObjectSelectionList<AnimationList.AnimationEntry> {
-		public AnimationList(Minecraft minecraft, int width, int height, int y, int itemHeight) {
-			super(minecraft, width, height, y, itemHeight);
+		public AnimationList(Minecraft minecraft, int width, int height, int y, int defaultEntryHeight) {
+			super(minecraft, width, height, y, defaultEntryHeight);
 		}
 		
 		@Override
@@ -140,16 +143,16 @@ public class SelectAnimationScreen extends Screen {
 		}
 		
 		@Override
-		protected int getScrollbarPosition() {
+		protected int scrollBarX() {
 			return this.getRight() - 6;
 		}
 		
 		@Override
-	    protected void renderListBackground(GuiGraphics guiGraphics) {
+	    protected void extractListBackground(GuiGraphicsExtractor guiGraphics) {
 	    }
 		
 	    @Override
-	    protected void renderListSeparators(GuiGraphics guiGraphics) {
+	    protected void extractListSeparators(GuiGraphicsExtractor guiGraphics) {
 	    }
 		
 		public void refreshAniamtionList(String keyword) {
@@ -178,8 +181,12 @@ public class SelectAnimationScreen extends Screen {
 			}
 			
 			@Override
-			public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
-				guiGraphics.drawString(SelectAnimationScreen.this.minecraft.font, this.animation.registryName().toString(), left + 5, top + 5, 16777215, false);
+			public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
+				int top = this.getY();
+				int left = this.getX();
+				int width = this.getWidth();
+				int height = this.getContentHeight();
+				guiGraphics.text(SelectAnimationScreen.this.minecraft.font, this.animation.registryName().toString(), left + 5, top + 5, GuiColors.text(16777215), false);
 			}
 			
 			@Override
@@ -188,7 +195,10 @@ public class SelectAnimationScreen extends Screen {
 			}
 			
 			@Override
-			public boolean mouseClicked(double mouseX, double mouseY, int button) {
+			public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+				double mouseX = event.x();
+				double mouseY = event.y();
+				int button = event.button();
 				if (button == 0) {
 					if (AnimationList.this.getSelected() == this) {
 						SelectAnimationScreen.this.selectCallback.accept(this.animation);

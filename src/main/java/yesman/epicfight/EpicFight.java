@@ -1,6 +1,6 @@
 package yesman.epicfight;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +35,9 @@ public final class EpicFight {
 
     /// Creates an identifier that points to an Epic Fight resource.
     ///
-    /// This was called `identifier` and not `resourceLocation` since [Mojang renamed `ResourceLocation` to `Identifier` in 1.21.11](https://neoforged.net/news/21.11release/#renaming-of-resourcelocation-to-identifier).
-    public static @NotNull ResourceLocation identifier(@NotNull final String path) {
-        return ResourceLocation.fromNamespaceAndPath(MODID, path);
+    /// This was called `identifier` and not `resourceLocation` since [Mojang renamed `Identifier` to `Identifier` in 1.21.11](https://neoforged.net/news/21.11release/#renaming-of-resourcelocation-to-identifier).
+    public static @NotNull Identifier identifier(@NotNull final String path) {
+        return Identifier.fromNamespaceAndPath(MODID, path);
     }
 
     /// Initializes common functionalities.

@@ -5,12 +5,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +77,7 @@ public class WeaponCapability extends CapabilityItem {
 
     /// A custom capability tag that eases identifying categories
     /// Weapon capabilities have a registry name of their weapon type builder
-    protected Set<ResourceLocation> customTags;
+    protected Set<Identifier> customTags;
 
 	protected WeaponCapability(WeaponCapability.Builder builder) {
 		super(builder);
@@ -320,7 +320,7 @@ public class WeaponCapability extends CapabilityItem {
 	}
 	
 	@Override
-	public UseAnim getUseAnimation(LivingEntityPatch<?> entityPatch) {
+	public ItemUseAnimation getUseAnimation(LivingEntityPatch<?> entityPatch) {
         Moveset set = getCurrentSet(entityPatch);
         if (set == null || set.getLivingMotionModifiers() == null)
         {
@@ -329,15 +329,15 @@ public class WeaponCapability extends CapabilityItem {
                 Style style = this.getStyle(entityPatch);
                 if (this.livingMotionModifiers.containsKey(style)) {
                     if (this.livingMotionModifiers.get(style).containsKey(LivingMotions.BLOCK)) {
-                        return UseAnim.BLOCK;
+                        return ItemUseAnimation.BLOCK;
                     }
                 }
             }
         }
 		else if (set.getLivingMotionModifiers().containsKey(LivingMotions.BLOCK)) {
-            return UseAnim.BLOCK;
+            return ItemUseAnimation.BLOCK;
         }
-		return UseAnim.NONE;
+		return ItemUseAnimation.NONE;
 	}
 	
 	@Override
@@ -389,18 +389,18 @@ public class WeaponCapability extends CapabilityItem {
         return set.getCustomMotion().apply(entitypatch, hand);
     }
 
-    public boolean hasMatchingTag(ResourceLocation rl) {
+    public boolean hasMatchingTag(Identifier rl) {
         return customTags.contains(rl);
     }
 
-    public Set<ResourceLocation> getTags() {
+    public Set<Identifier> getTags() {
         return customTags;
     }
 
     /// All fields marked with {@link Deprecated} have been moved to {@link Moveset} and exist as legacy fallback options to prevent addons from breaking.
     public static class Builder extends CapabilityItem.Builder<WeaponCapability.Builder> {
         /** List of resource locations for conditional logic providers. */
-        List<ResourceLocation> provider;
+        List<Identifier> provider;
         /** @deprecated Moved to {@link Moveset}. Fallback for determining the current combat style. */
         @Deprecated(forRemoval = true) Function<LivingEntityPatch<?>, Style> styleProvider;
         /** @deprecated Moved to {@link Moveset}. Determines if specific weapon combinations are valid. */
@@ -411,7 +411,7 @@ public class WeaponCapability extends CapabilityItem {
 		Holder<SoundEvent> hitSound;
 		Holder<ParticleType<?>> hitParticle;
         protected BiConsumer<Item, Builder> explicitItemOverride = null;
-        Map<Style, ResourceLocation> moveSets;
+        Map<Style, Identifier> moveSets;
         double baseAP;
         double aPScaling;
         final Map<Style, Moveset.Builder> pendingBuilders;
@@ -432,7 +432,7 @@ public class WeaponCapability extends CapabilityItem {
 		float reach;
         boolean offHandAlone;
 
-        Set<ResourceLocation> customTags = new HashSet<> ();
+        Set<Identifier> customTags = new HashSet<> ();
 
         public Builder copy() {
             Builder copy = new Builder();
@@ -525,7 +525,7 @@ public class WeaponCapability extends CapabilityItem {
             this.impactScaling = 1;
 		}
 
-        public Builder identifier(ResourceLocation id)
+        public Builder identifier(Identifier id)
         {
             return super.identifier(id);
         }
@@ -544,7 +544,7 @@ public class WeaponCapability extends CapabilityItem {
         {
             pendingBuilders.forEach(
                     ((style, builder) -> {
-                        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(
+                        Identifier id = Identifier.fromNamespaceAndPath(
                                 identifier.getNamespace(),
                                 identifier.getPath() + "/generated/" + style.toString().toLowerCase(Locale.ROOT)
                         );
@@ -559,7 +559,7 @@ public class WeaponCapability extends CapabilityItem {
         {
             pendingConditionals.forEach(
                     builder -> {
-                        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(
+                        Identifier id = Identifier.fromNamespaceAndPath(
                                 identifier.getNamespace(),
                                 identifier.getPath() + "/generated/" + builder.getWieldStyle().toString().toLowerCase(Locale.ROOT)
                         );
@@ -570,7 +570,7 @@ public class WeaponCapability extends CapabilityItem {
         }
 
         @ApiStatus.Internal
-        public void removeConditional(ResourceLocation rl)
+        public void removeConditional(Identifier rl)
         {
             this.provider.remove(rl);
         }
@@ -653,7 +653,7 @@ public class WeaponCapability extends CapabilityItem {
          * @param conditionals ResourceLocations of the conditionals.
          * @return This builder for chaining.
          */
-        public Builder addConditionals(ResourceLocation... conditionals)
+        public Builder addConditionals(Identifier... conditionals)
         {
             provider.addAll(Arrays.asList(conditionals));
             return this;
@@ -671,7 +671,7 @@ public class WeaponCapability extends CapabilityItem {
         }
 
         /**
-         * Registers a moveset anonymously by generating a ResourceLocation based on the style.
+         * Registers a moveset anonymously by generating a Identifier based on the style.
          * <p>
          * This method constructs a unique identifier using the pattern {@code [namespace]/[style_name]},
          * registers the moveset via the {@link MovesetManager}, and appends it to this builder.
@@ -688,12 +688,12 @@ public class WeaponCapability extends CapabilityItem {
         }
 
         @ApiStatus.Internal
-        public void addMovesets(Map<Style, ResourceLocation> moveSets) {
+        public void addMovesets(Map<Style, Identifier> moveSets) {
             this.moveSets.putAll(moveSets);
         }
 
         @ApiStatus.Internal
-        public Builder addConditionals(List<ResourceLocation> conditionals)
+        public Builder addConditionals(List<Identifier> conditionals)
         {
             provider.addAll(conditionals);
             return this;
@@ -727,7 +727,7 @@ public class WeaponCapability extends CapabilityItem {
 		}
 
 
-        public Builder addMoveset(Style style, ResourceLocation moveSet) {
+        public Builder addMoveset(Style style, Identifier moveSet) {
             moveSets.put(style, moveSet);
             return this;
         }
@@ -749,10 +749,10 @@ public class WeaponCapability extends CapabilityItem {
 
         /**
          * Adds a custom tag to this weapon for compatibility or filtering.
-         * @param customTag ResourceLocation of the tag.
+         * @param customTag Identifier of the tag.
          * @return This builder for chaining.
          */
-        public Builder addTag(ResourceLocation customTag) {
+        public Builder addTag(Identifier customTag) {
             this.customTags.add(customTag);
             return this;
         }

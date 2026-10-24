@@ -11,7 +11,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.registry.EpicFightRegistries;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillCategory;
@@ -37,8 +37,8 @@ public class SkillArgument implements ArgumentType<Holder<Skill>> {
 	}
 
 	public Holder<Skill> parse(StringReader p_98428_) throws CommandSyntaxException {
-		ResourceLocation resourcelocation = ResourceLocation.read(p_98428_);
-		Optional<Holder.Reference<Skill>> skill = EpicFightRegistries.SKILL.getHolder(resourcelocation);
+		Identifier resourcelocation = Identifier.read(p_98428_);
+		Optional<Holder.Reference<Skill>> skill = EpicFightRegistries.SKILL.get(resourcelocation);
 		
 		if (skill.isEmpty()) {
 			throw ERROR_UNKNOWN_SKILL.create(resourcelocation);

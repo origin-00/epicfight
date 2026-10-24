@@ -1,5 +1,7 @@
 package yesman.epicfight.api.data.reloader;
 
+import net.minecraft.util.ExtraCodecs;
+import net.minecraft.resources.FileToIdConverter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -15,7 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.sounds.SoundEvent;
@@ -63,40 +65,40 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
+public class MobPatchReloadListener extends SimpleJsonResourceReloadListener<JsonElement> {
 	public static final String DIRECTORY = "epicfight_mobpatch";
 	private static final Gson GSON = (new GsonBuilder()).create();
 	private static final Map<EntityType<?>, CompoundTag> TAGMAP = Maps.newHashMap();
 	private static final Map<EntityType<?>, AbstractMobPatchProvider> MOB_PATCH_PROVIDERS = Maps.newHashMap();
 	
 	public MobPatchReloadListener() {
-		super(GSON, DIRECTORY);
+		super(ExtraCodecs.JSON, FileToIdConverter.json(DIRECTORY));
 	}
 	
 	@Override
-	protected Map<ResourceLocation, JsonElement> prepare(ResourceManager resourceManager, ProfilerFiller profileIn) {
+	protected Map<Identifier, JsonElement> prepare(ResourceManager resourceManager, ProfilerFiller profileIn) {
 		MOB_PATCH_PROVIDERS.clear();
 		TAGMAP.clear();
 		return super.prepare(resourceManager, profileIn);
 	}
 	
 	@Override
-	protected void apply(Map<ResourceLocation, JsonElement> objectIn, ResourceManager resourceManager, ProfilerFiller profilerIn) {
-		for (Map.Entry<ResourceLocation, JsonElement> entry : objectIn.entrySet()) {
-			ResourceLocation rl = entry.getKey();
+	protected void apply(Map<Identifier, JsonElement> objectIn, ResourceManager resourceManager, ProfilerFiller profilerIn) {
+		for (Map.Entry<Identifier, JsonElement> entry : objectIn.entrySet()) {
+			Identifier rl = entry.getKey();
 			String pathString = rl.getPath();
-			ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), pathString);
+			Identifier registryName = Identifier.fromNamespaceAndPath(rl.getNamespace(), pathString);
 			
 			if (!BuiltInRegistries.ENTITY_TYPE.containsKey(registryName)) {
                 EpicFight.LOGGER.warn("Mob Patch Exception: No Entity named {}", registryName);
 				continue;
 			}
 			
-			EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(registryName);
+			EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getValue(registryName);
 			CompoundTag tag = null;
 			
 			try {
-				tag = TagParser.parseTag(entry.getValue().toString());
+				tag = TagParser.parseCompoundFully(entry.getValue().toString());
 			} catch (CommandSyntaxException e) {
                 EpicFight.LOGGER.warn("Error while deserializing datapack for {} : {}", registryName, e.getLocalizedMessage());
 				continue;
@@ -116,7 +118,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			TAGMAP.put(entityType, filterClientData(tag));
 			
 			if (EpicFightSharedConstants.isPhysicalClient()) {
-				RenderEngine.getInstance().registerCustomEntityRenderer(entityType, tag.contains("preset") ? tag.getString("preset") : tag.getString("renderer"), tag);
+				RenderEngine.getInstance().registerCustomEntityRenderer(entityType, tag.contains("preset") ? tag.getStringOr("preset", "") : tag.getStringOr("renderer", ""), tag);
 			}
 		}
 	}
@@ -271,8 +273,8 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		}
 		
 		while (hasBranch) {
-			CompoundTag branchTag = tag.getCompound(String.format("branch_%d", i));
-			((BranchProvider)provider).providers.add(Pair.of(deserializeBranchPredicate(branchTag.getCompound("condition")), deserialize(entityType, branchTag, clientSide, resourceManager)));
+			CompoundTag branchTag = tag.getCompoundOrEmpty(String.format("branch_%d", i));
+			((BranchProvider)provider).providers.add(Pair.of(deserializeBranchPredicate(branchTag.getCompoundOrEmpty("condition")), deserialize(entityType, branchTag, clientSide, resourceManager)));
 			hasBranch = tag.contains(String.format("branch_%d", ++i));
 		}
 		
@@ -280,15 +282,15 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static HasCustomTag deserializeBranchPredicate(CompoundTag tag) {
-		String predicateType = tag.getString("predicate");
+		String predicateType = tag.getStringOr("predicate", "");
 		HasCustomTag predicate = null;
 		
 		if ("has_tags".equals(predicateType)) {
-			if (!tag.contains("tags", 9)) {
+			if (!tag.getList("tags").isPresent()) {
                 EpicFight.LOGGER.info("Mob capability deserializing exception: Can't find a proper argument for %s. [identifier: %s, type: %s]".formatted("has_tags", "tags", "string list"));
 			}
 			
-			predicate = new HasCustomTag(tag.getList("tags", 8));
+			predicate = new HasCustomTag(tag.getListOrEmpty("tags"));
 		}
 		
 		if (predicate == null) {
@@ -305,21 +307,21 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
     /// @deprecated Use Non-datapack sensitive version. [#deserialize(EntityType, CompoundTag, boolean, ResourceManager)]
     /// @param extraEntryProvider Returns extra-entry created in runtime. (Datapack editor) Exists to access armatures and meshes
     public static AbstractMobPatchProvider deserializeMobPatchProvider(EntityType<?> entityType, CompoundTag tag, boolean clientSide, ResourceManager resourceManager, @Nullable ExtraEntryProvider extraEntryProvider) {
-		boolean disabled = tag.contains("disabled") && tag.getBoolean("disabled");
+		boolean disabled = tag.contains("disabled") && tag.getBooleanOr("disabled", false);
 		
 		if (disabled) {
 			return new NullPatchProvider();
 		} else if (tag.contains("preset")) {
-			String presetName = tag.getString("preset");
+			String presetName = tag.getStringOr("preset", "");
 			Function<Entity, EntityPatch<?>> preset = EpicFightCapabilities.ENTITY_PATCH_PROVIDER.get(presetName);
             if (extraEntryProvider == null) Armatures.registerEntityTypeArmatureByPreset(entityType, presetName); // Register armature when it's not loaded from datapack
             return new MobPatchPresetProvider(preset);
 		} else {
-			boolean humanoid = tag.getBoolean("isHumanoid");
+			boolean humanoid = tag.getBooleanOr("isHumanoid", false);
 			CustomMobPatchProvider provider = humanoid ? new CustomHumanoidMobPatchProvider() : new CustomMobPatchProvider();
-			provider.attributeValues = deserializeAttributes(tag.getCompound("attributes"));
-			ResourceLocation modelLocation = ResourceLocation.parse(tag.getString("model"));
-			ResourceLocation armatureId = ResourceLocation.parse(tag.getString("armature"));
+			provider.attributeValues = deserializeAttributes(tag.getCompoundOrEmpty("attributes"));
+			Identifier modelLocation = Identifier.parse(tag.getStringOr("model", ""));
+			Identifier armatureId = Identifier.parse(tag.getStringOr("armature", ""));
 			
 			if (EpicFightSharedConstants.isPhysicalClient()) {
                 if (extraEntryProvider == null) Meshes.getOrCreate(modelLocation, (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(humanoid ? SkinnedMesh::new : HumanoidMesh::new)); // Register mesh when it's not loaded from datapack
@@ -327,13 +329,13 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 
             if (extraEntryProvider == null) Armatures.registerEntityTypeArmature(entityType, Armatures.getOrCreate(armatureId, Armature::new)); // Register armature when it's not loaded from datapack
 			
-			provider.defaultAnimations = deserializeDefaultAnimations(tag.getCompound("default_livingmotions"));
-			provider.faction = Faction.ENUM_MANAGER.getOrThrow(tag.getString("faction"));
+			provider.defaultAnimations = deserializeDefaultAnimations(tag.getCompoundOrEmpty("default_livingmotions"));
+			provider.faction = Faction.ENUM_MANAGER.getOrThrow(tag.getStringOr("faction", ""));
 			
-			provider.scale = tag.getCompound("attributes").contains("scale") ? (float)tag.getCompound("attributes").getDouble("scale") : 1.0F;
+			provider.scale = tag.getCompoundOrEmpty("attributes").contains("scale") ? (float)tag.getCompoundOrEmpty("attributes").getDoubleOr("scale", 0.0D) : 1.0F;
 
             if (tag.contains("swing_sound")) {
-                SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse(tag.getString("swing_sound")));
+                SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.getValue(Identifier.parse(tag.getStringOr("swing_sound", "")));
 
                 if (soundEvent == null) {
                     EpicFight.LOGGER.warn("Can't find a swing sound {} for the next mot patch: {}", tag.getString("swing_sound"), entityType.toString());
@@ -343,7 +345,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
             }
 
             if (tag.contains("hit_sound")) {
-                SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse(tag.getString("hit_sound")));
+                SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.getValue(Identifier.parse(tag.getStringOr("hit_sound", "")));
 
                 if (soundEvent == null) {
                     EpicFight.LOGGER.warn("Can't find a hit sound {} for the next mot patch: {}", tag.getString("hit_sound"), entityType.toString());
@@ -353,7 +355,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
             }
 
             if (tag.contains("hit_particle")) {
-                HitParticleType hitParticle = (HitParticleType)BuiltInRegistries.PARTICLE_TYPE.get(ResourceLocation.parse(tag.getString("hit_particle")));
+                HitParticleType hitParticle = (HitParticleType)BuiltInRegistries.PARTICLE_TYPE.getValue(Identifier.parse(tag.getStringOr("hit_particle", "")));
 
                 if (hitParticle == null) {
                     EpicFight.LOGGER.warn("Can't find a hit particle type {} for the next mot patch: {}", tag.getString("hit_particle"), entityType.toString());
@@ -363,18 +365,18 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
             }
 			
 			if (!clientSide) {
-				provider.stunAnimations = deserializeStunAnimations(tag.getCompound("stun_animations"));
+				provider.stunAnimations = deserializeStunAnimations(tag.getCompoundOrEmpty("stun_animations"));
 				
-				if (tag.getCompound("attributes").contains("chasing_speed")) {
-					provider.chasingSpeed = tag.getCompound("attributes").getDouble("chasing_speed");
+				if (tag.getCompoundOrEmpty("attributes").contains("chasing_speed")) {
+					provider.chasingSpeed = tag.getCompoundOrEmpty("attributes").getDoubleOr("chasing_speed", 0.0D);
 				}
 				
 				if (humanoid) {
 					CustomHumanoidMobPatchProvider humanoidProvider = (CustomHumanoidMobPatchProvider)provider;
-					humanoidProvider.humanoidCombatBehaviors = deserializeHumanoidCombatBehaviors(tag.getList("combat_behavior", 10));
-					humanoidProvider.humanoidWeaponMotions = deserializeHumanoidWeaponMotions(tag.getList("humanoid_weapon_motions", 10));
+					humanoidProvider.humanoidCombatBehaviors = deserializeHumanoidCombatBehaviors(tag.getListOrEmpty("combat_behavior"));
+					humanoidProvider.humanoidWeaponMotions = deserializeHumanoidWeaponMotions(tag.getListOrEmpty("humanoid_weapon_motions"));
 				} else {
-					provider.combatBehaviorsBuilder = deserializeCombatBehaviorsBuilder(tag.getList("combat_behavior", 10));
+					provider.combatBehaviorsBuilder = deserializeCombatBehaviorsBuilder(tag.getListOrEmpty("combat_behavior"));
 				}
 			}
 			
@@ -386,13 +388,13 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		Map<WeaponCategory, Map<Style, CombatBehaviors.Builder<HumanoidMobPatch<?>>>> combatBehaviorsMapBuilder = Maps.newHashMap();
 		
 		for (int i = 0; i < tag.size(); i++) {
-			CompoundTag combatBehavior = tag.getCompound(i);
-			ListTag categories = combatBehavior.getList("weapon_categories", 8);
-			Style style = Style.ENUM_MANAGER.getOrThrow(combatBehavior.getString("style"));
-			CombatBehaviors.Builder<HumanoidMobPatch<?>> builder = deserializeCombatBehaviorsBuilder(combatBehavior.getList("behavior_series", 10));
+			CompoundTag combatBehavior = tag.getCompoundOrEmpty(i);
+			ListTag categories = combatBehavior.getListOrEmpty("weapon_categories");
+			Style style = Style.ENUM_MANAGER.getOrThrow(combatBehavior.getStringOr("style", ""));
+			CombatBehaviors.Builder<HumanoidMobPatch<?>> builder = deserializeCombatBehaviorsBuilder(combatBehavior.getListOrEmpty("behavior_series"));
 			
 			for (int j = 0; j < categories.size(); j++) {
-				WeaponCategory category = WeaponCategory.ENUM_MANAGER.getOrThrow(categories.getString(j));
+				WeaponCategory category = WeaponCategory.ENUM_MANAGER.getOrThrow(categories.getStringOr(j, ""));
 				combatBehaviorsMapBuilder.computeIfAbsent(category, (key) -> Maps.newHashMap());
 				combatBehaviorsMapBuilder.get(category).put(style, builder);
 			}
@@ -404,8 +406,8 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 	public static List<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> deserializeDefaultAnimations(CompoundTag defaultLivingmotions) {
 		List<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> defaultAnimations = Lists.newArrayList();
 		
-		for (String key : defaultLivingmotions.getAllKeys()) {
-			String animation = defaultLivingmotions.getString(key);
+		for (String key : defaultLivingmotions.keySet()) {
+			String animation = defaultLivingmotions.getStringOr(key, "");
 			defaultAnimations.add(Pair.of(LivingMotion.ENUM_MANAGER.getOrThrow(key), AnimationManager.byKey(animation)));
 		}
 		
@@ -416,7 +418,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		Map<StunType, AnimationAccessor<? extends StaticAnimation>> stunAnimations = Maps.newHashMap();
 		
 		for (StunType stunType : StunType.values()) {
-			String lowerCaseName = tag.getString(stunType.name().toLowerCase(Locale.ROOT));
+			String lowerCaseName = tag.getStringOr(stunType.name().toLowerCase(Locale.ROOT), "");
 			
 			if (!StringUtil.isNullOrEmpty(lowerCaseName)) {
 				stunAnimations.put(stunType, AnimationManager.byKey(lowerCaseName));
@@ -428,13 +430,13 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 	
 	public static Object2DoubleMap<Holder<Attribute>> deserializeAttributes(CompoundTag tag) {
 		Object2DoubleMap<Holder<Attribute>> attributes = new Object2DoubleOpenHashMap<>();
-		attributes.put(EpicFightAttributes.IMPACT, tag.contains("impact", Tag.TAG_DOUBLE) ? tag.getDouble("impact") : 0.5D);
-		attributes.put(EpicFightAttributes.ARMOR_NEGATION, tag.contains("armor_negation", Tag.TAG_DOUBLE) ? tag.getDouble("armor_negation") : 0.0D);
-		attributes.put(EpicFightAttributes.MAX_STRIKES, (double)(tag.contains("max_strikes", Tag.TAG_INT) ? tag.getInt("max_strikes") : 1));
-		attributes.put(EpicFightAttributes.STUN_ARMOR, (double)(tag.contains("stun_armor", Tag.TAG_DOUBLE) ? tag.getDouble("stun_armor") : 0.0D));
+		attributes.put(EpicFightAttributes.IMPACT, tag.getDouble("impact").isPresent() ? tag.getDoubleOr("impact", 0.0D) : 0.5D);
+		attributes.put(EpicFightAttributes.ARMOR_NEGATION, tag.getDouble("armor_negation").isPresent() ? tag.getDoubleOr("armor_negation", 0.0D) : 0.0D);
+		attributes.put(EpicFightAttributes.MAX_STRIKES, (double)(tag.getInt("max_strikes").isPresent() ? tag.getIntOr("max_strikes", 0) : 1));
+		attributes.put(EpicFightAttributes.STUN_ARMOR, (double)(tag.getDouble("stun_armor").isPresent() ? tag.getDoubleOr("stun_armor", 0.0D) : 0.0D));
 		
-		if (tag.contains("attack_damage", Tag.TAG_DOUBLE)) {
-			attributes.put(Attributes.ATTACK_DAMAGE, tag.getDouble("attack_damage"));
+		if (tag.getDouble("attack_damage").isPresent()) {
+			attributes.put(Attributes.ATTACK_DAMAGE, tag.getDoubleOr("attack_damage", 0.0D));
 		}
 		
 		return attributes;
@@ -445,18 +447,18 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		
 		for (int i = 0; i < tag.size(); i++) {
 			ImmutableSet.Builder<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> motions = ImmutableSet.builder();
-			CompoundTag weaponMotionTag = tag.getCompound(i);
-			Style style = Style.ENUM_MANAGER.getOrThrow(weaponMotionTag.getString("style"));
-			CompoundTag motionsTag = weaponMotionTag.getCompound("livingmotions");
+			CompoundTag weaponMotionTag = tag.getCompoundOrEmpty(i);
+			Style style = Style.ENUM_MANAGER.getOrThrow(weaponMotionTag.getStringOr("style", ""));
+			CompoundTag motionsTag = weaponMotionTag.getCompoundOrEmpty("livingmotions");
 			
-			for (String key : motionsTag.getAllKeys()) {
-				motions.add(Pair.of(LivingMotion.ENUM_MANAGER.getOrThrow(key), AnimationManager.byKey(motionsTag.getString(key))));
+			for (String key : motionsTag.keySet()) {
+				motions.add(Pair.of(LivingMotion.ENUM_MANAGER.getOrThrow(key), AnimationManager.byKey(motionsTag.getStringOr(key, ""))));
 			}
 			
 			Tag weponTypeTag = weaponMotionTag.get("weapon_categories");
 			
 			if (weponTypeTag instanceof StringTag) {
-				WeaponCategory weaponCategory = WeaponCategory.ENUM_MANAGER.getOrThrow(weponTypeTag.getAsString());
+				WeaponCategory weaponCategory = WeaponCategory.ENUM_MANAGER.getOrThrow(weponTypeTag.asString().orElse(""));
 				if (!map.containsKey(weaponCategory)) {
 					map.put(weaponCategory, Maps.newHashMap());
 				}
@@ -465,7 +467,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			} else if (weponTypeTag instanceof ListTag weponTypesTag) {
 
 				for (int j = 0; j < weponTypesTag.size(); j++) {
-					WeaponCategory weaponCategory = WeaponCategory.ENUM_MANAGER.getOrThrow(weponTypesTag.getString(j));
+					WeaponCategory weaponCategory = WeaponCategory.ENUM_MANAGER.getOrThrow(weponTypesTag.getStringOr(j, ""));
 					if (!map.containsKey(weaponCategory)) {
 						map.put(weaponCategory, Maps.newHashMap());
 					}
@@ -481,31 +483,31 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		CombatBehaviors.Builder<T> builder = CombatBehaviors.builder();
 		
 		for (int i = 0; i < tag.size(); i++) {
-			CompoundTag behaviorSeries = tag.getCompound(i);
-			float weight = (float)behaviorSeries.getDouble("weight");
-			int cooldown = behaviorSeries.contains("cooldown") ? behaviorSeries.getInt("cooldown") : 0;
-			boolean canBeInterrupted = behaviorSeries.contains("canBeInterrupted") && behaviorSeries.getBoolean("canBeInterrupted");
-			boolean looping = behaviorSeries.contains("looping") && behaviorSeries.getBoolean("looping");
-			ListTag behaviorList = behaviorSeries.getList("behaviors", 10);
+			CompoundTag behaviorSeries = tag.getCompoundOrEmpty(i);
+			float weight = (float)behaviorSeries.getDoubleOr("weight", 0.0D);
+			int cooldown = behaviorSeries.contains("cooldown") ? behaviorSeries.getIntOr("cooldown", 0) : 0;
+			boolean canBeInterrupted = behaviorSeries.contains("canBeInterrupted") && behaviorSeries.getBooleanOr("canBeInterrupted", false);
+			boolean looping = behaviorSeries.contains("looping") && behaviorSeries.getBooleanOr("looping", false);
+			ListTag behaviorList = behaviorSeries.getListOrEmpty("behaviors");
 			BehaviorSeries.Builder<T> behaviorSeriesBuilder = BehaviorSeries.builder();
 			behaviorSeriesBuilder.weight(weight).cooldown(cooldown).canBeInterrupted(canBeInterrupted).looping(looping);
 			
 			for (int j = 0; j < behaviorList.size(); j++) {
 				Behavior.Builder<T> behaviorBuilder = Behavior.builder();
-				CompoundTag behavior = behaviorList.getCompound(j);
-				String animationName = behavior.getString("animation");
+				CompoundTag behavior = behaviorList.getCompoundOrEmpty(j);
+				String animationName = behavior.getStringOr("animation", "");
 				AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byKey(animationName);
 				
 				if (animation == null) {
 					throw new NoSuchElementException("No animation named " + animationName);
 				}
 				
-				ListTag conditionList = behavior.getList("conditions", 10);
+				ListTag conditionList = behavior.getListOrEmpty("conditions");
 				behaviorBuilder.animationBehavior(animation);
 				
 				for (int k = 0; k < conditionList.size(); k++) {
-					CompoundTag condition = conditionList.getCompound(k);
-					Condition<T> predicate = deserializeBehaviorPredicate(condition.getString("predicate"), condition);
+					CompoundTag condition = conditionList.getCompoundOrEmpty(k);
+					Condition<T> predicate = deserializeBehaviorPredicate(condition.getStringOr("predicate", ""), condition);
 					behaviorBuilder.predicate(predicate);
 				}
 				
@@ -519,10 +521,10 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static <T extends MobPatch<?>> Condition<T> deserializeBehaviorPredicate(String type, CompoundTag args) {
-		ResourceLocation rl;
+		Identifier rl;
 		
 		if (type.contains(":")) {
-			rl = ResourceLocation.parse(type);
+			rl = Identifier.parse(type);
 		} else {
 			rl = EpicFight.identifier(type);
 		}
@@ -540,7 +542,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		boolean hasBranch = tag.contains(String.format("branch_%d", i));
 		
 		while (hasBranch) {
-			CompoundTag branchTag = tag.getCompound(String.format("branch_%d", i));
+			CompoundTag branchTag = tag.getCompoundOrEmpty(String.format("branch_%d", i));
 			CompoundTag copiedTag = new CompoundTag();
 			extractBranch(copiedTag, branchTag);
 			clientTag.put(String.format("branch_%d", i), copiedTag);
@@ -553,18 +555,18 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static CompoundTag extractBranch(CompoundTag extract, CompoundTag original) {
-		if (original.contains("disabled") && original.getBoolean("disabled")) {
+		if (original.contains("disabled") && original.getBooleanOr("disabled", false)) {
 			extract.put("disabled", original.get("disabled"));
 		} else if (original.contains("preset")) {
 			extract.put("preset", original.get("preset"));
 		} else {
 			extract.put("model", original.get("model"));
 			extract.put("armature", original.get("armature"));
-			extract.putBoolean("isHumanoid", original.contains("isHumanoid") ? original.getBoolean("isHumanoid") : false);
+			extract.putBoolean("isHumanoid", original.contains("isHumanoid") ? original.getBooleanOr("isHumanoid", false) : false);
 			extract.put("renderer", original.get("renderer"));
 			extract.put("faction", original.get("faction"));
 			extract.put("default_livingmotions", original.get("default_livingmotions"));
-			if (original.contains("attributes", Tag.TAG_COMPOUND)) extract.put("attributes", original.get("attributes"));
+			if (original.getCompound("attributes").isPresent()) extract.put("attributes", original.get("attributes"));
 		}
 		
 		return extract;
@@ -584,24 +586,24 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			boolean disabled = false;
 			
 			if (tag.contains("disabled")) {
-				disabled = tag.getBoolean("disabled");
+				disabled = tag.getBooleanOr("disabled", false);
 			}
 			
-			EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(tag.getString("id")));
+			EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.parse(tag.getStringOr("id", "")));
 			MOB_PATCH_PROVIDERS.put(entityType, deserialize(entityType, tag, true, Minecraft.getInstance().getResourceManager()));
 			EpicFightCapabilities.ENTITY_PATCH_PROVIDER.putCustomEntityPatch(entityType, (entity) -> MOB_PATCH_PROVIDERS.get(entity.getType()).get(entity));
 			
 			if (!disabled) {
 				if (tag.contains("preset")) {
-					Armatures.registerEntityTypeArmatureByPreset(entityType, tag.getString("preset"));
+					Armatures.registerEntityTypeArmatureByPreset(entityType, tag.getStringOr("preset", ""));
 				} else {
-					ResourceLocation armatureLocation = ResourceLocation.parse(tag.getString("armature"));
-					boolean humanoid = tag.getBoolean("isHumanoid");
+					Identifier armatureLocation = Identifier.parse(tag.getStringOr("armature", ""));
+					boolean humanoid = tag.getBooleanOr("isHumanoid", false);
 					AssetAccessor<? extends Armature> armature = Armatures.getOrCreate(armatureLocation, humanoid ? Armature::new : HumanoidArmature::new);
 					Armatures.registerEntityTypeArmature(entityType, armature);
 				}
 				
-				RenderEngine.getInstance().registerCustomEntityRenderer(entityType, tag.contains("preset") ? tag.getString("preset") : tag.getString("renderer"), tag);
+				RenderEngine.getInstance().registerCustomEntityRenderer(entityType, tag.contains("preset") ? tag.getStringOr("preset", "") : tag.getStringOr("renderer", ""), tag);
 			}
 		}
 	}

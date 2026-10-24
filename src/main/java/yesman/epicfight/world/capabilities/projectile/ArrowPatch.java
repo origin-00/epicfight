@@ -1,7 +1,7 @@
 package yesman.epicfight.world.capabilities.projectile;
 
 import net.minecraft.tags.DamageTypeTags;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 import yesman.epicfight.world.damagesource.EpicFightDamageSources;
 import yesman.epicfight.world.damagesource.StunType;

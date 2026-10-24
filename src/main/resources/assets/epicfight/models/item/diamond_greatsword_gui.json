@@ -1,0 +1,26 @@
+{
+  "gui_light": "front",
+  "parent": "epicfight:item/greatsword",
+  "textures": {
+    "layer0": "epicfight:item/diamond_greatsword_gui"
+  },
+  "display": {
+    "gui": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  }
+}

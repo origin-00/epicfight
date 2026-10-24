@@ -1,5 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -40,7 +41,7 @@ public class DragonAirstrikePhase extends PatchedDragonPhase {
 		this.dragonpatch.setAttakTargetSync(null);
 		
 		if (this.dragonpatch.isLogicalClient()) {
-			Minecraft.getInstance().getSoundManager().stop(EpicFightSounds.ENDER_DRAGON_BREATH.get().getLocation(), SoundSource.HOSTILE);
+			Minecraft.getInstance().getSoundManager().stop(EpicFightSounds.ENDER_DRAGON_BREATH.get().location(), SoundSource.HOSTILE);
 			this.dragon.level().playLocalSound(this.dragon.getX(), this.dragon.getY(), this.dragon.getZ(), EpicFightSounds.ENDER_DRAGON_BREATH_FINALE.get(), this.dragon.getSoundSource(), 5.0F, 1.0F, false);
 		}
 	}
@@ -51,9 +52,9 @@ public class DragonAirstrikePhase extends PatchedDragonPhase {
 		Vec3 dragonpos = this.dragon.position();
 		OpenMatrix4f mouthpos = this.dragonpatch.getArmature().getBoundTransformFor(this.dragonpatch.getAnimator().getPose(1.0F), Armatures.DRAGON.get().upperMouth);
 		
-		float f = (float)this.dragon.getLatencyPos(7, 1.0F)[0];
-		float f1 = (float)(this.dragon.getLatencyPos(5, 1.0F)[1] - this.dragon.getLatencyPos(10, 1.0F)[1]);
-		float f2 = MathUtils.rotWrap((this.dragon.getLatencyPos(5, 1.0F)[0] - this.dragon.getLatencyPos(10, 1.0F)[0]));
+		float f = this.dragon.flightHistory.get(7, 1.0F).yRot();
+		float f1 = (float)(this.dragon.flightHistory.get(5, 1.0F).y() - this.dragon.flightHistory.get(10, 1.0F).y());
+		float f2 = MathUtils.rotWrap(this.dragon.flightHistory.get(5, 1.0F).yRot() - this.dragon.flightHistory.get(10, 1.0F).yRot());
 		OpenMatrix4f modelMatrix = MathUtils.getModelMatrixIntegral(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, f1, f1, f, f, 1.0F, 1.0F, 1.0F, 1.0F).rotateDeg(-f2 * 1.5F, Vec3f.Z_AXIS);
 		mouthpos.mulFront(modelMatrix);
 		
@@ -83,7 +84,7 @@ public class DragonAirstrikePhase extends PatchedDragonPhase {
 	}
 	
 	@Override
-	public void doServerTick() {
+	public void doServerTick(ServerLevel level) {
 		LivingEntity target = this.dragon.getTarget();
 		
 		if (target == null) {
@@ -145,7 +146,7 @@ public class DragonAirstrikePhase extends PatchedDragonPhase {
 							breatharea.setRadius(0.5F);
 							breatharea.setDuration(15);
 							breatharea.setRadiusPerTick(0.2F);
-							breatharea.addEffect(new MobEffectInstance(MobEffects.HARM, 1, 1));
+							breatharea.addEffect(new MobEffectInstance(MobEffects.INSTANT_DAMAGE, 1, 1));
 							breatharea.setDeltaMovement(0, -1, 0);
 							this.dragon.level().addFreshEntity(breatharea);
 						}

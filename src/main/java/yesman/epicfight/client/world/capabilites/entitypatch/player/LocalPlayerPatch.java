@@ -482,7 +482,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
                 if (blockHitResult != null && this.minecraft.level != null) {
                     BlockPos bp = blockHitResult.getBlockPos();
                     BlockState bs = this.minecraft.level.getBlockState(bp);
-                    return !combatItem.getItem().canAttackBlock(bs, this.original.level(), bp, this.original) || !combatItem.isCorrectToolForDrops(bs);
+                    return !combatItem.canDestroyBlock(bs, this.original.level(), bp, this.original) || !combatItem.isCorrectToolForDrops(bs);
                 }
             } else {
                 return RenderEngine.hitResultNotEquals(this.minecraft.hitResult, HitResult.Type.BLOCK);

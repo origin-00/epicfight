@@ -32,7 +32,7 @@ public class EviscerateSkill extends WeaponInnateSkill {
     @Override
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
-        this.damageCap = parameters.getFloat("damage_cap");
+        this.damageCap = parameters.getFloatOr("damage_cap", 0.0F);
     }
 
     @Override

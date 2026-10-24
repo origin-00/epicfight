@@ -21,27 +21,27 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.client.mesh.HumanoidMesh;
 import yesman.epicfight.main.EpicFightMod;
 
 public class HumanoidModelBaker {
-	static final Map<ResourceLocation, SkinnedMesh> BAKED_MODELS = new HashMap<> ();
+	static final Map<Identifier, SkinnedMesh> BAKED_MODELS = new HashMap<> ();
 	static final List<HumanoidModelTransformer> MODEL_TRANSFORMERS = new ArrayList<> ();
 	
-	static final Set<ArmorItem> EXCEPTIONAL_MODELS = new HashSet<> ();
+	static final Set<Item> EXCEPTIONAL_MODELS = new HashSet<> ();
 	static final Set<ModelPart> MODEL_PARTS = new HashSet<> ();
 	
 	public static final HumanoidModelTransformer VANILLA_TRANSFORMER = new VanillaModelTransformer();
 	
 	public interface ModelProvider {
-		public Model get(LivingEntity entityLiving, ItemStack itemStack, EquipmentSlot slot, HumanoidModel<?> _default);
+		public Model<?> get(LivingEntity entityLiving, ItemStack itemStack, EquipmentSlot slot, HumanoidModel<?> _default);
 	}
 	
 	public static void registerNewTransformer(HumanoidModelTransformer transformer) {
@@ -52,7 +52,7 @@ public class HumanoidModelBaker {
 		File zipFile = new File(resourcePackDirectory, "epicfight_custom_armors.zip");
 		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zipFile));
 		
-		for (Map.Entry<ResourceLocation, SkinnedMesh> entry : BAKED_MODELS.entrySet()) {
+		for (Map.Entry<Identifier, SkinnedMesh> entry : BAKED_MODELS.entrySet()) {
 			ZipEntry zipEntry = new ZipEntry(String.format("assets/%s/animmodels/armor/%s.json", entry.getKey().getNamespace(), entry.getKey().getPath()));
 			Gson gson = new GsonBuilder().create();
 			out.putNextEntry(zipEntry);
@@ -66,7 +66,7 @@ public class HumanoidModelBaker {
 		JsonObject root = new JsonObject();
 		JsonObject pack = new JsonObject();
 		pack.addProperty("description", "epicfight_custom_armor_models");
-		pack.addProperty("pack_format", SharedConstants.getCurrentVersion().getPackVersion(PackType.CLIENT_RESOURCES));
+		pack.addProperty("pack_format", SharedConstants.getCurrentVersion().packVersion(PackType.CLIENT_RESOURCES).major());
 		root.add("pack", pack);
 		out.putNextEntry(zipEntry);
 		out.write(gson.toJson(root).getBytes());
@@ -74,8 +74,9 @@ public class HumanoidModelBaker {
 		out.close();
 	}
 	
-	public static SkinnedMesh bakeArmor(LivingEntity entityLiving, ItemStack itemstack, ArmorItem armorItem, EquipmentSlot slot, HumanoidModel<?> originalModel, Model forgeModel, HumanoidModel<?> entityModel, HumanoidMesh entityMesh) {
+	public static SkinnedMesh bakeArmor(LivingEntity entityLiving, ItemStack itemstack, EquipmentSlot slot, HumanoidModel<?> originalModel, Model<?> forgeModel, HumanoidMesh entityMesh) {
 		SkinnedMesh skinnedArmorModel = null;
+		Item armorItem = itemstack.getItem();
 		
 		if (!EXCEPTIONAL_MODELS.contains(armorItem)) {
 			HumanoidModel<?> humanoidModel = forgeModel instanceof HumanoidModel hm ? hm : (originalModel instanceof HumanoidModel om ? om : null);

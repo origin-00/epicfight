@@ -3,7 +3,7 @@ package yesman.epicfight.world.capabilities.entitypatch.mob;
 import com.google.common.collect.ImmutableMap;
 
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.monster.Drowned;
+import net.minecraft.world.entity.monster.zombie.Drowned;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;

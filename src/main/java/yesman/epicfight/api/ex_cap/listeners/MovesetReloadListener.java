@@ -1,5 +1,7 @@
 package yesman.epicfight.api.ex_cap.listeners;
 
+import net.minecraft.util.ExtraCodecs;
+import net.minecraft.resources.FileToIdConverter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -7,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import yesman.epicfight.api.event.EpicFightEventHooks;
 import yesman.epicfight.api.ex_cap.modules.core.events.ExCapMovesetRegistryEvent;
 import yesman.epicfight.api.ex_cap.managers.MovesetManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -16,7 +18,7 @@ import yesman.epicfight.network.server.SPDatapackSync;
 
 import java.util.Map;
 @ApiStatus.Experimental
-public class MovesetReloadListener extends SimpleJsonResourceReloadListener
+public class MovesetReloadListener extends SimpleJsonResourceReloadListener<JsonElement>
 {
     public static final String DIRECTORY = "capabilities/weapons/movesets";
 
@@ -24,11 +26,11 @@ public class MovesetReloadListener extends SimpleJsonResourceReloadListener
 
     public MovesetReloadListener()
     {
-        super(GSON, DIRECTORY);
+        super(ExtraCodecs.JSON, FileToIdConverter.json(DIRECTORY));
     }
 
     @Override
-    protected void apply(@NotNull Map<ResourceLocation, JsonElement> elementMap, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller)
+    protected void apply(@NotNull Map<Identifier, JsonElement> elementMap, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller)
     {
         @Deprecated
         ExCapMovesetRegistryEvent event = createEvent();

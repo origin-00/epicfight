@@ -1,28 +1,30 @@
 package yesman.epicfight.client.renderer;
 
-import java.util.Iterator;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import java.util.Map;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
-import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.ArrowLayer;
 import net.minecraft.client.renderer.entity.layers.BeeStingerLayer;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
-import net.minecraft.client.renderer.entity.layers.ElytraLayer;
+import net.minecraft.client.renderer.entity.layers.WingsLayer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.layers.SpinAttackEffectLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import yesman.epicfight.api.animation.JointTransform;
@@ -38,15 +40,14 @@ import yesman.epicfight.client.renderer.patched.layer.EmptyLayer;
 import yesman.epicfight.client.renderer.patched.layer.PatchedItemInHandLayer;
 import yesman.epicfight.client.renderer.patched.layer.WearableItemLayer;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
-import yesman.epicfight.mixin.client.MixinLivingEntityRenderer;
 
-public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer, LocalPlayerPatch, PlayerModel<LocalPlayer>, LivingEntityRenderer<LocalPlayer, PlayerModel<LocalPlayer>>, HumanoidMesh> {
+public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer, LocalPlayerPatch, PlayerModel, LivingEntityRenderer<LocalPlayer, ?, ?>, HumanoidMesh> {
 	public FirstPersonRenderer(EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(context, entityType);
 		
-		this.addPatchedLayer(ElytraLayer.class, new EmptyLayer<>());
+		this.addPatchedLayer(WingsLayer.class, new EmptyLayer<>());
 		this.addPatchedLayer(PlayerItemInHandLayer.class, new PatchedItemInHandLayer<>());
-		this.addPatchedLayer(HumanoidArmorLayer.class, new WearableItemLayer<>(Meshes.BIPED, true, context.getModelManager()));
+		this.addPatchedLayer(HumanoidArmorLayer.class, new WearableItemLayer<>(Meshes.BIPED, true, context));
 		this.addPatchedLayer(CustomHeadLayer.class, new EmptyLayer<>());
 		this.addPatchedLayer(ArrowLayer.class, new EmptyLayer<>());
 		this.addPatchedLayer(BeeStingerLayer.class, new EmptyLayer<>());
@@ -55,7 +56,9 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 	}
 	
 	@Override
-	public void render(LocalPlayer entity, LocalPlayerPatch localPlayerPatch, LivingEntityRenderer<LocalPlayer, PlayerModel<LocalPlayer>> renderer, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTick) {
+	public void render(LocalPlayer entity, LocalPlayerPatch localPlayerPatch, LivingEntityRenderer<LocalPlayer, ?, ?> renderer, EntityRenderState entityRenderState, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTick) {
+		LivingEntityRenderState renderState = (LivingEntityRenderState)entityRenderState;
+		
 		if (localPlayerPatch.getPovSettings() != null) {
 			Pose pose = localPlayerPatch.getFirstPersonLayer().getEnabledPose(localPlayerPatch, true, partialTick);
 			OpenMatrix4f[] poses = localPlayerPatch.getArmature().getPoseAsTransformMatrix(pose, false);
@@ -106,12 +109,12 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 					}
 				}
 				
-				RenderType renderType = RenderType.entityCutoutNoCull(entity.getSkin().texture());
+				RenderType renderType = RenderTypes.entityCutout(entity.getSkin().body().texturePath());
 				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, localPlayerPatch.getArmature(), poses);
 			}
 			
 			if (!entity.isSpectator()) {
-				this.renderLayer(renderer, localPlayerPatch, entity, poses, buffer, poseStack, packedLight, partialTick);
+				this.renderLayer(renderer, localPlayerPatch, entity, renderState, poses, buffer, poseStack, packedLight, partialTick);
 			}
 			
 			poseStack.popPose();
@@ -145,12 +148,12 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 				mesh.leftSleeve.setHidden(false);
 				mesh.rightSleeve.setHidden(false);
 				
-				RenderType renderType = RenderType.entityCutoutNoCull(entity.getSkin().texture());
+				RenderType renderType = RenderTypes.entityCutout(entity.getSkin().body().texturePath());
 				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, localPlayerPatch.getArmature(), poses);
 			}
 			
 			if (!entity.isSpectator()) {
-				this.renderLayer(renderer, localPlayerPatch, entity, poses, buffer, poseStack, packedLight, partialTick);
+				this.renderLayer(renderer, localPlayerPatch, entity, renderState, poses, buffer, poseStack, packedLight, partialTick);
 			}
 			
 			poseStack.popPose();
@@ -158,32 +161,27 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 	}
 	
 	@Override
-	protected void renderLayer(LivingEntityRenderer<LocalPlayer, PlayerModel<LocalPlayer>> renderer, LocalPlayerPatch entitypatch, LocalPlayer entity, OpenMatrix4f[] poses, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
-		Iterator<RenderLayer<LocalPlayer, PlayerModel<LocalPlayer>>> iter = renderer.layers.iterator();
-		
-		float f = MathUtils.lerpBetween(entity.yBodyRotO, entity.yBodyRot, partialTicks);
-        float f1 = MathUtils.lerpBetween(entity.yHeadRotO, entity.yHeadRot, partialTicks);
-        float f2 = f1 - f;
-		float f7 = entity.getViewXRot(partialTicks);
-		float bob = ((MixinLivingEntityRenderer)renderer).invokeGetBob(entity, partialTicks);
-		
-		while (iter.hasNext()) {
-			RenderLayer<LocalPlayer, PlayerModel<LocalPlayer>> layer = iter.next();
+	protected void renderLayer(LivingEntityRenderer<LocalPlayer, ?, ?> renderer, LocalPlayerPatch entitypatch, LocalPlayer entity, LivingEntityRenderState renderState, OpenMatrix4f[] poses, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
+		float f2 = renderState.yRot;
+		float f7 = renderState.xRot;
+		float bob = renderState.ageInTicks;
+
+		for (RenderLayer<?, ?> layer : renderer.layers) {
 			Class<?> rendererClass = layer.getClass();
-			
+
 			if (rendererClass.isAnonymousClass()) {
 				rendererClass = rendererClass.getSuperclass();
 			}
-			
+
 			if (this.patchedLayers.containsKey(rendererClass)) {
-				this.patchedLayers.get(rendererClass).renderLayer(entity, entitypatch, layer, poseStack, buffer, packedLight, poses, bob, f2, f7, partialTicks);
+				this.patchedLayers.get(rendererClass).renderLayer(entity, entitypatch, layer, renderState, poseStack, buffer, packedLight, poses, bob, f2, f7, partialTicks);
 			}
 		}
 	}
-	
+
 	@Override
 	public AssetAccessor<HumanoidMesh> getMeshProvider(LocalPlayerPatch entitypatch) {
-		return PlayerSkin.Model.WIDE.equals(entitypatch.getOriginal().getSkin().model()) ? Meshes.BIPED : Meshes.ALEX;
+		return PlayerModelType.WIDE == entitypatch.getOriginal().getSkin().model() ? Meshes.BIPED : Meshes.ALEX;
 	}
 	
 	@Override
@@ -192,7 +190,7 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 	}
 	
 	@Override
-	protected void prepareModel(HumanoidMesh mesh, LocalPlayer entity, LocalPlayerPatch entitypatch, LivingEntityRenderer<LocalPlayer, PlayerModel<LocalPlayer>> renderer) {
+	protected void prepareModel(HumanoidMesh mesh, LocalPlayer entity, LocalPlayerPatch entitypatch, LivingEntityRenderer<LocalPlayer, ?, ?> renderer) {
 		mesh.initialize();
 		mesh.head.setHidden(true);
 		mesh.hat.setHidden(true);

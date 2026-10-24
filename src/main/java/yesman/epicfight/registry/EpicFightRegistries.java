@@ -1,5 +1,6 @@
 package yesman.epicfight.registry;
 
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -43,8 +44,8 @@ public abstract class EpicFightRegistries {
 
     // Deferred Registries
     public static final List<DeferredRegister<?>> DEFERRED_REGISTRIES = List.of(
-        EpicFightArmorMaterials.REGISTRY,
         EpicFightAttachmentTypes.REGISTRY,
+        EpicFightGameRules.REGISTRY,
         EpicFightAttributes.REGISTRY,
         EpicFightBlockEntities.REGISTRY,
         EpicFightBlocks.REGISTRY,

@@ -14,7 +14,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -47,10 +47,10 @@ public class LevelUtil {
 	 * {@link LivingEntity#calculateFallDamage} Calculates the fall damage instead of the vanilla method because it's protected
 	 */
 	public static int calculateLivingEntityFallDamage(LivingEntity livingEntity, float distance, float modifier) {
-		if (livingEntity.getType().is(EntityTypeTags.FALL_DAMAGE_IMMUNE)) {
+		if (livingEntity.getType().builtInRegistryHolder().is(EntityTypeTags.FALL_DAMAGE_IMMUNE)) {
 			return 0;
 		} else {
-			MobEffectInstance mobeffectinstance = livingEntity.getEffect(MobEffects.JUMP);
+			MobEffectInstance mobeffectinstance = livingEntity.getEffect(MobEffects.JUMP_BOOST);
 			float f = mobeffectinstance == null ? 0.0F : (float) (mobeffectinstance.getAmplifier() + 1);
 			return Mth.ceil((distance - 3.0F - f) * modifier);
 		}
@@ -68,7 +68,7 @@ public class LevelUtil {
 		int zFrom = (int)Math.min(Math.floor(center.z), edgeZ);
 		int zTo = (int)Math.max(Math.floor(center.z), edgeZ);
 		List<Vec2i> affectedBlocks = Lists.newArrayList();
-		List<Entity> entitiesInArea = level.isClientSide ? null : level.getEntities(null, new AABB(xFrom, center.y - length, zFrom, xTo, center.y + length, zTo));
+		List<Entity> entitiesInArea = level.isClientSide() ? null : level.getEntities(null, new AABB(xFrom, center.y - length, zFrom, xTo, center.y + length, zTo));
 		
 		double bounceExponentCoef = Math.min(1.0D / (length * length), 0.1D);
 		
@@ -115,8 +115,8 @@ public class LevelUtil {
 					break;
 				}
 			} else {
-				if (!level.isClientSide && aboveState.getCollisionShape(level, aboveBp, CollisionContext.empty()).isEmpty() && level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
-					level.destroyBlock(aboveBp, level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS));
+				if (level instanceof ServerLevel serverLevel && aboveState.getCollisionShape(level, aboveBp, CollisionContext.empty()).isEmpty() && serverLevel.getGameRules().get(GameRules.MOB_GRIEFING)) {
+					level.destroyBlock(aboveBp, serverLevel.getGameRules().get(GameRules.BLOCK_DROPS));
 				}
 			}
 			
@@ -141,7 +141,7 @@ public class LevelUtil {
 				continue;
 			}
 			
-			if (level.isClientSide) {
+			if (level.isClientSide()) {
                 if (!ClientConfig.groundSlams) {
                     continue;
                 }
@@ -153,12 +153,12 @@ public class LevelUtil {
 				Vec3 rotAxis = IMPACT_DIRECTION.cross(centerToBlock).normalize();
 				Vector3f axis = new Vector3f((float)rotAxis.x, (float)rotAxis.y, (float)rotAxis.z);
 				Vector3f translator = new Vector3f(0, Math.max(0.0F, (float)(distance / length) - 0.5F) * 0.5F, 0);
-				Quaternionf rotator = QuaternionUtils.rotationDegrees(axis, (float)(distance / length) * 15.0F + level.random.nextFloat() * 10.0F - 5.0F);
+				Quaternionf rotator = QuaternionUtils.rotationDegrees(axis, (float)(distance / length) * 15.0F + level.getRandom().nextFloat() * 10.0F - 5.0F);
 				
-				rotator.mul(QuaternionUtils.XP.rotationDegrees(level.random.nextFloat() * 15.0F - 7.5F));
-				rotator.mul(QuaternionUtils.YP.rotationDegrees(level.random.nextFloat() * 40.0F - 20.0F));
-				rotator.mul(QuaternionUtils.ZP.rotationDegrees(level.random.nextFloat() * 15.0F - 7.5F));
-				int lifeTime = 30 + level.random.nextInt((int)length * 80);
+				rotator.mul(QuaternionUtils.XP.rotationDegrees(level.getRandom().nextFloat() * 15.0F - 7.5F));
+				rotator.mul(QuaternionUtils.YP.rotationDegrees(level.getRandom().nextFloat() * 40.0F - 20.0F));
+				rotator.mul(QuaternionUtils.ZP.rotationDegrees(level.getRandom().nextFloat() * 15.0F - 7.5F));
+				int lifeTime = 30 + level.getRandom().nextInt((int)length * 80);
 				double bouncing = Math.pow(distance, 2) * bounceExponentCoef;
 
 				FractureBlockState fractureBlockState = FractureBlock.getDefaultFractureBlockState(null);
@@ -189,7 +189,7 @@ public class LevelUtil {
 		for (int i = 0; i < 4; i += level.getRandom().nextInt(4)) {
 			double x = bp.getX() + (i % 2);
 			double z = bp.getZ() + 1 - (i % 2);
-            level.addParticle(new BlockParticleOption(EpicFightParticles.GROUND_FRACTURE.get(), bs).setPos(bp.above()), x, bp.getY() + 1, z, 0.0, 0.0, 0.0);
+            level.addParticle(new BlockParticleOption(EpicFightParticles.GROUND_FRACTURE.get(), bs, bp.above()), x, bp.getY() + 1, z, 0.0, 0.0, 0.0);
 		}
 	}
 	
@@ -224,8 +224,8 @@ public class LevelUtil {
 		
 		radius = Math.max(0.5F, radius);
 		
-		if (!level.isClientSide) {
-			EpicFightNetworkManager.sendToAllPlayerTrackingThisChunkWithSelf(new SPCreateTerrainFracture(center, radius, noSound, noParticle), (ServerLevel)level, new ChunkPos(blockPos));
+		if (!level.isClientSide()) {
+			EpicFightNetworkManager.sendToAllPlayerTrackingThisChunkWithSelf(new SPCreateTerrainFracture(center, radius, noSound, noParticle), (ServerLevel)level, ChunkPos.containing(blockPos));
 		}
 		
 		int xFrom = (int)Math.floor(center.x - radius);
@@ -241,7 +241,7 @@ public class LevelUtil {
 			}
 		}
 		
-		if (!level.isClientSide && hurtEntities) {
+		if (!level.isClientSide() && hurtEntities) {
 			for (Entity entity : entityBeingHit) {
 				if (!entity.is(caster)) {
 					double damageInflict = 1.0D - ((entity.position().distanceTo(center) - radius * 0.5D) / radius);

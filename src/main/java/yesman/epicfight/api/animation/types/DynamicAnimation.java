@@ -2,7 +2,7 @@ package yesman.epicfight.api.animation.types;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
@@ -138,7 +138,7 @@ public abstract class DynamicAnimation {
         return false;
     }
 
-    public ResourceLocation getRegistryName() {
+    public Identifier getRegistryName() {
         return EpicFightMod.identifier("");
     }
 

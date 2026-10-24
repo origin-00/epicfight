@@ -1,20 +1,16 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.util.RandomSource;
 import java.util.List;
 import java.util.Optional;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
-import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
@@ -90,15 +86,7 @@ public class AnimationTrailParticle extends AbstractTrailParticle<LivingEntityPa
 		this.rCol = Math.max(this.trailInfo.rCol(), 0.0F);
 		this.gCol = Math.max(this.trailInfo.gCol(), 0.0F);
 		this.bCol = Math.max(this.trailInfo.bCol(), 0.0F);
-		
-		if (this.trailInfo.texturePath() != null) {
-			TextureManager texturemanager = Minecraft.getInstance().getTextureManager();
-			AbstractTexture abstracttexture = texturemanager.getTexture(this.trailInfo.texturePath());
-		    
-			RenderSystem.bindTexture(abstracttexture.getId());
-			RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-		    RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-		}
+
 	}
 	
 	@Deprecated /** This constructor is only for {@link ModelPreviewer} **/
@@ -131,15 +119,7 @@ public class AnimationTrailParticle extends AbstractTrailParticle<LivingEntityPa
 		this.rCol = Math.max(this.trailInfo.rCol(), 0.0F);
 		this.gCol = Math.max(this.trailInfo.gCol(), 0.0F);
 		this.bCol = Math.max(this.trailInfo.bCol(), 0.0F);
-		
-		if (this.trailInfo.texturePath() != null) {
-			TextureManager texturemanager = Minecraft.getInstance().getTextureManager();
-			AbstractTexture abstracttexture = texturemanager.getTexture(this.trailInfo.texturePath());
-		    
-			RenderSystem.bindTexture(abstracttexture.getId());
-			RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-		    RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-		}
+
 	}
 	
 	@Override
@@ -266,7 +246,7 @@ public class AnimationTrailParticle extends AbstractTrailParticle<LivingEntityPa
 	
 	public static class Provider implements ParticleProvider<SimpleParticleType> {
 		@Override
-		public Particle createParticle(SimpleParticleType typeIn, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+		public Particle createParticle(SimpleParticleType typeIn, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
 			int eid = (int)Double.doubleToRawLongBits(x);
 			int animid = (int)Double.doubleToRawLongBits(z);
 			int jointId = (int)Double.doubleToRawLongBits(xSpeed);

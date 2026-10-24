@@ -27,7 +27,7 @@ public class StaminaPillagerSkill extends PassiveSkill {
     @Override
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
-        this.regenRate = parameters.getFloat("regen_rate");
+        this.regenRate = parameters.getFloatOr("regen_rate", 0.0F);
     }
 
     @Override

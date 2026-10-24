@@ -14,7 +14,7 @@ import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.mesh.HumanoidMesh;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 
-public class PWitherSkeletonMinionRenderer extends PHumanoidRenderer<PathfinderMob, HumanoidMobPatch<PathfinderMob>, HumanoidModel<PathfinderMob>, HumanoidMobRenderer<PathfinderMob, HumanoidModel<PathfinderMob>>, HumanoidMesh> {
+public class PWitherSkeletonMinionRenderer extends PHumanoidRenderer<PathfinderMob, HumanoidMobPatch<PathfinderMob>, HumanoidModel<?>, HumanoidMobRenderer<PathfinderMob, ?, ?>, HumanoidMesh> {
 	public PWitherSkeletonMinionRenderer(EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(Meshes.SKELETON, context, entityType);
 	}

@@ -39,14 +39,15 @@ public class FractureBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected ImmutableMap<BlockState, VoxelShape> getShapeForEachState(Function<BlockState, VoxelShape> p_152459_) {
-        return this.stateDefinition.getPossibleStates().stream().collect(ImmutableMap.toImmutableMap(Function.identity(), p_152459_));
+    protected Function<BlockState, VoxelShape> getShapeForEachState(Function<BlockState, VoxelShape> p_152459_) {
+        ImmutableMap<BlockState, VoxelShape> shapes = this.stateDefinition.getPossibleStates().stream().collect(ImmutableMap.toImmutableMap(Function.identity(), p_152459_));
+        return shapes::get;
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> blockEntityType) {
-        return level.isClientSide ? createTickerHelper(blockEntityType, EpicFightBlockEntities.FRACTURE.get(), FractureBlockEntity::lifeTimeTick) : null;
+        return level.isClientSide() ? createTickerHelper(blockEntityType, EpicFightBlockEntities.FRACTURE.get(), FractureBlockEntity::lifeTimeTick) : null;
     }
 
     @Override

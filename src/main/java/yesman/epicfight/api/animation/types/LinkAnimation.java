@@ -1,6 +1,6 @@
 package yesman.epicfight.api.animation.types;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.*;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
@@ -212,7 +212,7 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 	}
 
 	@Override
-	public ResourceLocation registryName() {
+	public Identifier registryName() {
 		return null;
 	}
 

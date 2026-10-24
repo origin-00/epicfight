@@ -1,11 +1,12 @@
 package yesman.epicfight.client.gui.screen.overlay;
 
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class OverlayManager {
 	private Map<String, OverlayManager.Overlay> overlays = Maps.newHashMap();
@@ -13,9 +14,9 @@ public class OverlayManager {
 	private double originalGamma;
 	private boolean isGammaChanged;
 
-	public void renderTick(int xResolution, int yResolution) {
+	public void renderTick(GuiGraphicsExtractor guiGraphics, int xResolution, int yResolution) {
 		this.isGammaChanged = false;
-		this.overlays.entrySet().removeIf((entry) -> entry.getValue().render(xResolution, yResolution));
+		this.overlays.entrySet().removeIf((entry) -> entry.getValue().render(guiGraphics, xResolution, yResolution));
 	}
 	
 	public void remove(String overlayId) {
@@ -40,7 +41,7 @@ public class OverlayManager {
 		return this.isGammaChanged;
 	}
 
-	public void blendingTexture(String overlayId, ResourceLocation texture) {
+	public void blendingTexture(String overlayId, Identifier texture) {
 		if (Minecraft.renderNames()) {
 			this.overlays.put(overlayId, new BlendingTextureOverlay(texture));
 		}
@@ -53,6 +54,7 @@ public class OverlayManager {
 	}
 	
 	public abstract static class Overlay {
-		public abstract boolean render(int xResolution, int yResolution);
+		/// @return whether the overlay is finished and should be removed
+		public abstract boolean render(GuiGraphicsExtractor guiGraphics, int xResolution, int yResolution);
 	}
 }

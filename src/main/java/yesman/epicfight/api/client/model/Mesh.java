@@ -1,5 +1,9 @@
 package yesman.epicfight.api.client.model;
 
+import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.util.ARGB;
+import net.minecraft.client.model.geom.builders.UVPair;
+import net.neoforged.neoforge.client.model.quad.BakedNormals;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
@@ -9,22 +13,19 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-import org.lwjgl.system.MemoryStack;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.client.model.IQuadTransformer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.client.renderer.EpicFightRenderTypes;
+import yesman.epicfight.client.renderer.submit.RecordingBufferSource;
 
 public interface Mesh {
 	
@@ -38,10 +39,10 @@ public interface Mesh {
 	
 	/* Universal method */
 	default void draw(PoseStack poseStack, MultiBufferSource bufferSources, RenderType renderType, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, @Nullable Armature armature, OpenMatrix4f[] poses) {
-		this.drawPosed(poseStack, bufferSources.getBuffer(EpicFightRenderTypes.getTriangulated(renderType)), drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
+		RecordingBufferSource.drawTriangles(bufferSources, renderType, buffer -> this.drawPosed(poseStack, buffer, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses));
 	}
 	
-	public static record RenderProperties(ResourceLocation customTexturePath, Vec3f customColor, boolean isTransparent) {
+	public static record RenderProperties(Identifier customTexturePath, Vec3f customColor, boolean isTransparent) {
 		public static class Builder {
 			protected String customTexturePath;
 			protected Vec3f customColor = new Vec3f();
@@ -65,7 +66,7 @@ public interface Mesh {
 			}
 			
 			public RenderProperties build() {
-				return new RenderProperties(this.customTexturePath == null ? null : ResourceLocation.parse(this.customTexturePath), this.customColor, this.isTransparent);
+				return new RenderProperties(this.customTexturePath == null ? null : Identifier.parse(this.customTexturePath), this.customColor, this.isTransparent);
 			}
 			
 			public static RenderProperties.Builder create() {
@@ -128,79 +129,42 @@ public interface Mesh {
 	    default void putBulkData(PoseStack.Pose pose, BakedQuad bakedQuad, VertexConsumer vertexConsumer, float red, float green, float blue, float alpha, int packedLight, int packedOverlay, boolean readExistingColor) {
 	    	putBulkDataWithDrawingFunction(this, vertexConsumer, pose, bakedQuad, new float[] { 1.0F, 1.0F, 1.0F, 1.0F }, red, green, blue, alpha, new int[] { packedLight, packedLight, packedLight, packedLight }, packedOverlay, readExistingColor);
 	    }
-	    
-		static void putBulkDataWithDrawingFunction(DrawingFunction drawingFunction, VertexConsumer builder, PoseStack.Pose pPoseEntry, BakedQuad pQuad, float[] pColorMuls, float pRed, float pGreen, float pBlue, float alpha, int[] pCombinedLights, int pCombinedOverlay, boolean pMulColor) {
-			float[] afloat = new float[] { pColorMuls[0], pColorMuls[1], pColorMuls[2], pColorMuls[3] };
-			int[] aint1 = pQuad.getVertices();
-			Vec3i vec3i = pQuad.getDirection().getNormal();
-			Matrix4f matrix4f = pPoseEntry.pose();
-			Vector3f vector3f = pPoseEntry.normal().transform(new Vector3f((float) vec3i.getX(), (float) vec3i.getY(), (float) vec3i.getZ()));
-			int j = aint1.length / 8;
 
-			try (MemoryStack memorystack = MemoryStack.stackPush()) {
-				ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());
-				IntBuffer intbuffer = bytebuffer.asIntBuffer();
+	    /// Writes a baked quad through a drawing function, like vanilla `VertexConsumer#putBakedQuad`.
+	    ///
+	    /// Since 1.21.5 a [BakedQuad] is a record of positions, packed UVs and per-vertex baked
+	    /// normals/colors rather than packed vertex data, so the attributes are read directly.
+		static void putBulkDataWithDrawingFunction(DrawingFunction drawingFunction, VertexConsumer builder, PoseStack.Pose pose, BakedQuad quad, float[] colorMuls, float red, float green, float blue, float alpha, int[] combinedLights, int combinedOverlay, boolean mulColor) {
+			Matrix4f matrix = pose.pose();
+			Vector3f faceNormal = pose.transformNormal(quad.direction().getUnitVec3f(), new Vector3f());
+			int lightEmission = quad.materialInfo().lightEmission();
 
-				for (int k = 0; k < j; ++k) {
-					intbuffer.clear();
-					intbuffer.put(aint1, k * 8, 8);
-					float f = bytebuffer.getFloat(0);
-					float f1 = bytebuffer.getFloat(4);
-					float f2 = bytebuffer.getFloat(8);
-					float f3;
-					float f4;
-					float f5;
-					
-					if (pMulColor) {
-						float f6 = (float) (bytebuffer.get(12) & 255) / 255.0F;
-						float f7 = (float) (bytebuffer.get(13) & 255) / 255.0F;
-						float f8 = (float) (bytebuffer.get(14) & 255) / 255.0F;
-						f3 = f6 * afloat[k] * pRed;
-						f4 = f7 * afloat[k] * pGreen;
-						f5 = f8 * afloat[k] * pBlue;
-					} else {
-						f3 = afloat[k] * pRed;
-						f4 = afloat[k] * pGreen;
-						f5 = afloat[k] * pBlue;
-					}
+			for (int vertex = 0; vertex < BakedQuad.VERTEX_COUNT; vertex++) {
+				Vector3f position = matrix.transformPosition(quad.position(vertex), new Vector3f());
+				long packedUv = quad.packedUV(vertex);
+				float r, g, b;
 
-					int l = applyBakedLighting(pCombinedLights[k], bytebuffer);
-					float f9 = bytebuffer.getFloat(16);
-					float f10 = bytebuffer.getFloat(20);
-					Vector4f vector4f = matrix4f.transform(new Vector4f(f, f1, f2, 1.0F));
-					applyBakedNormals(vector3f, bytebuffer, pPoseEntry.normal());
-					float vertexAlpha = pMulColor ? alpha * (float) (bytebuffer.get(15) & 255) / 255.0F : alpha;
-					drawingFunction.draw(builder, vector4f.x(), vector4f.y(), vector4f.z(), vector3f.x(), vector3f.y(), vector3f.z(), l, f3, f4, f5, vertexAlpha, f9, f10, pCombinedOverlay);
+				if (mulColor) {
+					int bakedColor = quad.bakedColors().color(vertex);
+					r = ARGB.redFloat(bakedColor) * colorMuls[vertex] * red;
+					g = ARGB.greenFloat(bakedColor) * colorMuls[vertex] * green;
+					b = ARGB.blueFloat(bakedColor) * colorMuls[vertex] * blue;
+				} else {
+					r = colorMuls[vertex] * red;
+					g = colorMuls[vertex] * green;
+					b = colorMuls[vertex] * blue;
 				}
+
+				Vector3f normal = faceNormal;
+
+				int bakedNormal = quad.bakedNormals().normal(vertex);
+				
+				if (!BakedNormals.isUnspecified(bakedNormal)) {
+					normal = pose.transformNormal(BakedNormals.unpack(bakedNormal, null), new Vector3f());
+				}
+
+				drawingFunction.draw(builder, position.x(), position.y(), position.z(), normal.x(), normal.y(), normal.z(), LightCoordsUtil.lightCoordsWithEmission(combinedLights[vertex], lightEmission), r, g, b, alpha, UVPair.unpackU(packedUv), UVPair.unpackV(packedUv), combinedOverlay);
 			}
 		}
-		
-		/**
-		 * Code copy from {@link IForgeVertexConsumer#applyBakedLighting}
-		 */
-		static int applyBakedLighting(int packedLight, ByteBuffer data) {
-	        int bl = packedLight & 0xFFFF;
-	        int sl = (packedLight >> 16) & 0xFFFF;
-	        int offset = IQuadTransformer.UV2 * 4; // int offset for vertex 0 * 4 bytes per int
-	        int blBaked = Short.toUnsignedInt(data.getShort(offset));
-	        int slBaked = Short.toUnsignedInt(data.getShort(offset + 2));
-	        bl = Math.max(bl, blBaked);
-	        sl = Math.max(sl, slBaked);
-	        return bl | (sl << 16);
-	    }
-		
-		/**
-		 * Code copy from {@link IForgeVertexConsumer#applyBakedNormals}
-		 */
-	    static void applyBakedNormals(Vector3f generated, ByteBuffer data, Matrix3f normalTransform) {
-	        byte nx = data.get(28);
-	        byte ny = data.get(29);
-	        byte nz = data.get(30);
-	        if (nx != 0 || ny != 0 || nz != 0)
-	        {
-	            generated.set(nx / 127f, ny / 127f, nz / 127f);
-	            generated.mul(normalTransform);
-	        }
-	    }
 	}
 }

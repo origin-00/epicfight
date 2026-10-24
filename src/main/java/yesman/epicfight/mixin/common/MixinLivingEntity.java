@@ -1,5 +1,6 @@
 package yesman.epicfight.mixin.common;
 
+import net.minecraft.server.level.ServerLevel;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.tags.DamageTypeTags;
@@ -62,8 +63,9 @@ public abstract class MixinLivingEntity {
 		});
 	}
 	
-	@Inject(at = @At(value = "TAIL"), method = "blockUsingShield(Lnet/minecraft/world/entity/LivingEntity;)V", cancellable = true)
-	private void epicfight$blockUsingShield(LivingEntity p_21200_, CallbackInfo info) {
+	/// Shield blocking became item blocking (BlocksAttacks component) in 1.21.5.
+	@Inject(at = @At(value = "TAIL"), method = "blockUsingItem(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)V", cancellable = true)
+	private void epicfight$blockUsingShield(ServerLevel level, LivingEntity p_21200_, CallbackInfo info) {
 		LivingEntity self = (LivingEntity)((Object)this);
 		LivingEntityPatch<?> opponentEntitypatch = EpicFightCapabilities.getEntityPatch(p_21200_, LivingEntityPatch.class);
 		LivingEntityPatch<?> selfEntitypatch = EpicFightCapabilities.getEntityPatch(self, LivingEntityPatch.class);
@@ -77,8 +79,8 @@ public abstract class MixinLivingEntity {
 		}
 	}
 	
-	@Inject(at = @At(value = "RETURN"), method = "hurt", cancellable = true)
-	private void epicfight$hurt(DamageSource damagesource, float amount, CallbackInfoReturnable<Boolean> info) {
+	@Inject(at = @At(value = "RETURN"), method = "hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z", cancellable = true)
+	private void epicfight$hurt(ServerLevel level, DamageSource damagesource, float amount, CallbackInfoReturnable<Boolean> info) {
 		LivingEntity self = (LivingEntity)((Object)this);
 		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(damagesource.getEntity(), LivingEntityPatch.class);
 		

@@ -1,6 +1,6 @@
 package yesman.epicfight.client.renderer.patched.entity;
 
-import net.minecraft.client.model.RavagerModel;
+import net.minecraft.client.model.monster.ravager.RavagerModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RavagerRenderer;
 import net.minecraft.world.entity.EntityType;

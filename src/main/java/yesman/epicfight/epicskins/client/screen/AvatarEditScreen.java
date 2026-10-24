@@ -1,10 +1,16 @@
 package yesman.epicfight.epicskins.client.screen;
 
+import org.jspecify.annotations.Nullable;
+import net.minecraft.core.ClientAsset;
+import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -12,10 +18,10 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -75,8 +81,6 @@ public class AvatarEditScreen extends Screen {
 		super(Component.translatable("gui.epicskins.skin_config"));
 		
 		this.parentScreen = screen;
-		this.minecraft = screen == null ? Minecraft.getInstance() : screen.getMinecraft();
-		this.font = this.minecraft.font;
 
 		this.saveButton = Button.builder(Component.translatable("gui.epicskins.button.save"), (button) -> {
 			this.popupResponseAwaiting();
@@ -138,9 +142,9 @@ public class AvatarEditScreen extends Screen {
 		this.mainModelPreviewer.enableZoomingCamera(false);
 		this.mainModelPreviewer.enableCameraMove(false);
 		this.mainModelPreviewer.setCameraTransform(-3.0D, 28.0F, 160.0F, 0.0F, 0.0F);
-		this.mainModelPreviewer.setFigureTexture(AuthenticationHelperImpl.getInstance().playerInfo().getSkin().texture());
+		this.mainModelPreviewer.setFigureTexture(AuthenticationHelperImpl.getInstance().playerInfo().getSkin().body().texturePath());
 		
-		if (PlayerSkin.Model.SLIM.equals(AuthenticationHelperImpl.getInstance().playerInfo().getSkin().model())) {
+		if (PlayerModelType.SLIM.equals(AuthenticationHelperImpl.getInstance().playerInfo().getSkin().model())) {
 			this.mainModelPreviewer.setMesh(Meshes.ALEX);
 		} else {
 			this.mainModelPreviewer.setMesh(Meshes.BIPED);
@@ -223,7 +227,7 @@ public class AvatarEditScreen extends Screen {
 
 		Consumer<Boolean> responder = (val) -> {
 			if (this.capeList != null) {
-				this.mainModelPreviewer.setCloakTexture(val ? AuthenticationHelperImpl.getInstance().playerInfo().getSkin().capeTexture() : this.capePopupBox._getValue().textureLocation());
+				this.mainModelPreviewer.setCloakTexture(val ? vanillaCapeTexture() : this.capePopupBox._getValue().textureLocation());
 				this.mainModelPreviewer.setCloakColor(val || !this.capePopupBox._getValue().useIntParam1() ? 0xFFFFFFFF : this.brightnessSlider.getColor());
 			}
 		};
@@ -237,7 +241,7 @@ public class AvatarEditScreen extends Screen {
 				this.mainModelPreviewer.initCloakInfo(
 					  (SoftBodyTranslatable)mesh
 					, cosmetic.useBoolParam1() && epicskinsInfo.useVanillaTexture()
-						? AuthenticationHelperImpl.getInstance().playerInfo().getSkin().capeTexture() : cosmetic.textureLocation()
+						? vanillaCapeTexture() : cosmetic.textureLocation()
 					, ClothSimulator.ClothObjectBuilder.create()
 						.parentJoint(Armatures.BIPED.get().torso)
 						.putAll(ClothColliderPresets.BIPED)
@@ -282,7 +286,7 @@ public class AvatarEditScreen extends Screen {
 				this.capeOptions.addComponentCurrentRow(this.brightnessSlider.relocateX(this.getRectangle(), this.capeOptions.nextStart(96)));
 			}
 
-			if (selectedCosmetic.useBoolParam1() && AuthenticationHelperImpl.getInstance().playerInfo().getSkin().capeTexture() != null) {
+			if (selectedCosmetic.useBoolParam1() && AuthenticationHelperImpl.getInstance().playerInfo().getSkin().cape() != null) {
 				this.capeOptions.newRow();
 				this.capeOptions.addComponentCurrentRow(new Static(this, this.capeOptions.nextStart(8), 80, 60, 15, HorizontalSizing.LEFT_WIDTH, null, "gui.epicskins.avatar.vanilla_texture"));
 				this.capeOptions.addComponentCurrentRow(this.useVanillTextureCheckBox.relocateX(this.getRectangle(), this.capeOptions.nextStart(8)));
@@ -316,7 +320,7 @@ public class AvatarEditScreen extends Screen {
 
 		if (!this.initialized) {
 			if (this.capePopupBox._getValue() != null && this.capePopupBox._getValue().useBoolParam1() && this.useVanillTextureCheckBox._getValue()) {
-				this.mainModelPreviewer.setCloakTexture(AuthenticationHelperImpl.getInstance().playerInfo().getSkin().capeTexture());
+				this.mainModelPreviewer.setCloakTexture(vanillaCapeTexture());
 			}
 
 			this.initialized = true;
@@ -336,9 +340,12 @@ public class AvatarEditScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		double mouseX = event.x();
+		double mouseY = event.y();
+		int button = event.button();
 		return this.getChildAt(mouseX, mouseY).filter((listener) -> {
-			return listener.mouseDragged(mouseX, mouseY, button, dx, dy);
+			return listener.mouseDragged(event, dx, dy);
 		}).isPresent();
 	}
 
@@ -566,9 +573,9 @@ public class AvatarEditScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		guiGraphics.drawCenteredString(this.font, this.title, 56, 15, 16777215);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+		guiGraphics.centeredText(this.font, this.title, 56, 15, GuiColors.text(16777215));
 	}
 
 	@Override
@@ -578,6 +585,9 @@ public class AvatarEditScreen extends Screen {
 	}
 
 	public class CapeList extends ContainerObjectSelectionList<CapeList.CosmeticsEntry> {
+		/// Row height: the list's default entry height is final since 1.21.9, so rows are added with it.
+		private int blockLength = 1;
+
 		private CosmeticBlock focused;
 
 		public CapeList(Minecraft pMinecraft, int pWidth, int pHeight, int pY0) {
@@ -585,11 +595,11 @@ public class AvatarEditScreen extends Screen {
 		}
 
 		@Override
-	    protected void renderListBackground(GuiGraphics guiGraphics) {
+	    protected void extractListBackground(GuiGraphicsExtractor guiGraphics) {
 	    }
 
 	    @Override
-	    protected void renderListSeparators(GuiGraphics guiGraphics) {
+	    protected void extractListSeparators(GuiGraphicsExtractor guiGraphics) {
 	    }
 
 		public Cosmetic getSelectedCloak() {
@@ -600,7 +610,7 @@ public class AvatarEditScreen extends Screen {
 			int idx = this.children().indexOf(this.getFocused());
 
 			if (idx > -1) {
-				this.setScrollAmount(this.itemHeight * idx);
+				this.setScrollAmount(this.blockLength * idx);
 			}
 		}
 
@@ -619,7 +629,7 @@ public class AvatarEditScreen extends Screen {
 				columns++;
 			}
 
-			this.itemHeight = blockLength;
+			this.blockLength = blockLength;
 			this.clearEntries();
 
 			int count = 0;
@@ -643,7 +653,7 @@ public class AvatarEditScreen extends Screen {
 				count++;
 
 				if (count == columns) {
-					this.addEntry(new CosmeticsEntry(builder.build()));
+					this.addEntry(new CosmeticsEntry(builder.build()), blockLength);
 					builder = ImmutableList.builder();
 					count = 0;
 					row++;
@@ -653,12 +663,12 @@ public class AvatarEditScreen extends Screen {
 			List<CosmeticBlock> list = builder.build();
 
 			if (!list.isEmpty()) {
-				this.addEntry(new CosmeticsEntry(list));
+				this.addEntry(new CosmeticsEntry(list), blockLength);
 			}
 		}
 
 		@Override
-		protected int getScrollbarPosition() {
+		protected int scrollBarX() {
 			return this.getRight() - 6;
 		}
 
@@ -668,7 +678,7 @@ public class AvatarEditScreen extends Screen {
 		}
 
 		@Override
-		protected void clearEntries() {
+		public void clearEntries() {
 			this.destroy();
 			super.clearEntries();
 		}
@@ -678,8 +688,11 @@ public class AvatarEditScreen extends Screen {
 		}
 
 		@Override
-		public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
-			this.updateScrollingState(pMouseX, pMouseY, pButton);
+		public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+			double pMouseX = event.x();
+			double pMouseY = event.y();
+			int pButton = event.button();
+			this.updateScrolling(event);
 
 			if (!this.isMouseOver(pMouseX, pMouseY)) {
 				return false;
@@ -692,7 +705,7 @@ public class AvatarEditScreen extends Screen {
 						CapeList.CosmeticsEntry entry = this.children().get(i1);
 
 						for (CapeList.CosmeticBlock b : entry.cosmeticsBlock) {
-							if (b.mouseClicked(pMouseX, pMouseY, pButton)) {
+							if (b.mouseClicked(event, doubleClick)) {
 								CosmeticsEntry oEntry = this.getFocused();
 
 								if (entry != oEntry && oEntry instanceof ContainerEventHandler) {
@@ -717,7 +730,7 @@ public class AvatarEditScreen extends Screen {
 					}
 				}
 
-				return this.scrolling;
+				return this.isOverScrollbar(pMouseX, pMouseY);
 			}
 		}
 
@@ -739,10 +752,14 @@ public class AvatarEditScreen extends Screen {
 			}
 
 			@Override
-			public void render(GuiGraphics pGuiGraphics, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pHovering, float pPartialTick) {
+			public void extractContent(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, boolean pHovering, float pPartialTick) {
+				int pTop = this.getY();
+				int pLeft = this.getX();
+				int pWidth = this.getWidth();
+				int pHeight = this.getContentHeight();
 				for (CosmeticBlock cosmeticBlock : this.cosmeticsBlock) {
 					cosmeticBlock.setY(pTop);
-					cosmeticBlock.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+					cosmeticBlock.extractRenderState(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
 				}
 			}
 		}
@@ -758,7 +775,7 @@ public class AvatarEditScreen extends Screen {
 		}
 
 		public class CapeBlock extends CosmeticBlock {
-            private static final ResourceLocation LOCK_ICON = EpicFightMod.identifier("textures/gui/lock.png");
+            private static final Identifier LOCK_ICON = EpicFightMod.identifier("textures/gui/lock.png");
 			private final ModelPreviewer modelPreviewer;
 			private Cosmetic cosmetic;
 
@@ -784,24 +801,22 @@ public class AvatarEditScreen extends Screen {
 			}
 
 			@Override
-			protected void renderWidget(GuiGraphics guiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+			protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
 				if (this.isFocused()) {
 					this.modelPreviewer.setBackgroundClearColor(new Vec4f(0.5552F, 0.5552F, 0.5552F, 0.8F));
 				} else {
 					this.modelPreviewer.setBackgroundClearColor(new Vec4f(0.3552F, 0.3552F, 0.3552F, 0.3F));
 				}
 
-				RenderSystem.enableBlend();
-				this.modelPreviewer.render(guiGraphics, pMouseX, pMouseY, pPartialTick);
+				this.modelPreviewer.extractRenderState(guiGraphics, pMouseX, pMouseY, pPartialTick);
 
 				if (!this.cosmetic.unlocked()) {
 					guiGraphics.fill(this.modelPreviewer.getX(), this.modelPreviewer.getY(), this.modelPreviewer.getX() + this.modelPreviewer.getWidth(), this.modelPreviewer.getY() + this.modelPreviewer.getHeight(), 0xBB111111);
-					guiGraphics.blit(LOCK_ICON, this.modelPreviewer.getX() + this.modelPreviewer.getWidth() / 2 - 8, this.modelPreviewer.getY() + this.modelPreviewer.getHeight() / 2 - 8, 16, 16, 0, 0, 16, 16, 16, 16);
+					guiGraphics.blit(RenderPipelines.GUI_TEXTURED, LOCK_ICON, this.modelPreviewer.getX() + this.modelPreviewer.getWidth() / 2 - 8, this.modelPreviewer.getY() + this.modelPreviewer.getHeight() / 2 - 8, 0, 0, 16, 16, 16, 16, 16, 16);
 				}
 
-				RenderSystem.disableBlend();
 
-				guiGraphics.drawCenteredString(CapeList.this.minecraft.font, this.cosmetic.title(), this.getX() + this.width / 2, this.getY() + this.height - 12, -1);
+				guiGraphics.centeredText(CapeList.this.minecraft.font, this.cosmetic.title(), this.getX() + this.width / 2, this.getY() + this.height - 12, -1);
 			}
 
 			@Override
@@ -820,7 +835,7 @@ public class AvatarEditScreen extends Screen {
 						
 						AvatarEditScreen.this.mainModelPreviewer.initCloakInfo(
 							  this.modelPreviewer.getCloakMesh()
-							, useVanillaTexture ? AuthenticationHelperImpl.getInstance().playerInfo().getSkin().capeTexture() : this.modelPreviewer.getCloakTexture()
+							, useVanillaTexture ? vanillaCapeTexture() : this.modelPreviewer.getCloakTexture()
 							, ClothSimulator.ClothObjectBuilder.create()
 								.parentJoint(Armatures.BIPED.get().torso)
 								.putAll(ClothColliderPresets.BIPED)
@@ -879,5 +894,11 @@ public class AvatarEditScreen extends Screen {
 		public void accept(Consumer<T> consumer) {
 			this.components.forEach(consumer);
 		}
+	}
+
+	/// The player's own cape texture, or null. Skins hold client assets since 1.21.9.
+	private static @Nullable Identifier vanillaCapeTexture() {
+		ClientAsset.Texture cape = AuthenticationHelperImpl.getInstance().playerInfo().getSkin().cape();
+		return cape == null ? null : cape.texturePath();
 	}
 }

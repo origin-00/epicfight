@@ -9,7 +9,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.Input;
+import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
 import yesman.epicfight.api.client.input.action.InputAction;
 import yesman.epicfight.api.client.input.controller.ControllerBinding;
@@ -173,7 +173,7 @@ public final class InputManager {
     /// @return an immutable [PlayerInputState] representing the current input state.
     /// @see InputManager#setInputState
     @NotNull
-    public static PlayerInputState getInputState(@NotNull Input vanillaInput) {
+    public static PlayerInputState getInputState(@NotNull ClientInput vanillaInput) {
         final IEpicFightControllerMod controllerMod = getControllerModApi();
         if (controllerMod != null && controllerMod.getInputMode() == InputMode.CONTROLLER) {
             return controllerMod.getInputState();
@@ -202,7 +202,7 @@ public final class InputManager {
     public static void setInputState(@NotNull PlayerInputState inputState) {
         final LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
-            final Input input = player.input;
+            final ClientInput input = player.input;
             PlayerInputState.applyToVanillaInput(inputState, input);
         }
     }
@@ -265,7 +265,7 @@ public final class InputManager {
     private static boolean isPhysicalKeyDown(@NotNull KeyMapping keyMapping) {
         final InputConstants.Key key = keyMapping.getKey();
         final int keyValue = key.getValue();
-        final long windowPointer = Minecraft.getInstance().getWindow().getWindow();
+        final long windowPointer = Minecraft.getInstance().getWindow().handle();
 
         if (key.getType() == InputConstants.Type.KEYSYM) {
             return GLFW.glfwGetKey(windowPointer, keyValue) > 0;

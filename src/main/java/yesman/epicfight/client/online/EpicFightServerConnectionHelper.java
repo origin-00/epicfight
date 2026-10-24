@@ -1,6 +1,6 @@
 package yesman.epicfight.client.online;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import yesman.epicfight.EpicFight;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.utils.ParseUtil;

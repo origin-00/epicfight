@@ -1,6 +1,6 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -23,8 +23,15 @@ public class ResizableButton extends Button implements ResizableComponent {
 	}
 	
 	@Override
-	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+	public void _renderWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+	}
+	
+	/// Button is abstract since 1.21.9; draws as Button.Plain does.
+	@Override
+	protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		this.extractDefaultSprite(guiGraphics);
+		this.extractDefaultLabel(guiGraphics.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.NONE));
 	}
 	
 	/*******************************************************************

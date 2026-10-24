@@ -2,7 +2,7 @@ package yesman.epicfight.platform.neoforge.event;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
@@ -65,7 +65,7 @@ public final class NeoForgePlayerEvent {
                 event.setCanceled(true);
             }
 
-            if (itemCap.getUseAnimation(playerpatch) == UseAnim.BLOCK) {
+            if (itemCap.getUseAnimation(playerpatch) == ItemUseAnimation.BLOCK) {
                 event.setDuration(event.getItem().getUseDuration(event.getEntity()));
             }
         });

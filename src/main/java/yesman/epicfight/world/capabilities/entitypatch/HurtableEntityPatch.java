@@ -141,7 +141,7 @@ public abstract class HurtableEntityPatch<T extends LivingEntity> extends Entity
 		
 		if (power > 0.0D) {
 			this.original.hurtMarked = true;
-			this.original.hasImpulse = true;
+			this.original.needsSync = true;
 			Vec3 vec3 = this.original.getDeltaMovement();
 			Vec3 vec31 = (new Vec3(d1, 0.0D, d0)).normalize().scale(power);
 			this.original.setDeltaMovement(vec3.x / 2.0D - vec31.x, this.original.onGround() ? Math.min(0.4D, vec3.y / 2.0D) : vec3.y, vec3.z / 2.0D - vec31.z);

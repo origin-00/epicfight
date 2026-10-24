@@ -1,5 +1,8 @@
 package yesman.epicfight.client.online;
 
+import org.jspecify.annotations.Nullable;
+import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.core.ClientAsset;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -7,8 +10,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
-import net.minecraft.client.resources.PlayerSkin;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.Items;
@@ -30,7 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public record EpicSkins(Supplier<ResourceLocation> capeTexture, float r, float g, float b) {
+public record EpicSkins(Supplier<Identifier> capeTexture, float r, float g, float b) {
 	public static void initEpicSkins(AbstractClientPlayerPatch<?> playerpatch) {
 		if (EpicFightServerConnectionHelper.supported() && ClientConfig.enableCosmetics) {
 			EpicFightServerConnectionHelper.getPlayerSkinInfo(EpicFightSharedConstants.webServerDomain(), playerpatch.getOriginal().getUUID().toString().replace("-", ""), (response, exception) -> {
@@ -63,15 +66,15 @@ public record EpicSkins(Supplier<ResourceLocation> capeTexture, float r, float g
 				
 				if (cosmetics.containsKey(Slot.CAPE)) {
 					Cape cosmetic = cosmetics.get(Slot.CAPE);
-					Supplier<ResourceLocation> cloakTextureProvider = null;
+					Supplier<Identifier> cloakTextureProvider = null;
 					
 					if (cosmetic.useBoolParam1() && cosmetic.boolParam1()) {
-						cloakTextureProvider = () -> playerpatch.getOriginal().getSkin().capeTexture();
+						cloakTextureProvider = () -> capeTexture(playerpatch);
 					} else {
 						cloakTextureProvider = () -> cosmetic.textureLocation();
 					}
 					
-					final Supplier<ResourceLocation> fCloakTextureProvider = cloakTextureProvider;
+					final Supplier<Identifier> fCloakTextureProvider = cloakTextureProvider;
 					
 					RemoteAssets.getInstance().getRemoteMesh(cosmetic.seq(), cosmetic.fileLocation(), (mesh) -> {
 						SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.add(playerpatch);
@@ -83,7 +86,7 @@ public record EpicSkins(Supplier<ResourceLocation> capeTexture, float r, float g
 								.parentJoint(Armatures.BIPED.get().torso)
 								.putAll(ClothColliderPresets.BIPED)
 							, () -> {
-								  return playerpatch.getOriginal().getSkin().capeTexture() != null
+								  return capeTexture(playerpatch) != null
 										  && !playerpatch.getOriginal().isInvisible()
 										  && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
 										  && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
@@ -123,17 +126,23 @@ public record EpicSkins(Supplier<ResourceLocation> capeTexture, float r, float g
 			, Meshes.CAPE_DEFAULT
 			, ClothSimulator.ClothObjectBuilder.create()
 				.parentJoint(Armatures.BIPED.get().torso)
-				.putAll(PlayerSkin.Model.WIDE.equals(playerpatch.getOriginal().getSkin().model())
+				.putAll(PlayerModelType.WIDE.equals(playerpatch.getOriginal().getSkin().model())
 							? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM)
-			, () -> playerpatch.getOriginal().getSkin().capeTexture() != null
+			, () -> capeTexture(playerpatch) != null
 					&& !playerpatch.getOriginal().isInvisible()
 					&& playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
 					&& playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA
 		);
 		
-		playerpatch.setEpicSkinsInformation(new EpicSkins(() -> playerpatch.getOriginal().getSkin().capeTexture(), 1.0F, 1.0F, 1.0F));
+		playerpatch.setEpicSkinsInformation(new EpicSkins(() -> capeTexture(playerpatch), 1.0F, 1.0F, 1.0F));
 	}
 
+	/// The player's own cape texture, or null. Skins hold client assets since 1.21.9.
+	private static @Nullable Identifier capeTexture(AbstractClientPlayerPatch<?> playerpatch) {
+		ClientAsset.Texture cape = playerpatch.getOriginal().getSkin().cape();
+		return cape == null ? null : cape.texturePath();
+	}
+	
     public enum Slot {
 		CAPE
 	}

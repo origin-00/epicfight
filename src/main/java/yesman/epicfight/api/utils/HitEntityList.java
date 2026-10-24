@@ -1,5 +1,6 @@
 package yesman.epicfight.api.utils;
 
+import net.minecraft.server.level.ServerLevel;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
@@ -101,7 +102,7 @@ public class HitEntityList {
 						
 						for (WrappedGoal goal : targetingAi.getAvailableGoals()) {
 							if (goal.getGoal() instanceof NearestAttackableTargetGoal<?> targetGoal) {
-								if (targetGoal.targetType.isAssignableFrom(attacker.getOriginal().getClass()) && targetGoal.targetConditions.test(mob, attacker.getOriginal())) {
+								if (targetGoal.targetType.isAssignableFrom(attacker.getOriginal().getClass()) && mob.level() instanceof ServerLevel serverLevel && targetGoal.targetConditions.test(serverLevel, mob, attacker.getOriginal())) {
 									secondTargets.add(mob);
 									continue Outer;
 								}

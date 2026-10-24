@@ -5,7 +5,7 @@ import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -22,8 +22,8 @@ public class ShieldCapability extends WeaponCapability {
 	 * Avoid duplicated usage with guard skill
 	 */
 	@Override
-	public UseAnim getUseAnimation(LivingEntityPatch<?> entityPatch) {
-		return UseAnim.NONE;
+	public ItemUseAnimation getUseAnimation(LivingEntityPatch<?> entityPatch) {
+		return ItemUseAnimation.NONE;
 	}
 
 	@Override

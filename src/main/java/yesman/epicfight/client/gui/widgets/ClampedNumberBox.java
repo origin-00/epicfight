@@ -1,8 +1,10 @@
 package yesman.epicfight.client.gui.widgets;
 
+import net.minecraft.client.gui.components.AbstractScrollArea;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
@@ -25,6 +27,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ClampedNumberBox<T extends Number> extends AbstractContainerWidget implements AnchoredWidget, DataBoundWidget<T> {
+
+    /// AbstractContainerWidget is a scroll area since 1.21.9: the content always fits, so it never scrolls.
+    @Override
+    protected int contentHeight() {
+        return this.getHeight();
+    }
     private final T minValue;
     private final T maxValue;
     private final T increment;
@@ -61,7 +69,7 @@ public class ClampedNumberBox<T extends Number> extends AbstractContainerWidget 
         Comparator<T> comparator,
         BiFunction<T, T, T> sum
     ) {
-        super(0, 0, 0, 0, message);
+        super(0, 0, 0, 0, message, AbstractScrollArea.defaultSettings(0));
         this.x1 = x1;
         this.x2 = x2;
         this.y1 = y1;
@@ -160,10 +168,10 @@ public class ClampedNumberBox<T extends Number> extends AbstractContainerWidget 
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.increaseButton.render(guiGraphics, mouseX, mouseY, partialTick);
-        this.editBox.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
-        this.decreaseButton.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.increaseButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+        this.editBox.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTick);
+        this.decreaseButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
@@ -184,7 +192,7 @@ public class ClampedNumberBox<T extends Number> extends AbstractContainerWidget 
         }
 
         if (this.isFocused()) {
-            if (focusNavigationEvent instanceof FocusNavigationEvent.ArrowNavigation(ScreenDirection direction)) {
+            if (focusNavigationEvent instanceof FocusNavigationEvent.ArrowNavigation(ScreenDirection direction, ScreenRectangle previousFocus)) {
                 switch (direction) {
                     case LEFT -> {
                         return this.focusIndex > 0 ? ComponentPath.path(this, ComponentPath.leaf(this.children().get(--this.focusIndex))) : null;
@@ -203,7 +211,7 @@ public class ClampedNumberBox<T extends Number> extends AbstractContainerWidget 
                 }
             }
         } else {
-            if (focusNavigationEvent instanceof FocusNavigationEvent.ArrowNavigation(ScreenDirection direction)) {
+            if (focusNavigationEvent instanceof FocusNavigationEvent.ArrowNavigation(ScreenDirection direction, ScreenRectangle previousFocus)) {
                 this.focusIndex = switch (direction) {
                     case UP, DOWN -> this.focusIndex;
                     case LEFT -> this.children().size() - 1;
@@ -226,11 +234,14 @@ public class ClampedNumberBox<T extends Number> extends AbstractContainerWidget 
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         this.focusIndex = 0;
 
         for (GuiEventListener guieventlistener : this.children()) {
-            if (guieventlistener.mouseClicked(mouseX, mouseY, button)) {
+            if (guieventlistener.mouseClicked(event, doubleClick)) {
                 this.setFocused(guieventlistener);
 
                 if (button == 0) {

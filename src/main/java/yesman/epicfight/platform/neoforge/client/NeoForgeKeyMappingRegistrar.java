@@ -1,5 +1,6 @@
 package yesman.epicfight.platform.neoforge.client;
 
+import yesman.epicfight.client.input.EpicFightInputCategories;
 import net.minecraft.client.KeyMapping;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,6 +25,8 @@ public class NeoForgeKeyMappingRegistrar implements KeyMappingRegistrar {
 
     @ApiStatus.Internal
     public void onRegisterKeys(RegisterKeyMappingsEvent event) {
+        EpicFightInputCategories.ALL.forEach(event::registerCategory);
+
         for (KeyMapping keyMapping : pending) {
             event.register(keyMapping);
         }

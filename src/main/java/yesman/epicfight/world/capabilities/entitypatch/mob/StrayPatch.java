@@ -1,7 +1,7 @@
 package yesman.epicfight.world.capabilities.entitypatch.mob;
 
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.monster.skeleton.AbstractSkeleton;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import yesman.epicfight.registry.entries.EpicFightItems;

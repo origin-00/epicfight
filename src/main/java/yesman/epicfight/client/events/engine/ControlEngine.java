@@ -1,12 +1,13 @@
 package yesman.epicfight.client.events.engine;
 
+import net.minecraft.world.entity.Entity;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.player.Input;
+import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -72,7 +73,10 @@ public class ControlEngine implements IEventBasedEngine {
 	}
 
 	private final Set<CustomPacketPayload> packetsToSend = new HashSet<> ();
-	private final Minecraft minecraft;
+	/// The client instance. Not cached: since 26.1 this is constructed before the Minecraft instance exists.
+	private Minecraft minecraft() {
+	    return Minecraft.getInstance();
+	}
 	private LocalPlayer player;
 	private LocalPlayerPatch playerpatch;
 	private int weaponInnatePressCounter = 0;
@@ -116,10 +120,9 @@ public class ControlEngine implements IEventBasedEngine {
 	public Options options;
 
 	private ControlEngine() {
-		this.minecraft = Minecraft.getInstance();
 
-		if (this.minecraft != null) {
-			this.options = this.minecraft.options;
+		if (this.minecraft() != null) {
+			this.options = this.minecraft().options;
 		}
 	}
 
@@ -330,27 +333,27 @@ public class ControlEngine implements IEventBasedEngine {
     }
 
     private void maybeCorrectTPSPosition() {
-        if (this.minecraft.level == null || !EpicFightCameraAPI.getInstance().isTPSMode()) {
+        if (this.minecraft().level == null || !EpicFightCameraAPI.getInstance().isTPSMode()) {
             return;
         }
 
-        if (!InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_LCONTROL)) {
+        if (!InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_LCONTROL)) {
             return;
         }
 
-        if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_LEFT)) {
+        if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_LEFT)) {
             ClientConfig.cameraHorizontalLocation = Math.min(10, ClientConfig.cameraHorizontalLocation + 1);
         }
 
-        if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_RIGHT)) {
+        if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_RIGHT)) {
             ClientConfig.cameraHorizontalLocation = Math.max(-10, ClientConfig.cameraHorizontalLocation - 1);
         }
 
-        if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_UP)) {
+        if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_UP)) {
             ClientConfig.cameraVerticalLocation = Math.min(5, ClientConfig.cameraVerticalLocation + 1);
         }
 
-        if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_DOWN)) {
+        if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_DOWN)) {
             ClientConfig.cameraVerticalLocation = Math.max(-2, ClientConfig.cameraVerticalLocation - 1);
         }
 	}
@@ -361,22 +364,22 @@ public class ControlEngine implements IEventBasedEngine {
             return;
         }
 
-        this.minecraft.setScreen(new SkillEditScreen(this.player, playerSkills));
+        this.minecraft().setScreen(new SkillEditScreen(this.player, playerSkills));
     }
 
     private void openConfig() {
-    	this.minecraft.setScreen(new EpicFightSettingScreen(null, null));
+    	this.minecraft().setScreen(new EpicFightSettingScreen(null, null));
     }
 
     private void mayOpenEmoteWheel() {
-        if (this.minecraft.screen == null) {
-            this.minecraft.setScreen(new EmoteWheelScreen(this.playerpatch));
+        if (this.minecraft().screen == null) {
+            this.minecraft().setScreen(new EmoteWheelScreen(this.playerpatch));
         }
     }
 
     private void switchVanillaModelDebugging() {
         boolean flag = ClientEngine.getInstance().switchVanillaModelDebuggingMode();
-        this.minecraft.keyboardHandler.debugFeedbackTranslated(flag ? "debug.vanilla_model_debugging.on" : "debug.vanilla_model_debugging.off");
+        this.minecraft().keyboardHandler.debugFeedbackTranslated(flag ? "debug.vanilla_model_debugging.on" : "debug.vanilla_model_debugging.off");
     }
 
     private void maybeAttack() {
@@ -508,7 +511,7 @@ public class ControlEngine implements IEventBasedEngine {
     private void switchMode() {
         final boolean canSwitch = EpicFightGameRules.CAN_SWITCH_PLAYER_MODE.getRuleValue(this.playerpatch.getOriginal().level());
         if (!canSwitch) {
-            this.minecraft.gui.getChat().addMessage(Component.translatable("epicfight.messages.mode_switching_disabled").withStyle(ChatFormatting.RED));
+            this.minecraft().gui.getChat().addClientSystemMessage(Component.translatable("epicfight.messages.mode_switching_disabled").withStyle(ChatFormatting.RED));
             return;
         }
         this.playerpatch.toggleMode();
@@ -526,7 +529,7 @@ public class ControlEngine implements IEventBasedEngine {
         EpicFightCameraAPI.getInstance().setNextLockOnTarget(-1, true, true);
     }
 
-    private PlayerInputState inputTick(Input input) {
+    private PlayerInputState inputTick(ClientInput input) {
 		if (this.tickSinceLastJump > 0) this.tickSinceLastJump--;
 		PlayerInputState inputState = InputManager.getInputState(input);
 
@@ -629,9 +632,9 @@ public class ControlEngine implements IEventBasedEngine {
     @Deprecated(forRemoval = true)
     public static boolean isKeyDown(KeyMapping key) {
 		if (key.getKey().getType() == InputConstants.Type.KEYSYM) {
-			return key.isDown() || GLFW.glfwGetKey(Minecraft.getInstance().getWindow().getWindow(), key.getKey().getValue()) > 0;
+			return key.isDown() || GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), key.getKey().getValue()) > 0;
 		} else if(key.getKey().getType() == InputConstants.Type.MOUSE) {
-			return key.isDown() || GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().getWindow(), key.getKey().getValue()) > 0;
+			return key.isDown() || GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().handle(), key.getKey().getValue()) > 0;
 		} else {
 			return false;
 		}
@@ -993,7 +996,7 @@ public class ControlEngine implements IEventBasedEngine {
 	}
 
 	private void epicfight$interactionKeyMappingTriggered(InputEvent.InteractionKeyMappingTriggered event) {
-        if (this.minecraft.player == null || this.minecraft.hitResult == null) return;
+        if (this.minecraft().player == null || this.minecraft().hitResult == null) return;
 
         final InputAction triggeredAction = mapKeyMappingToAction(event.getKeyMapping());
 
@@ -1018,19 +1021,19 @@ public class ControlEngine implements IEventBasedEngine {
 		if (
             triggeredAction == MinecraftInputAction.ATTACK_DESTROY &&
             InputManager.isBoundToSamePhysicalInput(EpicFightInputAction.ATTACK, MinecraftInputAction.ATTACK_DESTROY) &&
-			this.minecraft.hitResult.getType() == HitResult.Type.BLOCK &&
+			this.minecraft().hitResult.getType() == HitResult.Type.BLOCK &&
 			!combatItemForSwing.isEmpty()
 		) {
-			BlockPos bp = ((BlockHitResult)this.minecraft.hitResult).getBlockPos();
-			BlockState bs = this.minecraft.level.getBlockState(bp);
+			BlockPos bp = ((BlockHitResult)this.minecraft().hitResult).getBlockPos();
+			BlockState bs = this.minecraft().level.getBlockState(bp);
 
-			if (!combatItemForSwing.getItem().canAttackBlock(bs, this.player.level(), bp, this.player) || combatItemForSwing.getDestroySpeed(bs) <= 1.0F) {
+			if (!combatItemForSwing.canDestroyBlock(bs, this.player.level(), bp, this.player) || combatItemForSwing.getDestroySpeed(bs) <= 1.0F) {
 				event.setSwingHand(false);
 				event.setCanceled(true);
 			}
 		}
 
-        LocalPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(this.minecraft.player, LocalPlayerPatch.class);
+        LocalPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(this.minecraft().player, LocalPlayerPatch.class);
 
         if (playerpatch == null) {
             return;
@@ -1040,7 +1043,7 @@ public class ControlEngine implements IEventBasedEngine {
             // Blocks vanilla attacks against living entities
             if (
                 !EpicFightGameRules.ALLOW_VANILLA_MELEE.getRuleValue(playerpatch.getOriginal().level()) &&
-                    this.minecraft.hitResult instanceof EntityHitResult entityHitResult &&
+                    this.minecraft().hitResult instanceof EntityHitResult entityHitResult &&
                     (entityHitResult.getEntity() instanceof LivingEntity || entityHitResult.getEntity() instanceof PartEntity)
             ) {
                 event.setSwingHand(false);
@@ -1064,26 +1067,29 @@ public class ControlEngine implements IEventBasedEngine {
             }
 
             if (playerpatch.getPlayerMode() == PlayerPatch.PlayerMode.EPICFIGHT) {
-                if (this.minecraft.hitResult.getType() == HitResult.Type.MISS) {
+                if (this.minecraft().hitResult.getType() == HitResult.Type.MISS) {
                     if (canGuard && ClientConfig.canceledVanillaActions.cancelItemUse()) {
                         event.setSwingHand(false);
                         event.setCanceled(true);
                     }
                 } else {
                     if (canGuard) {
-                        InteractionResult interactionResult = switch (this.minecraft.hitResult.getType()) {
+                        InteractionResult interactionResult = switch (this.minecraft().hitResult.getType()) {
                             case ENTITY -> {
-                                yield ((EntityHitResult) this.minecraft.hitResult).getEntity().interact(this.minecraft.player, event.getHand());
+                                EntityHitResult entityHitResult = (EntityHitResult) this.minecraft().hitResult;
+                                Entity target = entityHitResult.getEntity();
+                                yield target.interact(this.minecraft().player, event.getHand(), entityHitResult.getLocation().subtract(target.position()));
                             }
                             case BLOCK -> {
-                                BlockHitResult blockHitResult = ((BlockHitResult) this.minecraft.hitResult);
+                                BlockHitResult blockHitResult = ((BlockHitResult) this.minecraft().hitResult);
                                 BlockPos blockpos = blockHitResult.getBlockPos();
-                                BlockState blockstate = this.minecraft.level.getBlockState(blockpos);
-                                FakeLevel fakeLevelForSimulation = FakeLevel.getFakeLevel(this.minecraft.level);
-                                FakeLevel.FakeClientPlayer fakePlayerForSimulation = FakeLevel.getFakePlayer(this.minecraft.player.getGameProfile());
+                                BlockState blockstate = this.minecraft().level.getBlockState(blockpos);
+                                FakeLevel fakeLevelForSimulation = FakeLevel.getFakeLevel(this.minecraft().level);
+                                FakeLevel.FakeClientPlayer fakePlayerForSimulation = FakeLevel.getFakePlayer(this.minecraft().player.getGameProfile());
 
-                                InteractionResult useItemInteractionResult = blockstate.useItemOn(this.player.getItemInHand(event.getHand()), fakeLevelForSimulation, fakePlayerForSimulation, event.getHand(), blockHitResult).result();
-                                if (useItemInteractionResult != InteractionResult.PASS) yield useItemInteractionResult;
+                                // ItemInteractionResult merged into InteractionResult (1.21.2): TRY_WITH_EMPTY_HAND passes to the empty-hand use.
+                                InteractionResult useItemInteractionResult = blockstate.useItemOn(this.player.getItemInHand(event.getHand()), fakeLevelForSimulation, fakePlayerForSimulation, event.getHand(), blockHitResult);
+                                if (useItemInteractionResult != InteractionResult.PASS && !(useItemInteractionResult instanceof InteractionResult.TryEmptyHandInteraction)) yield useItemInteractionResult;
                                 yield blockstate.useWithoutItem(fakeLevelForSimulation, fakePlayerForSimulation, blockHitResult);
                             }
                             default -> throw new IllegalArgumentException();

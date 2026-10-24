@@ -1,7 +1,7 @@
 package yesman.epicfight.world.capabilities.entitypatch.mob;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.monster.Pillager;
+import net.minecraft.world.entity.monster.illager.Pillager;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.gameasset.Animations;

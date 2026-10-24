@@ -1,18 +1,19 @@
 package yesman.epicfight.client.particle;
 
+import net.minecraft.util.RandomSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 
-public class CatharsisParticle extends TextureSheetParticle {
+public class CatharsisParticle extends SingleQuadParticle {
 	private final SpriteSet sprites;
 	
 	protected CatharsisParticle(ClientLevel pLevel, double pX, double pY, double pZ, SpriteSet sprites) {
-		super(pLevel, pX, pY, pZ);
+		super(pLevel, pX, pY, pZ, sprites.first());
 		
 		this.yd = 0.1D;
 		this.quadSize = 0.75F;
@@ -28,8 +29,8 @@ public class CatharsisParticle extends TextureSheetParticle {
 	}
 	
 	@Override
-	public ParticleRenderType getRenderType() {
-		return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+	protected SingleQuadParticle.Layer getLayer() {
+		return SingleQuadParticle.Layer.TRANSLUCENT;
 	}
 	
 	public static class Provider implements ParticleProvider<SimpleParticleType> {
@@ -40,7 +41,7 @@ public class CatharsisParticle extends TextureSheetParticle {
 		}
 
 		@Override
-		public Particle createParticle(SimpleParticleType pType, ClientLevel pLevel, double pX, double pY, double pZ, double pXSpeed, double pYSpeed, double pZSpeed) {
+		public Particle createParticle(SimpleParticleType pType, ClientLevel pLevel, double pX, double pY, double pZ, double pXSpeed, double pYSpeed, double pZSpeed, RandomSource random) {
 			CatharsisParticle catharsisparticle = new CatharsisParticle(pLevel, pX, pY, pZ, this.sprites);
 			catharsisparticle.setAlpha(0.8F);
 			catharsisparticle.setLifetime(12);

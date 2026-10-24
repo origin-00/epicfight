@@ -1,114 +1,114 @@
 package yesman.epicfight.client.particle;
 
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.Util;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-
+import java.util.List;
 import java.util.function.Function;
 
-public class EpicFightParticleRenderTypes {
-    public static final ParticleRenderType PARTICLE_MODEL_NO_NORMAL = new ParticleRenderType() {
-        @Override
-        public BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
-            RenderSystem.disableCull();
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.depthMask(true);
-            RenderSystem.setShader(GameRenderer::getParticleShader);
+import com.google.common.collect.ImmutableList;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.CompareOp;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 
-            return tesselator.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.PARTICLE);
-        }
+import net.minecraft.client.particle.ParticleRenderType;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Util;
+import yesman.epicfight.EpicFight;
 
-        public String toString() {
-            return "epicfight:PARTICLE_MODEL_NO_NORMAL";
-        }
-    };
+/// Render types of Epic Fight's custom-drawn particles ([CustomRenderParticle]).
+///
+/// Before 1.21.9 these were [ParticleRenderType]s that set the GL state themselves. Particle render
+/// types are now only group keys, so all custom-drawn particles share the [#CUSTOM] group and each
+/// particle names the [RenderType] its vertices are drawn with.
+public final class EpicFightParticleRenderTypes {
+	private EpicFightParticleRenderTypes() {}
 
-    public static final ParticleRenderType LIGHTNING = new ParticleRenderType() {
-        @Override
-        public BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
-            RenderSystem.enableBlend();
-            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-            RenderSystem.depthMask(false);
-            RenderSystem.setShader(GameRenderer::getRendertypeLightningShader);
+	/// The particle group of every [CustomRenderParticle] (see [CustomRenderParticleGroup]).
+	public static final ParticleRenderType CUSTOM = new ParticleRenderType("epicfight:custom");
 
-            return tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        }
+	private static final DepthStencilState DEPTH_TEST_NO_WRITE = new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false);
 
-        @Override
-        public String toString() {
-            return "epicfight:LIGHTING";
-        }
-    };
+	/// Textured particle meshes (triangle lists) without normals.
+	private static final RenderPipeline PARTICLE_MODEL_NO_NORMAL_PIPELINE = RenderPipeline.builder(RenderPipelines.PARTICLE_SNIPPET)
+		.withLocation(EpicFight.identifier("pipeline/particle_model_no_normal"))
+		.withVertexFormat(DefaultVertexFormat.PARTICLE, VertexFormat.Mode.TRIANGLES)
+		.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+		.withCull(false)
+		.build();
 
-    public static final Function<ResourceLocation, ParticleRenderType> TRAIL_EFFECT = Util.memoize(textureLocation -> {
-        TextureManager texturemanager = Minecraft.getInstance().getTextureManager();
-        AbstractTexture abstracttexture = texturemanager.getTexture(textureLocation);
+	/// Additive, untextured flashes.
+	private static final RenderPipeline LIGHTNING_PIPELINE = RenderPipelines.LIGHTNING.toBuilder()
+		.withLocation(EpicFight.identifier("pipeline/particle_lightning"))
+		.withDepthStencilState(DEPTH_TEST_NO_WRITE)
+		.build();
 
-        // Set texture parameter
-        RenderSystem.bindTexture(abstracttexture.getId());
-        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+	private static final RenderPipeline TRAIL_EFFECT_PIPELINE = RenderPipeline.builder(RenderPipelines.PARTICLE_SNIPPET)
+		.withLocation(EpicFight.identifier("pipeline/trail_effect"))
+		.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+		.withDepthStencilState(DEPTH_TEST_NO_WRITE)
+		.withCull(false)
+		.build();
 
-        return new ParticleRenderType() {
-            @Override
-            public BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
-                RenderSystem.disableCull();
-                RenderSystem.enableBlend();
-                RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-                RenderSystem.depthMask(false);
-                RenderSystem.setShaderTexture(0, textureLocation);
+	/// Translucent, untextured triangle meshes (lasers).
+	private static final RenderPipeline TRANSLUCENT_GLOWING_PIPELINE = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+		.withLocation(EpicFight.identifier("pipeline/translucent_glowing"))
+		.withVertexShader("core/position_color")
+		.withFragmentShader("core/position_color")
+		.withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLES)
+		.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+		.withDepthStencilState(DepthStencilState.DEFAULT)
+		.build();
 
-                return tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
-            }
+	/// Registered for precompilation with [yesman.epicfight.client.renderer.EpicFightRenderTypes#PIPELINES].
+	public static final List<RenderPipeline> PIPELINES = ImmutableList.of(
+		PARTICLE_MODEL_NO_NORMAL_PIPELINE, LIGHTNING_PIPELINE, TRAIL_EFFECT_PIPELINE, TRANSLUCENT_GLOWING_PIPELINE
+	);
 
-            @Override
-            public String toString() {
-                return "epicfight:TRAIL_EFFECT";
-            }
-        };
-    });
+	private static final Function<Identifier, RenderType> PARTICLE_MODEL_NO_NORMAL = Util.memoize(texture -> RenderType.create(
+		EpicFight.identifier("particle_model_no_normal").toString(),
+		RenderSetup.builder(PARTICLE_MODEL_NO_NORMAL_PIPELINE).withTexture("Sampler0", texture).useLightmap().sortOnUpload().createRenderSetup()
+	));
 
-    public static final ParticleRenderType TRANSLUCENT_GLOWING = new ParticleRenderType() {
-        @Override
-        public BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.depthMask(true);
-            RenderSystem.setShader(GameRenderer::getPositionColorShader);
+	private static final RenderType LIGHTNING = RenderType.create(
+		EpicFight.identifier("particle_lightning").toString(),
+		RenderSetup.builder(LIGHTNING_PIPELINE).sortOnUpload().createRenderSetup()
+	);
 
-            return tesselator.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
-        }
+	/// Trail textures are sampled clamped: a trail stretches its texture once along its length.
+	private static final Function<Identifier, RenderType> TRAIL_EFFECT = Util.memoize(texture -> RenderType.create(
+		EpicFight.identifier("trail_effect").toString(),
+		RenderSetup.builder(TRAIL_EFFECT_PIPELINE)
+			.withTexture("Sampler0", texture, () -> RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR))
+			.useLightmap()
+			.sortOnUpload()
+			.createRenderSetup()
+	));
 
-        @Override
-        public String toString() {
-            return "epicfight:TRANSLUCENT_GLOWING";
-        }
-    };
+	private static final RenderType TRANSLUCENT_GLOWING = RenderType.create(
+		EpicFight.identifier("translucent_glowing").toString(),
+		RenderSetup.builder(TRANSLUCENT_GLOWING_PIPELINE).sortOnUpload().createRenderSetup()
+	);
 
-    public static final ParticleRenderType ENTITY_PARTICLE = new ParticleRenderType() {
-        @Override
-        public BufferBuilder begin(Tesselator tesselator, TextureManager texManager) {
-            RenderSystem.depthMask(true);
-            RenderSystem.setShader(GameRenderer::getParticleShader);
-            return tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
-        }
+	public static RenderType particleModelNoNormal(Identifier texture) {
+		return PARTICLE_MODEL_NO_NORMAL.apply(texture);
+	}
 
-        @Override
-        public String toString() {
-            return "epicfight:ENTITY_PARTICLE";
-        }
-    };
+	public static RenderType lightning() {
+		return LIGHTNING;
+	}
+
+	public static RenderType trailEffect(Identifier texture) {
+		return TRAIL_EFFECT.apply(texture);
+	}
+
+	public static RenderType translucentGlowing() {
+		return TRANSLUCENT_GLOWING;
+	}
 }

@@ -1,9 +1,10 @@
 package yesman.epicfight.api.collider;
 
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
@@ -238,7 +239,7 @@ public class OBBCollider extends Collider {
 	
 	@Override @ClientOnly
 	public RenderType getRenderType() {
-		return RenderType.lines();
+		return RenderTypes.lines();
 	}
 
     @ClientOnly

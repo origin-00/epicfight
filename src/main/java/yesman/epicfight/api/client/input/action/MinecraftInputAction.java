@@ -6,7 +6,6 @@ import net.minecraft.client.Options;
 import org.jetbrains.annotations.NotNull;
 import yesman.epicfight.api.client.input.controller.ControllerBinding;
 import yesman.epicfight.api.client.input.controller.EpicFightControllerModProvider;
-import yesman.epicfight.compat.controlify.EpicFightControlifyControllerMod;
 
 import java.util.Optional;
 
@@ -61,7 +60,8 @@ public enum MinecraftInputAction implements InputAction {
         if (EpicFightControllerModProvider.get() == null) {
             throw new IllegalStateException("controllerBinding() must not be called when the controller mod is not installed");
         }
-        return Optional.of(EpicFightControlifyControllerMod.getBinding(this));
+        // 26.1.2 port: the Controlify module is disabled until Controlify has a 26.1.2 release.
+        return Optional.empty();
     }
 
     @Override

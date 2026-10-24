@@ -1,11 +1,12 @@
 package yesman.epicfight.client.gui;
 
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import yesman.epicfight.api.client.camera.EpicFightCameraAPI;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
@@ -20,7 +21,7 @@ public abstract class EntityUI {
 	public static final List<EntityUI> ENTITY_UI_LIST = Lists.newArrayList();
 	public static final TargetIndicator TARGET_INDICATOR = new TargetIndicator();
 	public static final HealthBar HEALTH_BAR  = new HealthBar();
-    public static final ResourceLocation BATTLE_ICON = EpicFightMod.identifier("textures/gui/battle_icons.png");
+    public static final Identifier BATTLE_ICON = EpicFightMod.identifier("textures/gui/battle_icons.png");
 	
 	public EntityUI() {
 		ENTITY_UI_LIST.add(this);
@@ -35,13 +36,13 @@ public abstract class EntityUI {
 		poseStack.mulPose(Axis.XP.rotationDegrees(xRot));
 	}
 	
-	public static void drawUIAsLevelModel(PoseStack.Pose posestack$pose, ResourceLocation textureLocation, MultiBufferSource buffer, float minX, float minY, float maxX, float maxY, int minU, int minV, int maxU, int maxV, int uvSize) {
+	public static void drawUIAsLevelModel(PoseStack.Pose posestack$pose, Identifier textureLocation, MultiBufferSource buffer, float minX, float minY, float maxX, float maxY, int minU, int minV, int maxU, int maxV, int uvSize) {
 		float uvSizeInvert = 1.0F / uvSize;
 		
 		drawUIAsLevelModel(posestack$pose, textureLocation, buffer, minX, minY, maxX, maxY, minU * uvSizeInvert, minV * uvSizeInvert, maxU * uvSizeInvert, maxV * uvSizeInvert);
 	}
 	
-	public static void drawUIAsLevelModel(PoseStack.Pose posestack$pose, ResourceLocation textureLocation, MultiBufferSource buffer, float minX, float minY, float maxX, float maxY, float minU, float minV, float maxU, float maxV) {
+	public static void drawUIAsLevelModel(PoseStack.Pose posestack$pose, Identifier textureLocation, MultiBufferSource buffer, float minX, float minY, float maxX, float maxY, float minU, float minV, float maxU, float maxV) {
 		VertexConsumer vertexConsumer = buffer.getBuffer(EpicFightRenderTypes.entityUITexture(textureLocation));
 		
 		vertexConsumer.addVertex(posestack$pose, minX, minY, 0).setUv(minU, maxV);

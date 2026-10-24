@@ -21,7 +21,7 @@ import dev.isxander.controlify.utils.render.Blit;
 import dev.isxander.controlify.utils.render.CGuiPose;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.ApiStatus;
@@ -141,20 +141,20 @@ public class EpicFightControlifyEntrypoint implements ControlifyEntrypoint {
         UCHIGATANA(EpicFightMod.identifier("textures/item/uchigatana_gui.png")),
         SKILL_BOOK(EpicFightMod.identifier("textures/item/skillbook.png"));
 
-        private final @NotNull ResourceLocation id;
+        private final @NotNull Identifier id;
 
-        EpicFightRadialIcons(@NotNull ResourceLocation id) {
+        EpicFightRadialIcons(@NotNull Identifier id) {
             this.id = id;
         }
 
-        public @NotNull ResourceLocation getId() {
+        public @NotNull Identifier getId() {
             return id;
         }
     }
 
     private static void registerCustomRadialIcons() {
         for (EpicFightRadialIcons icon : EpicFightRadialIcons.values()) {
-            final ResourceLocation location = icon.getId();
+            final Identifier location = icon.getId();
 
             // For consistency with the current Controlify radial icons,
             // this code is equivalent to:
@@ -299,7 +299,7 @@ public class EpicFightControlifyEntrypoint implements ControlifyEntrypoint {
                 .addKeyCorrelation(keyMappingToIgnore);
     }
 
-    private static @NotNull ResourceLocation getBindingId(@NotNull EpicFightInputAction action) {
+    private static @NotNull Identifier getBindingId(@NotNull EpicFightInputAction action) {
         final String path = switch (action) {
             // Project maintainers: if you change any ID (e.g., "attack"), update assets/controlify too.
             case ATTACK -> "attack";

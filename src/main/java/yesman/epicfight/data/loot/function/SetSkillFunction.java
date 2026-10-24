@@ -11,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import yesman.epicfight.platform.ModPlatformProvider;
 import yesman.epicfight.registry.entries.EpicFightDataComponentTypes;
@@ -88,8 +87,8 @@ public class SetSkillFunction extends LootItemConditionalFunction {
 	}
 	
 	@Override
-	public LootItemFunctionType<? extends LootItemConditionalFunction> getType() {
-		return EpicFightLootItemFunctions.SKILLS.get();
+	public MapCodec<? extends LootItemConditionalFunction> codec() {
+		return CODEC;
 	}
 	
 	@SafeVarargs

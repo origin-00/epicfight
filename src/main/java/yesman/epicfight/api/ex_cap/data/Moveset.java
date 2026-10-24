@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
 import yesman.epicfight.api.ex_cap.data.modifier.RenderModifier;
 import yesman.epicfight.api.ex_cap.managers.MovesetManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class Moveset
     private final BiFunction<LivingEntityPatch<?>, InteractionHand, LivingMotion> customMotion;
     private final Map<GuardSkill.BlockType, List<AnimationManager.AnimationAccessor<? extends StaticAnimation>>> defaultGuardAnimations;
     private final RenderModifier modifier;
-    private final ResourceLocation id;
+    private final Identifier id;
 
 
 
@@ -192,7 +192,7 @@ public class Moveset
      * A fluent builder for creating {@link Moveset} instances.
      * <p>
      * This builder defines the animations, skills, and behavioral logic associated with a specific
-     * weapon style. It supports a hierarchical inheritance system via {@link #parent(ResourceLocation)},
+     * weapon style. It supports a hierarchical inheritance system via {@link #parent(Identifier)},
      * allowing builders to override or extend properties from existing movesets.
      * </p>
      * <h3>Key Features:</h3>
@@ -216,9 +216,9 @@ public class Moveset
         protected Predicate<LivingEntityPatch<?>> sheathRender;
         protected AnimationManager.AnimationAccessor<? extends AttackAnimation> revelationAnimation;
         protected BiFunction<LivingEntityPatch<?>, InteractionHand, LivingMotion> motion;
-        protected ResourceLocation parent;
+        protected Identifier parent;
         protected RenderModifier modifier;
-        protected ResourceLocation id;
+        protected Identifier id;
 
         public Builder()
         {
@@ -241,20 +241,20 @@ public class Moveset
         /**
          * Sets the parent moveset to inherit properties from.
          * <p>
-         * During the {@link #build(ResourceLocation)} process, the system will recursively merge properties from
+         * During the {@link #build(Identifier)} process, the system will recursively merge properties from
          * the parent hierarchy. Local definitions in this builder will override parent values.
          * </p>
-         * @param parent The {@link ResourceLocation} of the parent moveset.
+         * @param parent The {@link Identifier} of the parent moveset.
          * @return This builder for chaining.
          */
-        public Builder parent(ResourceLocation parent)
+        public Builder parent(Identifier parent)
         {
             this.parent = parent;
             return this;
         }
 
         @ApiStatus.Internal
-        public Builder id(ResourceLocation id)
+        public Builder id(Identifier id)
         {
             this.id = id;
             return this;
@@ -500,7 +500,7 @@ public class Moveset
                         if (get.isJsonObject())
                         {
                             get.getAsJsonObject().entrySet().forEach(entry -> {
-                                Skill guard = EpicFightRegistries.SKILL.get(ResourceLocation.parse(entry.getKey()));
+                                Skill guard = EpicFightRegistries.SKILL.getValue(Identifier.parse(entry.getKey()));
                                 List<AnimationManager.AnimationAccessor<? extends StaticAnimation>> animations = Lists.newArrayList();
                                 if (entry.getValue().isJsonArray())
                                 {
@@ -525,7 +525,7 @@ public class Moveset
                     }
                     if (json.has("innate_skill"))
                     {
-                        result.addInnateSkill((itemStack, playerPatch) -> EpicFightRegistries.SKILL.get(ResourceLocation.parse(json.get("innate_skill").getAsString())));
+                        result.addInnateSkill((itemStack, playerPatch) -> EpicFightRegistries.SKILL.getValue(Identifier.parse(json.get("innate_skill").getAsString())));
                     }
                     if (json.has("living_animations"))
                     {
@@ -533,7 +533,7 @@ public class Moveset
                     }
                     if (json.has("weapon_passive"))
                     {
-                        result.setPassiveSkill(EpicFightRegistries.SKILL.getHolder(ResourceLocation.parse(json.get("weapon_passive").getAsString())).get());
+                        result.setPassiveSkill(EpicFightRegistries.SKILL.get(Identifier.parse(json.get("weapon_passive").getAsString())).get());
                     }
                     if (json.has("guard_motions"))
                     {
@@ -619,7 +619,7 @@ public class Moveset
             return result;
         }
 
-        public Moveset build(ResourceLocation id)
+        public Moveset build(Identifier id)
         {
             return new Moveset(merge().id(id));
         }

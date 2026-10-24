@@ -1,24 +1,21 @@
 package yesman.epicfight.world.capabilities.item;
 
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Tier;
-import net.minecraft.world.item.TieredItem;
-import net.minecraft.world.item.Tiers;
+import net.minecraft.world.item.ToolMaterial;
 import yesman.epicfight.api.ex_cap.managers.ExCapManager;
 import yesman.epicfight.registry.entries.EpicFightSounds;
+import yesman.epicfight.world.item.ToolMaterials;
 
 public abstract class WeaponCapabilityPresets {
-	public static int vanillaTierToLevel(Tier tier) {
-		if (tier instanceof Tiers vanillaTier) {
-			switch (vanillaTier) {
-                case WOOD, GOLD -> {return 0;}
-                case STONE -> {return 1;}
-			    case IRON -> {return 2;}
-			    case DIAMOND -> {return 3;}
-                case NETHERITE -> {return 4;}
-			}
-		}
-		double sqrt = Math.sqrt(tier.getUses());
+	public static int vanillaTierToLevel(ToolMaterial material) {
+		if (material == ToolMaterial.WOOD || material == ToolMaterial.GOLD) return 0;
+		// Copper (added in 1.21.9) sits between stone and iron and shares stone's level.
+		if (material == ToolMaterial.STONE || material == ToolMaterial.COPPER) return 1;
+		if (material == ToolMaterial.IRON) return 2;
+		if (material == ToolMaterial.DIAMOND) return 3;
+		if (material == ToolMaterial.NETHERITE) return 4;
+		
+		double sqrt = Math.sqrt(material.durability());
 
 		// Custom tier mapping
 		return sqrt < 10.0D ? 0 : (int)Math.round(sqrt / 10.0D);
@@ -41,14 +38,16 @@ public abstract class WeaponCapabilityPresets {
 
     private static void handleItemOverrides(WeaponCapability.Builder builder, Item item)
     {
-        if (item instanceof TieredItem tieredItem) {
-            int tierLevel = vanillaTierToLevel(tieredItem.getTier());
+        ToolMaterial material = ToolMaterials.of(item);
+        
+        if (material != null) {
+            int tierLevel = vanillaTierToLevel(material);
             builder.modifyTierAttributes(tierLevel);
-            if (tieredItem.getTier() == Tiers.WOOD)
+            if (material == ToolMaterial.WOOD)
             {
                 builder.hitSound(EpicFightSounds.BLUNT_HIT);
             }
-            if (tieredItem.getTier() == Tiers.STONE)
+            if (material == ToolMaterial.STONE)
             {
                 builder.hitSound(EpicFightSounds.BLUNT_HIT_HARD);
             }

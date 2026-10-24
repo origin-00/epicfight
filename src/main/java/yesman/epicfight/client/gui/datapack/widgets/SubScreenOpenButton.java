@@ -1,5 +1,6 @@
 package yesman.epicfight.client.gui.datapack.widgets;
 
+import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
@@ -18,7 +19,7 @@ public class SubScreenOpenButton extends ResizableButton {
 	}
 	
 	@Override
-	public void onPress() {
+	public void onPress(InputWithModifiers input) {
 		Minecraft.getInstance().setScreen(this.subScreenProvider.get());
 	}
 	

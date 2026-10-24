@@ -1,7 +1,7 @@
 package yesman.epicfight.registry.entries;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -9,7 +9,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
-import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.monster.skeleton.AbstractSkeleton;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -58,11 +58,11 @@ public final class EpicFightAttributes {
 	public static final DeferredHolder<Attribute, Attribute> OFFHAND_IMPACT = REGISTRY.register("offhand_impact", () -> new RangedAttribute("attribute.name." + EpicFightMod.MODID + ".offhand_impact", 0.5D, 0.0D, 1024.0).setSyncable(true));
 	
 	// Modifier ids for epicfight attribute
-	public static final ResourceLocation ARMOR_NEGATION_MODIFIER = EpicFightMod.identifier("armor_negation");
-	public static final ResourceLocation MAX_STRIKE_MODIFIER = EpicFight.identifier("max_strikes");
-	public static final ResourceLocation IMPACT_MODIFIER = EpicFight.identifier("impact");
-	public static final ResourceLocation ATTACK_DAMAGE_MODIFIER = EpicFightMod.identifier("attack_damage");
-	public static final ResourceLocation ATTACK_SPEED_MODIFIER = EpicFightMod.identifier("attack_speed");
+	public static final Identifier ARMOR_NEGATION_MODIFIER = EpicFightMod.identifier("armor_negation");
+	public static final Identifier MAX_STRIKE_MODIFIER = EpicFight.identifier("max_strikes");
+	public static final Identifier IMPACT_MODIFIER = EpicFight.identifier("impact");
+	public static final Identifier ATTACK_DAMAGE_MODIFIER = EpicFightMod.identifier("attack_damage");
+	public static final Identifier ATTACK_SPEED_MODIFIER = EpicFightMod.identifier("attack_speed");
     
 	public static AttributeModifier getArmorNegationModifier(double value) {
 		return new AttributeModifier(ARMOR_NEGATION_MODIFIER, value, AttributeModifier.Operation.ADD_VALUE);

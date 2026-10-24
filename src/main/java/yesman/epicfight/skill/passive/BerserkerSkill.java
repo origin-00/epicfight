@@ -1,6 +1,8 @@
 package yesman.epicfight.skill.passive;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
+import yesman.epicfight.client.gui.GuiColors;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
@@ -29,8 +31,8 @@ public class BerserkerSkill extends PassiveSkill {
     @Override
     public void loadDatapackParameters(CompoundTag parameters) {
         super.loadDatapackParameters(parameters);
-        this.speedBonus = parameters.getFloat("speed_bonus");
-        this.damageBonus = parameters.getFloat("damage_bonus");
+        this.speedBonus = parameters.getFloatOr("speed_bonus", 0.0F);
+        this.damageBonus = parameters.getFloatOr("damage_bonus", 0.0F);
     }
 
     @Override @ClientOnly
@@ -109,14 +111,14 @@ public class BerserkerSkill extends PassiveSkill {
     }
 
     @Override @ClientOnly
-    public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphics guiGraphics, float x, float y, float partialTick) {
-        guiGraphics.blit(this.getSkillTexture(), (int)x, (int)y, 24, 24, 0, 0, 1, 1, 1, 1);
+    public void drawOnGui(BattleModeGui gui, SkillContainer container, GuiGraphicsExtractor guiGraphics, float x, float y, float partialTick) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.getSkillTexture(), (int)x, (int)y, 0, 0, 24, 24, 1, 1, 1, 1);
         Player player = container.getExecutor().getOriginal();
         float health = player.getHealth();
         float maxHealth = player.getMaxHealth();
         float lostHealthPercentage = (maxHealth - health) / maxHealth;
         lostHealthPercentage = (float)Math.floor(lostHealthPercentage * 100.0F);
-        guiGraphics.drawString(gui.getFont(), String.format("%.0f%%", lostHealthPercentage), x + 4, y + 6, 16777215, true);
+        guiGraphics.text(gui.getFont(), String.format("%.0f%%", lostHealthPercentage), (int)(x + 4), (int)(y + 6), GuiColors.text(16777215), true);
     }
 
     @Override @ClientOnly

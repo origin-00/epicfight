@@ -2,7 +2,7 @@ package yesman.epicfight.api.client.event.types.registry;
 
 import com.google.gson.JsonElement;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import yesman.epicfight.api.event.Event;
 import yesman.epicfight.client.renderer.patched.entity.PatchedEntityRenderer;
@@ -15,13 +15,13 @@ import java.util.function.Function;
 @SuppressWarnings("rawtypes")
 public abstract class RegisterPatchedRenderersEvent extends Event {
 	public static class Item extends RegisterPatchedRenderersEvent {
-		private final Map<ResourceLocation, Function<JsonElement, RenderItemBase>> itemRenderers;
+		private final Map<Identifier, Function<JsonElement, RenderItemBase>> itemRenderers;
 		
-		public Item(Map<ResourceLocation, Function<JsonElement, RenderItemBase>> itemRenderers) {
+		public Item(Map<Identifier, Function<JsonElement, RenderItemBase>> itemRenderers) {
 			this.itemRenderers = itemRenderers;
 		}
 		
-		public void addItemRenderer(ResourceLocation rl, Function<JsonElement, RenderItemBase> provider) {
+		public void addItemRenderer(Identifier rl, Function<JsonElement, RenderItemBase> provider) {
 			if (this.itemRenderers.containsKey(rl)) {
 				throw new IllegalArgumentException("Item renderer " + rl + " already registered.");
 			}

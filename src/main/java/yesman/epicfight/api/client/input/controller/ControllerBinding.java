@@ -1,6 +1,6 @@
 package yesman.epicfight.api.client.input.controller;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 /// Represents a controller button or analogue stick axis.
@@ -28,7 +28,7 @@ public interface ControllerBinding {
     ///
     /// @return the ID
     @NotNull
-    ResourceLocation id();
+    Identifier id();
 
     /// Returns whether the digital state is currently active in this tick.
     ///

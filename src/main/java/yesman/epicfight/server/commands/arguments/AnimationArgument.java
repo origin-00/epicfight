@@ -16,7 +16,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -38,7 +38,7 @@ public class AnimationArgument implements ArgumentType<AnimationAccessor<? exten
 	}
 	
 	public AnimationAccessor<? extends StaticAnimation> parse(StringReader p_98428_) throws CommandSyntaxException {
-		ResourceLocation resourcelocation = ResourceLocation.read(p_98428_);
+		Identifier resourcelocation = Identifier.read(p_98428_);
 		AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byKey(resourcelocation);
 		
 		return Optional.ofNullable(animation).orElseThrow(() -> {
