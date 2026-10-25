@@ -1,4 +1,5 @@
 {
 	"penalizer": 0.6,
-	"parry_window": 5
+	"parry_window": 5,
+	"parry_cooldown": 16
 }

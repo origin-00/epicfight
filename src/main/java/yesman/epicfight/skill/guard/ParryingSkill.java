@@ -41,6 +41,7 @@ public class ParryingSkill extends GuardSkill {
 	}
 	
 	private int parryWindow;
+	private int parryCooldown;
 	
 	public ParryingSkill(GuardSkill.Builder builder) {
 		super(builder);
@@ -54,6 +55,13 @@ public class ParryingSkill extends GuardSkill {
 		
 		if (this.parryWindow <= 0) {
 			this.parryWindow = 8;
+		}
+
+		// Ticks after a parry attempt before another one starts a fresh window
+		this.parryCooldown = parameters.getIntOr("parry_cooldown", 0);
+
+		if (this.parryCooldown <= 0) {
+			this.parryCooldown = this.parryWindow * 2;
 		}
 	}
 
@@ -72,7 +80,7 @@ public class ParryingSkill extends GuardSkill {
 
             int lastActive = skillContainer.getDataManager().getDataValue(EpicFightSkillDataKeys.LAST_ACTIVE);
 
-            if (skillContainer.getExecutor().getOriginal().tickCount - lastActive > this.parryWindow * 2) {
+            if (skillContainer.getExecutor().getOriginal().tickCount - lastActive > this.parryCooldown) {
                 skillContainer.getDataManager().setData(EpicFightSkillDataKeys.LAST_ACTIVE, skillContainer.getExecutor().getOriginal().tickCount);
             }
         });
@@ -84,7 +92,7 @@ public class ParryingSkill extends GuardSkill {
 		
 		skillContainer.runOnServer(serverExecutor -> {
 			 int lastActive = skillContainer.getDataManager().getDataValue(EpicFightSkillDataKeys.LAST_ACTIVE);
-			 if (serverExecutor.getOriginal().tickCount - lastActive > this.parryWindow * 2) {
+			 if (serverExecutor.getOriginal().tickCount - lastActive > this.parryCooldown) {
 				 skillContainer.getDataManager().setDataSync(EpicFightSkillDataKeys.LAST_ACTIVE, serverExecutor.getOriginal().tickCount);
 			 }
 		});
