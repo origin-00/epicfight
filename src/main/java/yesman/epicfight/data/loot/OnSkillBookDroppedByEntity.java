@@ -1,5 +1,6 @@
 package yesman.epicfight.data.loot;
 
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 import com.google.common.collect.Maps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -53,6 +54,10 @@ public class OnSkillBookDroppedByEntity extends LootModifier {
 	@SuppressWarnings("deprecation")
 	@Override
 	protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
+		if (!EpicFightGameRules.SKILL_BOOKS.getRuleValue(context.getLevel())) {
+			return generatedLoot;
+		}
+		
 		Entity entity = context.getOptionalParameter(LootContextParams.THIS_ENTITY);
 
 		if (entity != null && SKILL_LOOT_TABLE.containsKey(entity.getType())) {

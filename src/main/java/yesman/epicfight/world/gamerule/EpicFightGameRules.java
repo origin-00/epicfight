@@ -50,6 +50,16 @@ public class EpicFightGameRules {
 			, false
 	);
 	
+	/// When false, skill books can't be read and no longer drop as loot, so skills come only from
+	/// what a server grants (e.g. a stat or progression system driving the skill slots).
+	public static final ConfigurableGameRule<Boolean, ModConfigSpec.BooleanValue> SKILL_BOOKS = create(
+			  "skillBooks"
+			, GameRuleCategory.PLAYER
+			, configBuilder -> configBuilder.define("default_gamerule.skillBooks", true)
+			, RuleType.BOOLEAN
+			, true
+	);
+	
 	public static final ConfigurableGameRule<Boolean, ModConfigSpec.BooleanValue> HAS_FALL_ANIMATION = create(
 			  "hasFallAnimation"
 			, GameRuleCategory.PLAYER

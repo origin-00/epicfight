@@ -131,6 +131,7 @@
   "gamerule.allowVanillaMelee": "Enable Vanilla Melee Attacks",
   "gamerule.hasFallAnimation": "Enable landing animation",
   "gamerule.keepSkills": "Keep skills after death",
+  "gamerule.skillBooks": "Skill books can be read and drop as loot",
   "gamerule.weightPenalty": "Weight Penalty applied to Attack Speed.",
   "gamerule.disableEntityUI": "Turn off health bar and target indicator for all players",
   "gamerule.globalStun": "Enable Global Hitstun",

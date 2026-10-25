@@ -1,5 +1,6 @@
 package yesman.epicfight.world.item;
 
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -53,6 +54,10 @@ public class SkillBookItem extends Item {
 	@Override
 	public InteractionResult use(Level world, Player player, InteractionHand hand) {
 		ItemStack itemstack = player.getItemInHand(hand);
+		
+		if (!EpicFightGameRules.SKILL_BOOKS.getRuleValue(world)) {
+			return InteractionResult.FAIL;
+		}
 		
 		EpicFightCapabilities.getUnparameterizedEntityPatch(player, PlayerPatch.class).ifPresent(playerpatch -> {
 			playerpatch.openSkillBook(itemstack, hand);
