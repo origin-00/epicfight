@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.DefaultDataComponentsBoundEvent;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import yesman.epicfight.EpicFight;
@@ -29,6 +30,13 @@ import yesman.epicfight.world.gamerule.EpicFightGameRules.ConfigurableGameRule;
 public final class NeoForgeWorldEvent {
 	private NeoForgeWorldEvent() {}
 	
+	@SubscribeEvent
+	public static void onComponentsBound(final DefaultDataComponentsBoundEvent event) {
+		if (event.getUpdateCause() == DefaultDataComponentsBoundEvent.UpdateCause.SERVER_DATA_LOAD) {
+			ItemCapabilityReloadListener.onComponentsBound();
+		}
+	}
+
 	@SubscribeEvent
 	public static void onDatapackSync(final OnDatapackSyncEvent event) {
 		if (event.getPlayer() != null) {

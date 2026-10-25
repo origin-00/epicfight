@@ -66,8 +66,24 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 		return super.prepare(resourceManager, profileIn);
 	}
 	
+	/// Parsed during the reload, built once item components are bound (see [#onComponentsBound()]).
+	private static Map<Identifier, JsonElement> pendingEntries;
+
 	@Override
 	protected void apply(Map<Identifier, JsonElement> objectIn, @NotNull ResourceManager resourceManagerIn, @NotNull ProfilerFiller profilerIn) {
+		// Since 26.1, item components are bound after every reload listener finished, and the capabilities read them
+		pendingEntries = objectIn;
+	}
+
+	/// Builds the item capabilities from the last reload. Called after the server binds the default item components.
+	public static void onComponentsBound() {
+		if (pendingEntries == null) {
+			return;
+		}
+
+		Map<Identifier, JsonElement> objectIn = pendingEntries;
+		pendingEntries = null;
+
 		for (Map.Entry<Identifier, JsonElement> entry : objectIn.entrySet()) {
 			Identifier rl = entry.getKey();
 			String path = rl.getPath();

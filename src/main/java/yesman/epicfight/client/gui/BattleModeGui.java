@@ -30,7 +30,6 @@ import java.util.List;
 
 public class BattleModeGui {
 	private final List<SkillContainer> skillIcons = new ArrayList<> ();
-	private Minecraft minecraft;
 	private boolean isVisible;
 	private int slidingO;
 	private int sliding;
@@ -40,7 +39,6 @@ public class BattleModeGui {
 	public BattleModeGui(Minecraft minecraft) {
 		this.sliding = 7;
 		this.isVisible = false;
-		this.minecraft = minecraft;
 	}
 	
 	public void tick(LocalPlayerPatch playerpatch) {
@@ -117,8 +115,8 @@ public class BattleModeGui {
 			Identifier rl = Identifier.parse(chageableSkill.toString());
 			String skillName = Component.translatable(String.format("skill.%s.%s", rl.getNamespace(), rl.getPath())).getString();
 			
-			int stringWidth = this.minecraft.font.width(skillName);
-			guiGraphics.text(this.minecraft.font, skillName, (int)((pos.x + 120 - stringWidth * 0.5F)), (int)(pos.y - 12), GuiColors.text(16777215), true);
+			int stringWidth = this.minecraft().font.width(skillName);
+			guiGraphics.text(this.minecraft().font, skillName, (int)((pos.x + 120 - stringWidth * 0.5F)), (int)(pos.y - 12), GuiColors.text(16777215), true);
 		}
 	}
 	
@@ -226,10 +224,16 @@ public class BattleModeGui {
 	}
 	
 	public Font getFont() {
-		return this.minecraft.font;
+		return this.minecraft().font;
 	}
 	
 	private float getSliding(float partialTick) {
 		return Mth.lerp(partialTick, this.slidingO, this.sliding) * 8.0F + 4.0F;
+	}
+
+	/// Read on use, never cached: since 26.1 this is constructed (via RenderEngine) before the
+	/// Minecraft instance exists, so a field captured at construction stays null.
+	private Minecraft minecraft() {
+		return Minecraft.getInstance();
 	}
 }

@@ -1,23 +1,17 @@
 package yesman.epicfight.data.conditions.entity;
 
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.side.ClientOnly;
-import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
+import yesman.epicfight.client.gui.datapack.ConditionParameterEditors;
 import yesman.epicfight.data.conditions.Condition.EntityPatchCondition;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.WeaponCategory;
 
 import java.util.List;
-import java.util.Locale;
 
 public class OffhandItemCategory extends EntityPatchCondition {
 	private WeaponCategory category;
@@ -44,7 +38,6 @@ public class OffhandItemCategory extends EntityPatchCondition {
     @Override @ClientOnly
     @OnlyIn(Dist.CLIENT) // TODO: Remove OnlyIn annotation and completely decouple the widget provider code
 	public List<ParameterEditor> getAcceptingParameters(Screen screen) {
-		AbstractWidget comboBox = new ComboBox<>(screen, screen.getMinecraft().font, 0, 0, 0, 0, null, null, 4, Component.literal("category"), List.copyOf(WeaponCategory.ENUM_MANAGER.universalValues()), ParseUtil::snakeToSpacedCamel, null);
-		return List.of(ParameterEditor.of((value) -> StringTag.valueOf(value.toString().toLowerCase(Locale.ROOT)), (tag) -> WeaponCategory.ENUM_MANAGER.get(ParseUtil.nullOrToString(tag, ParseUtil::tagAsString)), comboBox));
+		return ConditionParameterEditors.offhandItemCategory(screen);
 	}
 }

@@ -9,12 +9,10 @@ import yesman.epicfight.generated.LangKeys;
 import yesman.epicfight.main.EpicFightMod;
 
 public class VersionNotifier {
-    private final Minecraft minecraft;
     private final boolean visible;
     private int count = 0;
 
     public VersionNotifier(Minecraft minecraft) {
-        this.minecraft = minecraft;
         this.visible = ModList.get().getModFileById(EpicFightMod.MODID).versionString().matches("[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+");
     }
 
@@ -32,18 +30,24 @@ public class VersionNotifier {
         }
 
         this.count++;
-        Window sr = this.minecraft.getWindow();
+        Window sr = this.minecraft().getWindow();
         int width = sr.getGuiScaledWidth();
 
         if (inWorld) {
             String l1 = Component.translatable(LangKeys.GUI_MESSAGE_VERSION_NOTIFIER_TEST_VERSION_WARNING_LINE1).getString();
             String l2 = Component.translatable(LangKeys.GUI_MESSAGE_VERSION_NOTIFIER_TEST_VERSION_WARNING_LINE2, ModList.get().getModFileById(EpicFightMod.MODID).versionString()).getString();
 
-            guiGraphics.text(this.minecraft.font, l1, (width - this.minecraft.font.width(l1) - 2), 8, GuiColors.text(16777215));
-            guiGraphics.text(this.minecraft.font, l2, (width - this.minecraft.font.width(l2) - 2), 20, GuiColors.text(16777215));
+            guiGraphics.text(this.minecraft().font, l1, (width - this.minecraft().font.width(l1) - 2), 8, GuiColors.text(16777215));
+            guiGraphics.text(this.minecraft().font, l2, (width - this.minecraft().font.width(l2) - 2), 20, GuiColors.text(16777215));
         } else {
             String l1 = Component.translatable(LangKeys.GUI_MESSAGE_VERSION_NOTIFIER, ModList.get().getModFileById(EpicFightMod.MODID).versionString()).getString();
-            guiGraphics.text(this.minecraft.font, l1, (width - this.minecraft.font.width(l1) - 2), 8, GuiColors.text(16777215));
+            guiGraphics.text(this.minecraft().font, l1, (width - this.minecraft().font.width(l1) - 2), 8, GuiColors.text(16777215));
         }
+    }
+
+    /// Read on use, never cached: since 26.1 this is constructed (via RenderEngine) before the
+    /// Minecraft instance exists, so a field captured at construction stays null.
+    private Minecraft minecraft() {
+        return Minecraft.getInstance();
     }
 }
