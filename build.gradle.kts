@@ -66,13 +66,16 @@ java.sourceSets.main.get().java.srcDirs(
 tasks.compileJava { dependsOn(tasks.generateLangKeys, tasks.generateSoundKeys) }
 
 // 26.1.2 port: third-party compat modules are excluded until each dependency has a 26.1.2 release
-// and the module is ported. Only the loader-agnostic compat scaffolding is compiled.
+// and the module is ported. Only the loader-agnostic compat scaffolding and the ported modules are compiled.
+val portedCompatModules = listOf("geckolib")
+
 sourceSets.main {
     java {
         // Files inside per-mod subpackages (depth > 3); the scaffolding directly in compat/ stays.
         exclude { element ->
             val path = element.relativePath.pathString
             path.startsWith("yesman/epicfight/compat/") && path.count { it == '/' } > 3
+                && portedCompatModules.none { path.startsWith("yesman/epicfight/compat/$it/") }
         }
         // The compute shader skinning path drives OpenGL directly, which the 26.1 GpuDevice
         // abstraction no longer allows inside vanilla render passes; CPU skinning is used instead.
@@ -105,7 +108,7 @@ dependencies {
 
     // compileOnly(libs.azurelib)
     // compileOnly(libs.azurelib.armor)
-    // compileOnly(libs.geckolib)
+    compileOnly(libs.geckolib)
 
     // compileOnly(libs.sodium)
     // compileOnly(libs.iris)

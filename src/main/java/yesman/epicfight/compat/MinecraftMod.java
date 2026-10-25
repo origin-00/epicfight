@@ -4,18 +4,19 @@ import net.neoforged.fml.ModList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import yesman.epicfight.EpicFight;
+import yesman.epicfight.compat.geckolib.GeckolibCompat;
 
 // List of mods with custom compatibility modules.
 // Only includes mods requiring manual registration via ICompatModule.
 // Mods with official API entry-points (e.g., Shoulder Surfing, Controlify, JEI, KubeJS) are excluded.
 //
-// 26.1.2 port: every module is null until the dependency has a 26.1.2 release and its module is ported
-// back into the build (see the compat exclusion in build.gradle.kts).
+// 26.1.2 port: a module is null until the dependency has a 26.1.2 release and its module is ported
+// back into the build (see portedCompatModules in build.gradle.kts).
 public enum MinecraftMod {
     VAMPIRISM("vampirism", false, null),
     WEREWOLVES("werewolves", false, null),
     CURIOS_API("curios", false, null),
-    GECKO_LIB("geckolib", true, null),
+    GECKO_LIB("geckolib", true, GeckolibCompat.class),
     AZURE_LIB("azurelib", true, null),
     AZURE_LIB_ARMOR("azurelibarmor", true, null),
     FIRST_PERSON("firstperson", true, null),

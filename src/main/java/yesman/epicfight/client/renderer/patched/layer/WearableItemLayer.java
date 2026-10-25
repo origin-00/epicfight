@@ -36,6 +36,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.item.equipment.trim.ArmorTrim;
@@ -189,6 +190,17 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 			List<EquipmentClientInfo.Layer> layers = this.equipmentAssets.get(assetId).getLayers(layerType);
 			int dyeColor = extensions.getDefaultDyeColor(itemstack);
 			boolean renderFoil = itemstack.hasFoil();
+
+			// Animated armor (e.g. GeckoLib) brings its own texture and may define no equipment layers at all
+			if (layers.isEmpty() && overriddenTexture != null) {
+				// Undyed armor renders untinted, as GeckoLib does (GeoArmorRenderer#getRenderColor)
+				Vector4f color = ColorUtil.unpackToARGBF(DyedItemColor.getOrDefault(itemstack, 0xFFFFFFFF));
+				this.renderArmor(poseStack, buffers, packedLight, armorMesh, entitypatch.getArmature(), color.x, color.y, color.z, overriddenTexture, poses);
+
+				if (renderFoil) {
+					this.renderGlint(poseStack, buffers, packedLight, armorMesh, entitypatch.getArmature(), poses);
+				}
+			}
 			int layerIdx = 0;
 
 			for (EquipmentClientInfo.Layer layer : layers) {

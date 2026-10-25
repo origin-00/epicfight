@@ -1,24 +1,34 @@
 package yesman.epicfight.compat.geckolib.client;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
+import com.geckolib.animatable.GeoAnimatable;
+import com.geckolib.animatable.client.GeoRenderProvider;
+import com.geckolib.cache.model.BakedGeoModel;
+import com.geckolib.cache.model.GeoBone;
+import com.geckolib.cache.model.GeoQuad;
+import com.geckolib.cache.model.GeoVertex;
+import com.geckolib.cache.model.cuboid.CuboidGeoBone;
+import com.geckolib.cache.model.cuboid.GeoCube;
+import com.geckolib.model.GeoModel;
+import com.geckolib.renderer.GeoArmorRenderer;
+import com.geckolib.renderer.base.GeoRenderState;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -26,25 +36,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import software.bernie.geckolib.animatable.GeoAnimatable;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.animation.state.BoneSnapshot;
-import software.bernie.geckolib.cache.object.GeoBone;
-import software.bernie.geckolib.cache.object.GeoCube;
-import software.bernie.geckolib.cache.object.GeoQuad;
-import software.bernie.geckolib.cache.object.GeoVertex;
-import software.bernie.geckolib.renderer.GeoArmorRenderer;
-import software.bernie.geckolib.util.RenderUtil;
+import yesman.epicfight.api.client.event.types.render.AnimatedArmorTextureEvent;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.transformer.HumanoidModelTransformer;
-import yesman.epicfight.api.client.event.types.render.AnimatedArmorTextureEvent;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.compat.geckolib.mixin.MixinGeoArmorRenderer;
 
 public class GeoModelTransformer extends HumanoidModelTransformer {
 	static final PartTransformer<GeoCube> HEAD = new SimpleTransformer(9);
@@ -55,31 +55,56 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 	static final PartTransformer<GeoCube> LEFT_LEG = new LimbPartTransformer(4, 5, 6, 0.375F, true, AABB.ofSize(new Vec3(-0.15D, 0.375D, 0), 0.5D, 0.85D, 0.5D));
 	static final PartTransformer<GeoCube> RIGHT_LEG = new LimbPartTransformer(1, 2, 3, 0.375F, true, AABB.ofSize(new Vec3(0.15D, 0.375D, 0), 0.5D, 0.85D, 0.5D));
 	static final PartTransformer<GeoCube> CHEST = new ChestPartTransformer(8, 7, 1.125F, AABB.ofSize(new Vec3(0, 1.125D, 0), 0.9D, 0.85D, 0.45D));
-	
+
 	static class GeoModelPartition {
 		final PartTransformer<GeoCube> partTransformer;
 		final GeoBone geoBone;
-		
+
 		private GeoModelPartition(PartTransformer<GeoCube> partTransformer, GeoBone geoBone) {
 			this.partTransformer = partTransformer;
 			this.geoBone = geoBone;
 		}
 	}
-	
+
+	/// The Epic Fight part transformer for each GeckoLib armor segment
+	static PartTransformer<GeoCube> partTransformerOf(GeoArmorRenderer.ArmorSegment segment) {
+		return switch (segment) {
+			case HEAD -> HEAD;
+			case CHEST -> CHEST;
+			case LEFT_ARM -> LEFT_ARM;
+			case RIGHT_ARM -> RIGHT_ARM;
+			case LEFT_LEG -> LEFT_LEG;
+			case RIGHT_LEG -> RIGHT_LEG;
+			case LEFT_FOOT -> LEFT_FEET;
+			case RIGHT_FOOT -> RIGHT_FEET;
+		};
+	}
+
+	static @Nullable GeoArmorRenderer<?, ?> getGeoArmorRenderer(ItemStack itemStack, EquipmentSlot equipmentSlot) {
+		GeoRenderProvider renderProvider = GeoRenderProvider.of(itemStack);
+		return renderProvider == GeoRenderProvider.DEFAULT ? null : renderProvider.getGeoArmorRenderer(itemStack, equipmentSlot);
+	}
+
+	/// Fills a render state the way GeckoLib does before an armor render pass, so models and textures
+	/// that depend on the render state resolve the same as they would without Epic Fight
 	@SuppressWarnings({"unchecked", "rawtypes"})
+	static HumanoidRenderState createRenderState(GeoArmorRenderer geoArmorRenderer, LivingEntity livingEntity, ItemStack itemStack, EquipmentSlot equipmentSlot, HumanoidModel<?> baseModel) {
+		HumanoidRenderState renderState = new HumanoidRenderState();
+		geoArmorRenderer.fillRenderState((GeoAnimatable)itemStack.getItem(), new GeoArmorRenderer.RenderData(itemStack, equipmentSlot, livingEntity, baseModel), (GeoRenderState)(Object)renderState, 0.0F);
+
+		return renderState;
+	}
+
 	public static void getGeoArmorTexturePath(AnimatedArmorTextureEvent event) {
 		ItemStack stack = event.getItemStack();
+		GeoArmorRenderer<?, ?> geoArmorRenderer = getGeoArmorRenderer(stack, event.getEquipmentSlot());
 
-		if (!(stack.getItem() instanceof GeoAnimatable geoAnimatable)) {
+		if (geoArmorRenderer == null || event.getOriginalModel() == null) {
 			return;
 		}
 
-		HumanoidModel<?> geoRenderer = GeoRenderProvider.of(stack).getGeoArmorRenderer(event.getLivingEntity(), stack, event.getEquipmentSlot(), (HumanoidModel) event.getOriginalModel());
-
-		if (geoRenderer instanceof GeoArmorRenderer geoArmorRenderer) {
-			geoArmorRenderer.prepForRender(event.getLivingEntity(), stack, event.getEquipmentSlot(), event.getOriginalModel(), Minecraft.getInstance().renderBuffers().bufferSource(), 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-			event.setResultLocation(geoArmorRenderer.getTextureLocation(geoAnimatable));
-		}
+		HumanoidRenderState renderState = createRenderState(geoArmorRenderer, event.getLivingEntity(), stack, event.getEquipmentSlot(), event.getOriginalModel());
+		event.setResultLocation(geoArmorRenderer.getGeoModel().getTextureResource((GeoRenderState)(Object)renderState));
 	}
 
 	@Override
@@ -90,77 +115,22 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Override
 	public SkinnedMesh transformArmorModel(HumanoidModel<?> humanoidModel, LivingEntity livingEntity, ItemStack itemStack, EquipmentSlot equipmentSlot) {
-		if (!(itemStack.getItem() instanceof GeoAnimatable)) {
+		GeoArmorRenderer geoArmorRenderer = getGeoArmorRenderer(itemStack, equipmentSlot);
+
+		if (geoArmorRenderer == null) {
 			return null;
 		}
 
-		HumanoidModel<?> geoRenderer = GeoRenderProvider.of(itemStack).getGeoArmorRenderer(livingEntity, itemStack, equipmentSlot, (HumanoidModel) humanoidModel);
-
-		if (!(geoRenderer instanceof GeoArmorRenderer<?> geoArmorRenderer)) {
-			return null;
-		}
-
-		geoArmorRenderer.prepForRender(livingEntity, itemStack, equipmentSlot, humanoidModel, Minecraft.getInstance().renderBuffers().bufferSource(), 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-
-		PoseStack poseStack = new PoseStack();
-		poseStack.translate(0, 10000, 0);
-		geoArmorRenderer.renderToBuffer(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.armorEntityGlint()), 0, 0, 0);
-
+		HumanoidRenderState renderState = createRenderState(geoArmorRenderer, livingEntity, itemStack, equipmentSlot, humanoidModel);
+		GeoModel<?> geoModel = geoArmorRenderer.getGeoModel();
+		BakedGeoModel bakedModel = geoModel.getBakedModel(geoModel.getModelResource((GeoRenderState)(Object)renderState));
 		List<GeoModelPartition> boxes = Lists.newArrayList();
-		MixinGeoArmorRenderer accessor = (MixinGeoArmorRenderer)geoArmorRenderer;
-		
-		GeoBone headBone = accessor.getHead();
-		GeoBone bodyBone = accessor.getBody();
-		GeoBone rightArmBone = accessor.getRightArm();
-		GeoBone leftArmBone = accessor.getLeftArm();
-		GeoBone rightLegBone = accessor.getRightLeg();
-		GeoBone leftLegBone = accessor.getLeftLeg();
-		GeoBone rightBootBone = accessor.getRightBoot();
-		GeoBone leftBootBone = accessor.getLeftBoot();
 
-		resetBoneTreeToInitialSnapshot(headBone);
-		resetBoneTreeToInitialSnapshot(bodyBone);
-		resetBoneTreeToInitialSnapshot(rightArmBone);
-		resetBoneTreeToInitialSnapshot(leftArmBone);
-		resetBoneTreeToInitialSnapshot(rightLegBone);
-		resetBoneTreeToInitialSnapshot(leftLegBone);
-		resetBoneTreeToInitialSnapshot(rightBootBone);
-		resetBoneTreeToInitialSnapshot(leftBootBone);
-
-		if (headBone != null) boxes.add(new GeoModelPartition(HEAD, headBone));
-		if (bodyBone != null) boxes.add(new GeoModelPartition(CHEST, bodyBone));
-		if (rightArmBone != null) boxes.add(new GeoModelPartition(RIGHT_ARM, rightArmBone));
-		if (leftArmBone != null) boxes.add(new GeoModelPartition(LEFT_ARM, leftArmBone));
-		if (leftLegBone != null) boxes.add(new GeoModelPartition(LEFT_LEG, leftLegBone));
-		if (rightLegBone != null) boxes.add(new GeoModelPartition(RIGHT_LEG, rightLegBone));
-		if (leftBootBone != null) boxes.add(new GeoModelPartition(LEFT_FEET, leftBootBone));
-		if (rightBootBone != null) boxes.add(new GeoModelPartition(RIGHT_FEET, rightBootBone));
-		
-		return bakeMeshFromCubes(boxes);
-	}
-	
-	private static void resetBoneTreeToInitialSnapshot(GeoBone bone) {
-		if (bone == null) {
-			return;
+		for (GeoArmorRenderer.ArmorSegment segment : (List<GeoArmorRenderer.ArmorSegment>)geoArmorRenderer.getSegmentsForSlot(renderState, equipmentSlot)) {
+			bakedModel.getBone(geoArmorRenderer.getBoneNameForSegment(renderState, segment)).ifPresent(bone -> boxes.add(new GeoModelPartition(partTransformerOf(segment), bone)));
 		}
 
-		BoneSnapshot snapshot = bone.getInitialSnapshot();
-
-		if (snapshot != null) {
-			bone.setPosX(snapshot.getOffsetX());
-			bone.setPosY(snapshot.getOffsetY());
-			bone.setPosZ(snapshot.getOffsetZ());
-			bone.setRotX(snapshot.getRotX());
-			bone.setRotY(snapshot.getRotY());
-			bone.setRotZ(snapshot.getRotZ());
-			bone.setScaleX(snapshot.getScaleX());
-			bone.setScaleY(snapshot.getScaleY());
-			bone.setScaleZ(snapshot.getScaleZ());
-		}
-
-		for (GeoBone child : bone.getChildBones()) {
-			resetBoneTreeToInitialSnapshot(child);
-		}
+		return boxes.isEmpty() ? null : bakeMeshFromCubes(boxes);
 	}
 
 	private static SkinnedMesh bakeMeshFromCubes(List<GeoModelPartition> partitions) {
@@ -168,59 +138,46 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 		Map<MeshPartDefinition, IntList> indices = Maps.newHashMap();
 		PoseStack poseStack = new PoseStack();
 		PartTransformer.IndexCounter indexCounter = new PartTransformer.IndexCounter();
-		
+
 		for (GeoModelPartition modelpartition : partitions) {
-			bake(poseStack, modelpartition, modelpartition.geoBone.getName(), modelpartition.geoBone, vertices, indices, Lists.newArrayList(), indexCounter, false);
+			bake(poseStack, modelpartition, modelpartition.geoBone.name(), modelpartition.geoBone, vertices, indices, indexCounter);
 		}
-		
+
 		return SingleGroupVertexBuilder.loadVertexInformation(vertices, indices);
 	}
-	
-	private static void bake(PoseStack poseStack, GeoModelPartition modelpartition, String partName, GeoBone geoBone, List<SingleGroupVertexBuilder> vertices, Map<MeshPartDefinition, IntList> indices, List<String> path, PartTransformer.IndexCounter indexCounter, boolean bindPartAnimation) {
-		if (geoBone == null || geoBone.isHidden()) {
-			return;
-		}
 
+	/// Bakes a bone tree in its rest pose. The baked mesh follows the Epic Fight armature, so GeckoLib
+	/// bone animations (which GeckoLib 5 only resolves inside its own render pass) are not carried over.
+	private static void bake(PoseStack poseStack, GeoModelPartition modelpartition, String partName, GeoBone geoBone, List<SingleGroupVertexBuilder> vertices, Map<MeshPartDefinition, IntList> indices, PartTransformer.IndexCounter indexCounter) {
 		poseStack.pushPose();
 
-		RenderUtil.prepMatrixForBone(poseStack, geoBone);
+		// RenderUtil#prepMatrixForBone without the frame snapshot the bone kept from its last render pass
+		geoBone.translateToPivotPoint(poseStack);
+		poseStack.mulPose(Axis.ZP.rotation(geoBone.baseRotZ()));
+		poseStack.mulPose(Axis.YP.rotation(geoBone.baseRotY()));
+		poseStack.mulPose(Axis.XP.rotation(geoBone.baseRotX()));
+		geoBone.translateAwayFromPivotPoint(poseStack);
 
-		List<String> newList = new ArrayList<>(path);
-
-		if (bindPartAnimation) {
-			newList.add(partName);
-		}
-
-		for (GeoCube cube : geoBone.getCubes()) {
-			poseStack.pushPose();
-
-			RenderUtil.translateToPivotPoint(poseStack, cube);
-			RenderUtil.rotateMatrixAroundCube(poseStack, cube);
-			RenderUtil.translateAwayFromPivotPoint(poseStack, cube);
+		if (geoBone instanceof CuboidGeoBone cuboidBone) {
 			MeshPartDefinition partDefinition = GeoMeshPartDefinition.of(partName);
 
-			if (bindPartAnimation) {
-				OpenMatrix4f invertedParentTransform = OpenMatrix4f.importFromMojangMatrix(poseStack.last().pose());
-				invertedParentTransform.m30 *= 0.0625F;
-				invertedParentTransform.m31 *= 0.0625F;
-				invertedParentTransform.m32 *= 0.0625F;
-				invertedParentTransform.invert();
-				partDefinition = GeoMeshPartDefinition.of(partName, newList, invertedParentTransform, modelpartition.geoBone);
+			for (GeoCube cube : cuboidBone.cubes) {
+				poseStack.pushPose();
+				cube.translateToPivotPoint(poseStack);
+				cube.rotate(poseStack);
+				cube.translateAwayFromPivotPoint(poseStack);
+				modelpartition.partTransformer.bakeCube(poseStack, partDefinition, cube, vertices, indices, indexCounter);
+				poseStack.popPose();
 			}
-
-			modelpartition.partTransformer.bakeCube(poseStack, partDefinition, cube, vertices, indices, indexCounter);
-			poseStack.popPose();
 		}
 
-		if (!geoBone.isHidingChildren()) {
-			for (GeoBone childBone : geoBone.getChildBones()) {
-				bake(poseStack, modelpartition, partName, childBone, vertices, indices, newList, indexCounter, true);
-			}
+		for (GeoBone childBone : geoBone.children()) {
+			bake(poseStack, modelpartition, partName, childBone, vertices, indices, indexCounter);
 		}
 
 		poseStack.popPose();
 	}
-	
+
 	static class SimpleTransformer extends PartTransformer<GeoCube> {
 		final int jointId;
 		
@@ -234,11 +191,11 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 					continue;
 				}
 				
-				Vector3f norm = new Vector3f(quad.normal());
+				Vector3f norm = new Vector3f(quad.normalVec());
 				norm.mul(poseStack.last().normal());
 				
 				for (GeoVertex vertex : quad.vertices()) {
-					Vector4f pos = new Vector4f(vertex.position(), 1.0F);
+					Vector4f pos = new Vector4f(vertex.posX(), vertex.posY(), vertex.posZ(), 1.0F);
 					pos.mul(poseStack.last().pose());
 					
 					vertices.add(new SingleGroupVertexBuilder()
@@ -292,11 +249,11 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 			for (GeoQuad polygon : cube.quads()) {
 				Matrix4f matrix = poseStack.last().pose();
 				
-				ModelPart.Vertex pos0 = getTranslatedVertex(polygon.vertices()[0], matrix);
-				ModelPart.Vertex pos1 = getTranslatedVertex(polygon.vertices()[1], matrix);
-				ModelPart.Vertex pos2 = getTranslatedVertex(polygon.vertices()[2], matrix);
-				ModelPart.Vertex pos3 = getTranslatedVertex(polygon.vertices()[3], matrix);
-				Direction direction = getDirectionFromVector(polygon.normal());
+				PosTexVertex pos0 = getTranslatedVertex(polygon.vertices()[0], matrix);
+				PosTexVertex pos1 = getTranslatedVertex(polygon.vertices()[1], matrix);
+				PosTexVertex pos2 = getTranslatedVertex(polygon.vertices()[2], matrix);
+				PosTexVertex pos3 = getTranslatedVertex(polygon.vertices()[3], matrix);
+				Direction direction = getDirectionFromVector(polygon.normalVec());
 				VertexWeight pos0Weight = getYClipWeight(pos0.pos.y());
 				VertexWeight pos1Weight = getYClipWeight(pos1.pos.y());
 				VertexWeight pos2Weight = getYClipWeight(pos2.pos.y());
@@ -305,8 +262,8 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 				if (pos1.pos.x() > X_PLANE != pos2.pos.x() > X_PLANE) {
 					float distance = pos2.pos.x() - pos1.pos.x();
 					float textureU = pos1.u + (pos2.u - pos1.u) * ((X_PLANE - pos1.pos.x()) / distance);
-					ModelPart.Vertex pos4 = new ModelPart.Vertex(X_PLANE, pos0.pos.y(), pos0.pos.z(), textureU, pos0.v);
-					ModelPart.Vertex pos5 = new ModelPart.Vertex(X_PLANE, pos1.pos.y(), pos1.pos.z(), textureU, pos1.v);
+					PosTexVertex pos4 = new PosTexVertex(X_PLANE, pos0.pos.y(), pos0.pos.z(), textureU, pos0.v);
+					PosTexVertex pos5 = new PosTexVertex(X_PLANE, pos1.pos.y(), pos1.pos.z(), textureU, pos1.v);
 					
 					xClipPolygons.add(new AnimatedPolygon(new AnimatedVertex[] {
 						new AnimatedVertex(pos0, 8, 7, 0, pos0Weight.chestWeight, pos0Weight.torsoWeight, 0),
@@ -348,8 +305,8 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 						float textureV = pos1.v + (pos2.v - pos1.v) * ((vertexWeight.yClipCoord - pos1.pos.y()) / distance);
 						Vector3f clipPos1 = getClipPoint(pos1.pos, pos2.pos, vertexWeight.yClipCoord);
 						Vector3f clipPos2 = getClipPoint(pos0.pos, pos3.pos, vertexWeight.yClipCoord);
-						ModelPart.Vertex pos4 = new ModelPart.Vertex(clipPos2, pos0.u, textureV);
-						ModelPart.Vertex pos5 = new ModelPart.Vertex(clipPos1, pos1.u, textureV);
+						PosTexVertex pos4 = new PosTexVertex(clipPos2, pos0.u, textureV);
+						PosTexVertex pos5 = new PosTexVertex(clipPos1, pos1.u, textureV);
 						animatedVertices.add(new AnimatedVertex(pos4, 8, 7, 0, vertexWeight.chestWeight, vertexWeight.torsoWeight, 0));
 						animatedVertices.add(new AnimatedVertex(pos5, 8, 7, 0, vertexWeight.chestWeight, vertexWeight.torsoWeight, 0));
 					}
@@ -484,19 +441,19 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 			
 			for (GeoQuad quad : cube.quads()) {
 				Matrix4f matrix = poseStack.last().pose();
-				ModelPart.Vertex pos0 = getTranslatedVertex(quad.vertices()[0], matrix);
-				ModelPart.Vertex pos1 = getTranslatedVertex(quad.vertices()[1], matrix);
-				ModelPart.Vertex pos2 = getTranslatedVertex(quad.vertices()[2], matrix);
-				ModelPart.Vertex pos3 = getTranslatedVertex(quad.vertices()[3], matrix);
-				Direction direction = getDirectionFromVector(quad.normal());
+				PosTexVertex pos0 = getTranslatedVertex(quad.vertices()[0], matrix);
+				PosTexVertex pos1 = getTranslatedVertex(quad.vertices()[1], matrix);
+				PosTexVertex pos2 = getTranslatedVertex(quad.vertices()[2], matrix);
+				PosTexVertex pos3 = getTranslatedVertex(quad.vertices()[3], matrix);
+				Direction direction = getDirectionFromVector(quad.normalVec());
 				
 				if (pos1.pos.y() > this.yClipCoord != pos2.pos.y() > this.yClipCoord) {
 					float distance = pos2.pos.y() - pos1.pos.y();
 					float textureV = pos1.v + (pos2.v - pos1.v) * ((this.yClipCoord - pos1.pos.y()) / distance);
 					Vector3f clipPos1 = getClipPoint(pos1.pos, pos2.pos, this.yClipCoord);
 					Vector3f clipPos2 = getClipPoint(pos0.pos, pos3.pos, this.yClipCoord);
-					ModelPart.Vertex pos4 = new ModelPart.Vertex(clipPos2, pos0.u, textureV);
-					ModelPart.Vertex pos5 = new ModelPart.Vertex(clipPos1, pos1.u, textureV);
+					PosTexVertex pos4 = new PosTexVertex(clipPos2, pos0.u, textureV);
+					PosTexVertex pos5 = new PosTexVertex(clipPos1, pos1.u, textureV);
 					
 					int upperId, lowerId;
 					if (distance > 0) {
@@ -600,7 +557,7 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 		
 		for (GeoQuad quad : cube.quads()) {
 			for (GeoVertex v : quad.vertices()) {
-				Vector4f translatedPosition = new Vector4f(v.position(), 1.0F);
+				Vector4f translatedPosition = new Vector4f(v.posX(), v.posY(), v.posZ(), 1.0F);
 				translatedPosition.mul(matrix);
 				
 				if (minX > translatedPosition.x()) {
@@ -643,30 +600,48 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 		return clipPoint;
 	}
 	
-	static ModelPart.Vertex getTranslatedVertex(GeoVertex original, Matrix4f matrix) {
-		Vector4f translatedPosition = new Vector4f(original.position(), 1.0F);
+	static PosTexVertex getTranslatedVertex(GeoVertex original, Matrix4f matrix) {
+		Vector4f translatedPosition = new Vector4f(original.posX(), original.posY(), original.posZ(), 1.0F);
 		translatedPosition.mul(matrix);
 		
-		return new ModelPart.Vertex(translatedPosition.x(), translatedPosition.y(), translatedPosition.z(), original.texU(), original.texV());
+		return new PosTexVertex(translatedPosition.x(), translatedPosition.y(), translatedPosition.z(), original.texU(), original.texV());
 	}
 	
-	static class AnimatedVertex extends ModelPart.Vertex {
+	/// Position + texture coordinate in model units, as the pre-1.21.5 `ModelPart.Vertex` was
+	/// (see VanillaModelTransformer.PosTexVertex)
+	static class PosTexVertex {
+		final Vector3f pos;
+		final float u;
+		final float v;
+		
+		PosTexVertex(float x, float y, float z, float u, float v) {
+			this(new Vector3f(x, y, z), u, v);
+		}
+		
+		PosTexVertex(Vector3f pos, float u, float v) {
+			this.pos = pos;
+			this.u = u;
+			this.v = v;
+		}
+	}
+	
+	static class AnimatedVertex extends PosTexVertex {
 		final Vec3i jointId;
 		final Vec3f weight;
 		
-		public AnimatedVertex(ModelPart.Vertex posTexVertx, int jointId) {
+		public AnimatedVertex(PosTexVertex posTexVertx, int jointId) {
 			this(posTexVertx, jointId, 0, 0, 1.0F, 0.0F, 0.0F);
 		}
 		
-		public AnimatedVertex(ModelPart.Vertex posTexVertx, int jointId1, int jointId2, int jointId3, float weight1, float weight2, float weight3) {
+		public AnimatedVertex(PosTexVertex posTexVertx, int jointId1, int jointId2, int jointId3, float weight1, float weight2, float weight3) {
 			this(posTexVertx, new Vec3i(jointId1, jointId2, jointId3), new Vec3f(weight1, weight2, weight3));
 		}
 		
-		public AnimatedVertex(ModelPart.Vertex posTexVertx, Vec3i ids, Vec3f weights) {
+		public AnimatedVertex(PosTexVertex posTexVertx, Vec3i ids, Vec3f weights) {
 			this(posTexVertx, posTexVertx.u, posTexVertx.v, ids, weights);
 		}
 		
-		public AnimatedVertex(ModelPart.Vertex posTexVertx, float u, float v, Vec3i ids, Vec3f weights) {
+		public AnimatedVertex(PosTexVertex posTexVertx, float u, float v, Vec3i ids, Vec3f weights) {
 			super(posTexVertx.pos.x(), posTexVertx.pos.y(), posTexVertx.pos.z(), u, v);
 			this.jointId = ids;
 			this.weight = weights;
@@ -691,86 +666,35 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 			this.normal = directionIn.step();
 		}
 	}
-	
-	public record GeoMeshPartDefinition(String partName, List<String> path, OpenMatrix4f invertedParentTransform, GeoBone root) implements MeshPartDefinition {
+
+	public record GeoMeshPartDefinition(String partName) implements MeshPartDefinition {
 		public static MeshPartDefinition of(String partName) {
-			return new GeoMeshPartDefinition(partName, null, null, null);
+			return new GeoMeshPartDefinition(partName);
 		}
-		
-		public static MeshPartDefinition of(String partName, List<String> path, OpenMatrix4f invertedParentTransform, GeoBone root) {
-			return new GeoMeshPartDefinition(partName, path, invertedParentTransform, root);
-		}
-		
-		public static GeoBone getChildBone(GeoBone bone, String boneName) {
-			for (GeoBone childBone : bone.getChildBones()) {
-				if (childBone.getName().equals(boneName)) {
-					return childBone;
-				}
-			}
-			
-			return null;
-		}
-		
+
+		/// Parts are baked in their rest pose and follow the armature only
+		@Override
 		public Supplier<OpenMatrix4f> getModelPartAnimationProvider() {
-			return this.root == null ? () -> null : () -> {
-				PoseStack poseStack = new PoseStack();
-				this.progress(this.root, poseStack, false);
-				GeoBone bone = this.root;
-				int idx = 0;
-				
-				for (String childPartName : this.path) {
-					bone = getChildBone(bone, childPartName);
-					
-					if (bone == null) {
-						return null;
-					}
-					
-					idx++;
-					this.progress(bone, poseStack, idx == this.path.size());
-				}
-				
-				OpenMatrix4f parentTransform = OpenMatrix4f.importFromMojangMatrix(poseStack.last().pose());
-				GeoBone lastBone = bone;
-				BoneSnapshot boneSnapshot = bone.getInitialSnapshot();
-				OpenMatrix4f partAnimation = OpenMatrix4f.mulMatrices(parentTransform,
-																	  new OpenMatrix4f().mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(boneSnapshot.getRotZ(), boneSnapshot.getRotY(), boneSnapshot.getRotX())).transpose().invert())
-																	  					.translate(new Vec3f(lastBone.getPosX() - boneSnapshot.getOffsetX(), lastBone.getPosY() - boneSnapshot.getOffsetY(), lastBone.getPosZ() - boneSnapshot.getOffsetZ()).scale(0.0625F))
-																						.mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(boneSnapshot.getRotZ(), boneSnapshot.getRotY(), boneSnapshot.getRotX())).transpose())
-																						.mulBack(OpenMatrix4f.fromQuaternion(new Quaternionf().rotationZYX(boneSnapshot.getRotZ() - lastBone.getRotZ(), boneSnapshot.getRotY() - lastBone.getRotY(), boneSnapshot.getRotX() - lastBone.getRotX())))
-																						.scale(new Vec3f(lastBone.getScaleX(), lastBone.getScaleY(), lastBone.getScaleZ())),
-																	  this.invertedParentTransform);
-				
-				return partAnimation;
-			};
+			return () -> null;
 		}
-		
+
+		@Override
 		public Mesh.RenderProperties renderProperties() {
 			return null;
 		}
-		
-		private void progress(GeoBone bone, PoseStack poseStack, boolean last) {
-			BoneSnapshot boneSnapshot = bone.getInitialSnapshot();
-			
-			if (last) {
-				poseStack.translate(boneSnapshot.getOffsetX(), boneSnapshot.getOffsetY(), boneSnapshot.getOffsetZ());
-				poseStack.mulPose(new Quaternionf().rotationZYX(boneSnapshot.getRotZ(), boneSnapshot.getRotY(), boneSnapshot.getRotX()));
-			} else {
-				poseStack.translate(bone.getPosX(), bone.getPosY(), bone.getPosZ());
-				poseStack.mulPose(new Quaternionf().rotationZYX(bone.getRotZ(), bone.getRotY(), bone.getRotX()));
-				poseStack.scale(bone.getScaleX(), bone.getScaleY(), bone.getScaleZ());
-			}
-		}
-		
+
+		@Override
 		public boolean equals(Object o) {
 			if (this == o) {
 				return true;
 			} else if (o instanceof MeshPartDefinition comparision) {
 				return this.partName.equals(comparision.partName());
 			}
-			
+
 			return false;
 		}
-		
+
+		@Override
 		public int hashCode() {
 			return this.partName.hashCode();
 		}

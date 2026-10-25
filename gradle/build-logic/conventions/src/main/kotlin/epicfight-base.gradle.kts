@@ -72,7 +72,7 @@ repositories {
     strictMaven("IsXander", "https://maven.isxander.dev/releases", "dev.isxander")
 
     strictMaven("AzureDoom Mods", "https://maven.azuredoom.com/mods", "mod.azure.azurelib", "mod.azure.azurelibarmor")
-    strictMaven("GeckoLib", "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/", "software.bernie.geckolib")
+    strictMaven("GeckoLib", "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/", "software.bernie.geckolib", "com.geckolib")
     strictMaven("Illusive Soulworks (Curios API)", "https://maven.theillusivec4.top/", "top.theillusivec4.curios")
     strictMaven("playerAnimator", "https://maven.kosmx.dev", "dev.kosmx.player-anim")
 }
