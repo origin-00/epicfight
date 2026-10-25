@@ -7,6 +7,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import yesman.epicfight.api.event.impl.ExternalDamageAuthority;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.event.EntityEventListener;
@@ -80,7 +81,7 @@ public class ParryingSkill extends GuardSkill {
 
             int lastActive = skillContainer.getDataManager().getDataValue(EpicFightSkillDataKeys.LAST_ACTIVE);
 
-            if (skillContainer.getExecutor().getOriginal().tickCount - lastActive > this.parryCooldown) {
+            if (skillContainer.getExecutor().getOriginal().tickCount - lastActive > this.parryCooldown(skillContainer.getExecutor().getOriginal())) {
                 skillContainer.getDataManager().setData(EpicFightSkillDataKeys.LAST_ACTIVE, skillContainer.getExecutor().getOriginal().tickCount);
             }
         });
@@ -92,12 +93,17 @@ public class ParryingSkill extends GuardSkill {
 		
 		skillContainer.runOnServer(serverExecutor -> {
 			 int lastActive = skillContainer.getDataManager().getDataValue(EpicFightSkillDataKeys.LAST_ACTIVE);
-			 if (serverExecutor.getOriginal().tickCount - lastActive > this.parryCooldown) {
+			 if (serverExecutor.getOriginal().tickCount - lastActive > this.parryCooldown(serverExecutor.getOriginal())) {
 				 skillContainer.getDataManager().setDataSync(EpicFightSkillDataKeys.LAST_ACTIVE, serverExecutor.getOriginal().tickCount);
 			 }
 		});
 	}
 	
+	/// The parry cooldown for `entity`, after any [ExternalDamageAuthority] tuning
+	private int parryCooldown(LivingEntity entity) {
+		return ExternalDamageAuthority.tune(entity, ExternalDamageAuthority.Parameter.PARRY_COOLDOWN, this.parryCooldown);
+	}
+
 	@Override
 	public void guard(SkillContainer container, CapabilityItem itemCapability, ServerPlayerPatch playerPatch, TakeDamageEvent.Income event, float knockback, float impact, boolean advanced) {
 		if (this.isHoldingWeaponAvailable(playerPatch, itemCapability, BlockType.ADVANCED_GUARD)) {
@@ -106,7 +112,7 @@ public class ParryingSkill extends GuardSkill {
 			
 			if (offender != null && this.isBlockableSource(damageSource, true)) {
 				ServerPlayer serverplayer = playerPatch.getOriginal();
-				boolean successParrying = serverplayer.tickCount - container.getDataManager().getDataValue(EpicFightSkillDataKeys.LAST_ACTIVE) < this.parryWindow;
+				boolean successParrying = serverplayer.tickCount - container.getDataManager().getDataValue(EpicFightSkillDataKeys.LAST_ACTIVE) < ExternalDamageAuthority.tune(serverplayer, ExternalDamageAuthority.Parameter.PARRY_WINDOW, this.parryWindow);
 				float penalty = container.getDataManager().getDataValue(EpicFightSkillDataKeys.PENALTY);
 				playerPatch.playSound(EpicFightSounds.CLASH.get(), -0.05F, 0.1F);
 				EpicFightParticles.HIT_BLUNT.get().spawnParticleWithArgument(serverplayer.level(), HitParticleType.FRONT_OF_EYES, HitParticleType.ZERO, serverplayer, offender);

@@ -192,6 +192,12 @@ public final class VanillaEntityEventHooks {
             }
         }
 
+        // An entity whose damage another mod judges is left to it: that mod asks
+        // ExternalDamageAuthority#judge once per blow on every path, this one included.
+        if (ExternalDamageAuthority.isJudgedExternally(entity)) {
+            return false;
+        }
+
         LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(entity, LivingEntityPatch.class);
         AttackResult result = entitypatch != null ? entitypatch.tryHurt(damageSource, amount) : AttackResult.success(amount);
 

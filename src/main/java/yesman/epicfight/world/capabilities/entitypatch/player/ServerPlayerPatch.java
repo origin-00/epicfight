@@ -17,6 +17,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import yesman.epicfight.api.event.impl.ExternalDamageAuthority;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -274,12 +275,12 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	}
 	
 	@Override
-	public AttackResult tryHurt(DamageSource damageSource, float amount) {
+	public ExternalDamageAuthority.Judgement judgeHurt(DamageSource damageSource, float amount) {
 		if (this.getOriginal().getAbilities().invulnerable && !damageSource.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-			return AttackResult.missed(amount); 
+			return new ExternalDamageAuthority.Judgement(AttackResult.missed(amount), false, false, AttackResult.ResultType.SUCCESS);
 		}
 
-        return super.tryHurt(damageSource, amount);
+        return super.judgeHurt(damageSource, amount);
 	}
 
 	@Override

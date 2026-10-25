@@ -35,6 +35,7 @@ import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.event.EntityEventListener;
 import yesman.epicfight.api.event.EpicFightEventHooks;
 import yesman.epicfight.api.event.IdentifierProvider;
+import yesman.epicfight.api.event.impl.ExternalDamageAuthority;
 import yesman.epicfight.api.event.types.entity.*;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.AttackResult;
@@ -395,13 +396,20 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
     }
 
     public AttackResult tryHurt(DamageSource damageSource, float amount) {
+        return this.judgeHurt(damageSource, amount).result();
+    }
+
+    /// [#tryHurt]'s judgement with how it was reached: whether a guard, parry or stance listener
+    /// caught the blow, and whether that catch was a parry. Asked by [ExternalDamageAuthority#judge].
+    /// Patches that override [#tryHurt] for mobs are not consulted here; players judge identically.
+    public ExternalDamageAuthority.Judgement judgeHurt(DamageSource damageSource, float amount) {
         TakeDamageEvent.Income takeDamageEvent$income = new TakeDamageEvent.Income(this, damageSource, amount);
         EpicFightEventHooks.Entity.TAKE_DAMAGE_INCOME.postWithListener(takeDamageEvent$income, this.getEventListener());
 
         if (takeDamageEvent$income.isCanceled()) {
-            return new AttackResult(ResultType.MISSED, takeDamageEvent$income.getDamage());
+            return new ExternalDamageAuthority.Judgement(new AttackResult(ResultType.MISSED, takeDamageEvent$income.getDamage()), true, takeDamageEvent$income.isParried(), takeDamageEvent$income.getResult());
         } else {
-            return AttackResult.of(this.getEntityState().attackResult(damageSource), amount);
+            return new ExternalDamageAuthority.Judgement(AttackResult.of(this.getEntityState().attackResult(damageSource), amount), false, false, AttackResult.ResultType.SUCCESS);
         }
     }
 
