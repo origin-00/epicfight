@@ -127,6 +127,9 @@ public final class CommonItemCapabilityProvider implements ICapabilityProvider<I
 	}
 	
 	public void addDefaultItems() {
+		// Defaults resolved before this data arrived (e.g. on login) must be rebuilt with it
+		this.defaultCapabilities.clear();
+
 		BuiltInRegistries.ITEM.entrySet().stream().filter(entry -> !this.capabilities.containsKey(entry.getValue())).forEach(entry -> {
 			Function<Item, ? extends CapabilityItem.Builder<?>> type = null;
 			Item item = entry.getValue();

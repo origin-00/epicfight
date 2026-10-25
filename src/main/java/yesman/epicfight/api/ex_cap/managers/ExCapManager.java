@@ -26,7 +26,8 @@ public class ExCapManager
 
     public static List<ExCapData.Builder> retrieveExCapData(Identifier cap)
     {
-        return getDataMap().get(cap);
+        // Presets without ex-cap data (e.g. looked up before the server data arrives) have nothing to apply
+        return dataMap.getOrDefault(cap, List.of());
     }
 
     public static void addExCapData(Identifier cap, List<Identifier> data)

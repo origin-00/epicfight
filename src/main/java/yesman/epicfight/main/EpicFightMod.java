@@ -336,7 +336,13 @@ public class EpicFightMod {
     		// world's data packs are loaded (26.1): fill them on joining a world.
     		NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn loggingIn) -> {
     			if (ClientConfig.combatCategorizedItems.isEmpty() && ClientConfig.miningCategorizedItems.isEmpty()) {
-    				ItemsPreferenceScreen.resetItems();
+    				// This runs inside the login packet handler: a throw here aborts the rest of the login,
+    				// including other mods' hooks (Distant Horizons never starts its client world)
+    				try {
+    					ItemsPreferenceScreen.resetItems();
+    				} catch (RuntimeException e) {
+    					EpicFight.LOGGER.error("Failed to fill the default item preferences", e);
+    				}
     			}
     		});
         }
