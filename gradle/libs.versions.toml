@@ -7,7 +7,7 @@ minecraft = "26.1.2"
 parchmentMappings = "2024.11.17"
 
 # NeoForge
-neoforge = "26.1.2.122"
+neoforge = "26.1.2.94"
 neoforgeRange = "[26.1,)"
 moddevgradle = "2.0.148"
 # https://projects.neoforged.net/neoforged/neoform
