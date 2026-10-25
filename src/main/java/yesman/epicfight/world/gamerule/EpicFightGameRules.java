@@ -55,7 +55,7 @@ public class EpicFightGameRules {
 	public static final ConfigurableGameRule<Boolean, ModConfigSpec.BooleanValue> SKILL_BOOKS = create(
 			  "skillBooks"
 			, GameRuleCategory.PLAYER
-			, configBuilder -> configBuilder.define("default_gamerule.skillBooks", true)
+			, configBuilder -> configBuilder.define("default_gamerule.skillBooks", false)
 			, RuleType.BOOLEAN
 			, true
 	);
@@ -135,7 +135,7 @@ public class EpicFightGameRules {
     public static final ConfigurableGameRule<Boolean, ModConfigSpec.BooleanValue> ALLOW_VANILLA_MELEE = EpicFightGameRules.create(
         "allowVanillaMelee"
         , GameRuleCategory.PLAYER
-        , configBuilder -> configBuilder.define("default_gamerule.allow_vanilla_melee", true)
+        , configBuilder -> configBuilder.define("default_gamerule.allow_vanilla_melee", false)
         , RuleType.BOOLEAN
         , true
     );
