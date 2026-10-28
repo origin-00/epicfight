@@ -2,6 +2,7 @@ package yesman.epicfight.client.renderer.submit;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
@@ -23,6 +24,10 @@ public final class RecordedGeometry implements VertexConsumer {
 	private static final int HAS_UV2 = 1 << 3;
 	private static final int HAS_NORMAL = 1 << 4;
 	private static final int HAS_LINE_WIDTH = 1 << 5;
+
+	/// Written for line formats whose writer never set a width (the collider debug lines), since 26.1
+	/// requires every line vertex to carry one.
+	private static final float DEFAULT_LINE_WIDTH = 1.0F;
 
 	// Per vertex: x, y, z, u, v, nx, ny, nz, lineWidth
 	private static final int FLOATS = 9;
@@ -125,23 +130,25 @@ public final class RecordedGeometry implements VertexConsumer {
 		return this;
 	}
 
-	/// Writes the recorded vertices into `target`, padding triangles to quads when `mode` is quads.
+	/// Writes the recorded vertices into `target`, padding triangles to quads when `mode` is quads and
+	/// supplying a line width when `format` needs one the writer never set.
 	///
 	/// @param colorOverride ARGB color replacing the recorded colors (used for entity outlines), or
 	///                      `null` to keep them
-	public void replay(VertexConsumer target, VertexFormat.Mode mode, Integer colorOverride) {
+	public void replay(VertexConsumer target, VertexFormat format, VertexFormat.Mode mode, Integer colorOverride) {
 		boolean padToQuads = this.triangles && mode == VertexFormat.Mode.QUADS;
+		boolean needsLineWidth = format.contains(VertexFormatElement.LINE_WIDTH);
 
 		for (int i = 0; i < this.vertexCount; i++) {
-			this.writeVertex(target, i, colorOverride);
+			this.writeVertex(target, i, colorOverride, needsLineWidth);
 
 			if (padToQuads && i % 3 == 2) {
-				this.writeVertex(target, i, colorOverride);
+				this.writeVertex(target, i, colorOverride, needsLineWidth);
 			}
 		}
 	}
 
-	private void writeVertex(VertexConsumer target, int index, Integer colorOverride) {
+	private void writeVertex(VertexConsumer target, int index, Integer colorOverride, boolean needsLineWidth) {
 		int f = index * FLOATS;
 		int n = index * INTS;
 		int flags = this.ints.getInt(n);
@@ -174,6 +181,8 @@ public final class RecordedGeometry implements VertexConsumer {
 
 		if ((flags & HAS_LINE_WIDTH) != 0) {
 			target.setLineWidth(this.floats.getFloat(f + 8));
+		} else if (needsLineWidth) {
+			target.setLineWidth(DEFAULT_LINE_WIDTH);
 		}
 	}
 }

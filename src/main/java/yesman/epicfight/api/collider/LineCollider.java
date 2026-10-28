@@ -150,7 +150,10 @@ public class LineCollider extends Collider {
         float endX = (float)(this.modelCenter.x + this.modelVec.x);
         float endY = (float)(this.modelCenter.y + this.modelVec.y);
         float endZ = (float)(this.modelCenter.z + this.modelVec.z);
-        vertexConsumer.addVertex(matrix, startX, startY, startZ).setColor(color);
-        vertexConsumer.addVertex(matrix, endX, endY, endZ).setColor(color);
+        float normalX = (float)this.modelVec.x;
+        float normalY = (float)this.modelVec.y;
+        float normalZ = (float)this.modelVec.z;
+        vertexConsumer.addVertex(matrix, startX, startY, startZ).setColor(color).setNormal(normalX, normalY, normalZ);
+        vertexConsumer.addVertex(matrix, endX, endY, endZ).setColor(color).setNormal(normalX, normalY, normalZ);
 	}
 }

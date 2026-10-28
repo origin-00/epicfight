@@ -75,7 +75,7 @@ public final class RecordingBufferSource implements MultiBufferSource {
 		} else {
 			RecordedGeometry geometry = new RecordedGeometry(true);
 			writer.accept(geometry);
-			geometry.replay(bufferSource.getBuffer(renderType), renderType.mode(), null);
+			geometry.replay(bufferSource.getBuffer(renderType), renderType.format(), renderType.mode(), null);
 		}
 	}
 
@@ -99,11 +99,11 @@ public final class RecordingBufferSource implements MultiBufferSource {
 				continue;
 			}
 
-			target.submitCustomGeometry(IDENTITY, renderType, (pose, buffer) -> geometry.replay(buffer, renderType.mode(), null));
+			target.submitCustomGeometry(IDENTITY, renderType, (pose, buffer) -> geometry.replay(buffer, renderType.format(), renderType.mode(), null));
 
 			if (this.outlineColor != 0) {
 				renderType.outline().ifPresent(outline -> {
-					target.submitCustomGeometry(IDENTITY, outline, (pose, buffer) -> geometry.replay(buffer, outline.mode(), this.outlineColor));
+					target.submitCustomGeometry(IDENTITY, outline, (pose, buffer) -> geometry.replay(buffer, outline.format(), outline.mode(), this.outlineColor));
 				});
 			}
 		}
