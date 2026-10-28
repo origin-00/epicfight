@@ -95,8 +95,13 @@ public abstract class HurtableEntityPatch<T extends LivingEntity> extends Entity
 		List<AttributeModifier> modifiersToRemove = CapabilityItem.getAttributeModifiersAsWeapon(EpicFightAttributes.STUN_ARMOR, equipmentslot, from, null);
 		
 		AttributeInstance tempAttr = new AttributeInstance(EpicFightAttributes.STUN_ARMOR, (i)->{});
-		tempAttr.replaceFrom(this.original.getAttribute(EpicFightAttributes.STUN_ARMOR));
-		
+		AttributeInstance currentStunArmor = this.original.getAttribute(EpicFightAttributes.STUN_ARMOR);
+
+		// A mob that never got STUN_ARMOR (a GlobalMobPatch body the constructor mixin missed) reads as 0, as getStunArmor does
+		if (currentStunArmor != null) {
+			tempAttr.replaceFrom(currentStunArmor);
+		}
+
 		for (AttributeModifier modifier : modifiersToAdd) {
 			if (!tempAttr.hasModifier(modifier.id())) {
 				tempAttr.addTransientModifier(modifier);
