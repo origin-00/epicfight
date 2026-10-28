@@ -42,7 +42,7 @@ public abstract class MixinDamageSources {
 		}
 	}
 	
-	@Inject(at = @At(value = "HEAD"), method = "arrow(Lnet/minecraft/world/entity/projectile/AbstractArrow;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;", cancellable = true)
+	@Inject(at = @At(value = "HEAD"), method = "arrow(Lnet/minecraft/world/entity/projectile/arrow/AbstractArrow;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;", cancellable = true)
 	public void epicfight$arrow(AbstractArrow arrow, Entity shooter, CallbackInfoReturnable<DamageSource> callback) {
 		ProjectilePatch<?> projectilePatch = EpicFightCapabilities.getEntityPatch(arrow, ProjectilePatch.class);
 		
@@ -56,7 +56,7 @@ public abstract class MixinDamageSources {
 		}
 	}
 	
-	@Inject(at = @At(value = "HEAD"), method = "witherSkull(Lnet/minecraft/world/entity/projectile/WitherSkull;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;", cancellable = true)
+	@Inject(at = @At(value = "HEAD"), method = "witherSkull(Lnet/minecraft/world/entity/projectile/hurtingprojectile/WitherSkull;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;", cancellable = true)
 	public void epicfight$witherSkull(WitherSkull witherSkull, Entity shooter, CallbackInfoReturnable<DamageSource> callback) {
 		ProjectilePatch<?> projectilePatch = EpicFightCapabilities.getEntityPatch(witherSkull, ProjectilePatch.class);
 		

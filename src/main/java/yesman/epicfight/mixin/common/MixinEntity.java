@@ -6,6 +6,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -41,12 +43,10 @@ public abstract class MixinEntity {
     @Unique
     private int lastOnGroundTick;
     
-	@Shadow
-	protected abstract void readAdditionalSaveData(CompoundTag compound);
-	
-	@Shadow
-    protected abstract void addAdditionalSaveData(CompoundTag compound);
-	
+    /// Patch data rides under one key since 26.1 stores entities through ValueOutput/ValueInput
+    @Unique
+    private static final String EPICFIGHT_DATA_KEY = "epicfight";
+
 	@Inject(at = @At(value = "TAIL"), method = "onAddedToLevel()V", remap = false)
 	private void epicfight$onAddedToLevel(CallbackInfo callbackInfo) {
 		Entity self = (Entity)((Object)this);
@@ -57,8 +57,8 @@ public abstract class MixinEntity {
 		}
 	}
 	
-	@Inject(at = @At(value = "HEAD"), method = "lerpMotion(DDD)V", cancellable = true)
-	public void epicfight$lerpMotion(double pX, double pY, double pZ, CallbackInfo callback) {
+	@Inject(at = @At(value = "HEAD"), method = "lerpMotion(Lnet/minecraft/world/phys/Vec3;)V", cancellable = true)
+	public void epicfight$lerpMotion(Vec3 motion, CallbackInfo callback) {
 		Entity self = (Entity)(Object)this;
 		
 		// Remove the delta movement from the server while playing animation with REMOVE_DELTA_MOVEMENT property set as true
@@ -108,38 +108,44 @@ public abstract class MixinEntity {
 	@WrapOperation(
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/entity/Entity;addAdditionalSaveData(Lnet/minecraft/nbt/CompoundTag;)V"
+			target = "Lnet/minecraft/world/entity/Entity;addAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueOutput;)V"
 		),
-		method = "saveWithoutId(Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/nbt/CompoundTag;"
+		method = "saveWithoutId(Lnet/minecraft/world/level/storage/ValueOutput;)V"
 	)
-	private void epicfight$saveWithoutId(Entity self, CompoundTag compoundTag, Operation<CompoundTag> operation) {
-		this.addAdditionalSaveData(compoundTag);
+	private void epicfight$saveWithoutId(Entity self, ValueOutput output, Operation<Void> operation) {
+		operation.call(self, output);
 		
 		EpicFightCapabilities.getUnparameterizedEntityPatch(self, EntityPatch.class).ifPresent(entitypatch -> {
+			CompoundTag compoundTag = new CompoundTag();
 			entitypatch.writeData(compoundTag);
+			
+			if (!compoundTag.isEmpty()) {
+				output.store(EPICFIGHT_DATA_KEY, CompoundTag.CODEC, compoundTag);
+			}
 		});
 	}
 	
 	@WrapOperation(
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/entity/Entity;readAdditionalSaveData(Lnet/minecraft/nbt/CompoundTag;)V"
+			target = "Lnet/minecraft/world/entity/Entity;readAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueInput;)V"
 		),
-		method = "load(Lnet/minecraft/nbt/CompoundTag;)V"
+		method = "load(Lnet/minecraft/world/level/storage/ValueInput;)V"
 	)
-	private void epicfight$load(Entity self, CompoundTag compoundTag, Operation<Void> operation) {
-		this.readAdditionalSaveData(compoundTag);
+	private void epicfight$load(Entity self, ValueInput input, Operation<Void> operation) {
+		operation.call(self, input);
 		
 		EpicFightCapabilities.getUnparameterizedEntityPatch(self, EntityPatch.class).ifPresent(entitypatch -> {
-			entitypatch.readData(compoundTag);
+			entitypatch.readData(input.read(EPICFIGHT_DATA_KEY, CompoundTag.CODEC).orElseGet(CompoundTag::new));
 		});
 	}
 
     /// Called when setting [Entity#onGround()] according to the player's movement
     ///
     /// The onGround variable is synced from a server to a client. [ServerGamePacketListenerImpl#handleMovePlayer]
-    @Inject(at = @At(value = "HEAD"), method = "setOnGroundWithMovement(ZLnet/minecraft/world/phys/Vec3;)V")
-    public void epicfight$setOnGroundWithMovement(boolean pOnGround, Vec3 pMovement, CallbackInfo callbackInfo) {
+    /// The (onGround, horizontalCollision, movement) overload since 26.1: the two-argument one delegates to it
+    @Inject(at = @At(value = "HEAD"), method = "setOnGroundWithMovement(ZZLnet/minecraft/world/phys/Vec3;)V")
+    public void epicfight$setOnGroundWithMovement(boolean pOnGround, boolean horizontalCollision, Vec3 pMovement, CallbackInfo callbackInfo) {
         Entity self = (Entity)(Object)this;
 
         if (onGround) lastOnGroundTick = self.tickCount;

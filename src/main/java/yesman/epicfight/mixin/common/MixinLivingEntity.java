@@ -171,7 +171,7 @@ public abstract class MixinLivingEntity {
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/LivingEntity;getYRot()F"
         ),
-        method = "tickHeadTurn(FF)F"
+        method = "tickHeadTurn(F)V"
     )
     protected float epicfight$tickHeadTurn(LivingEntity livingEntity, Operation<Float> original) {
         // returns the basis y rotation as camera in TPS mode

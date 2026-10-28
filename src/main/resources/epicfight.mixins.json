@@ -9,7 +9,6 @@
     "client.MixinClientCommonPacketListenerImpl",
     "client.MixinClientPacketListener",
     "client.MixinEnderDragonRenderer",
-    "client.MixinEntityRenderer",
     "client.MixinGui",
     "client.MixinGuiGraphicsExtractor",
     "client.MixinKeyboardHandler",
