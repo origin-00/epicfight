@@ -87,7 +87,7 @@ public class EpicFightGameRules {
 	public static final ConfigurableGameRule<Boolean, ModConfigSpec.BooleanValue> STIFF_COMBO_ATTACKS = create(
 			  "stiffComboAttacks"
 			, GameRuleCategory.PLAYER
-			, configBuilder -> configBuilder.define("default_gamerule.stiffComboAttacks", true)
+			, configBuilder -> configBuilder.define("default_gamerule.stiffComboAttacks", false)
 			, RuleType.BOOLEAN
 			, true
 	);
