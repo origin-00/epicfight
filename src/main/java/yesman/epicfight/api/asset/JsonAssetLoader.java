@@ -103,6 +103,11 @@ public class JsonAssetLoader {
                 }
 
                 if (inputstream == null) {
+                    // A mod that is not an FML container (a Connector-loaded Fabric mod) shares this classloader
+                    inputstream = JsonAssetLoader.class.getClassLoader().getResourceAsStream("assets/" + resourceLocation.getNamespace() + "/" + resourceLocation.getPath());
+                }
+
+                if (inputstream == null) {
                     throw new NoSuchElementException("No file named " + resourceLocation.toString());
                 }
 

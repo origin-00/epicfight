@@ -260,6 +260,7 @@ public class EpicFightMod {
     		AnimationManager.addNoWarningModId(EPICSKINS_MODID);
 			AnimationRegistryEvent animationregistryevent = new AnimationRegistryEvent();
     		ModLoader.postEvent(animationregistryevent);
+    		AnimationManager.addAddonBuilders(animationregistryevent);
     		animationregistryevent.getBuilders().stream().sorted(Comparator.comparing(AnimationManager.AnimationBuilder::namespace)).forEach(builder -> builder.task().accept(builder));
     	});
     }

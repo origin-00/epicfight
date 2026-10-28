@@ -476,6 +476,28 @@ public class AnimationManager extends SimplePreparableReloadListener<List<Identi
 		}
 	}
 	
+	private static final Map<String, Consumer<AnimationBuilder>> ADDON_BUILDERS = new java.util.LinkedHashMap<>();
+
+	/// Registers an animation builder without the mod event bus, for mods that have none (Sinytra
+	/// Connector's Fabric mods). Call before common setup; the builder joins [AnimationRegistryEvent].
+	public static synchronized void registerAddonBuilder(String namespace, Consumer<AnimationBuilder> build) {
+		if (addonBuildersConsumed) {
+			EpicFight.LOGGER.warn("Animation builder '{}' registered after the animation registry was built; building it now", namespace);
+			AnimationBuilder builder = new AnimationBuilder(namespace, build);
+			build.accept(builder);
+			return;
+		}
+
+		ADDON_BUILDERS.put(namespace, build);
+	}
+
+	public static synchronized void addAddonBuilders(AnimationRegistryEvent event) {
+		ADDON_BUILDERS.forEach(event::newBuilder);
+		addonBuildersConsumed = true;
+	}
+
+	private static boolean addonBuildersConsumed;
+
 	public static class AnimationRegistryEvent extends Event implements IModBusEvent {
 		private final List<AnimationBuilder> builders = Lists.newArrayList();
 		private final Set<String> namespaces = Sets.newHashSet();
