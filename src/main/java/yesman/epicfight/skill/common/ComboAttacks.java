@@ -42,6 +42,10 @@ public class ComboAttacks extends Skill {
 	/// Decides if the animation used for combo attack
 	public static final IndependentVariableKey<Boolean> COMBO = AnimationVariables.unsyncIndependent(animator -> false, false);
 	
+    /// Client-side writers of extra arguments for a combo attack request, read on the server from
+    /// [ComboAttackEvent#getArguments]. Registered once at client start-up.
+    public static final java.util.List<java.util.function.BiConsumer<SkillContainer, CompoundTag>> ARGUMENT_WRITERS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
 	public static SkillBuilder<?> createComboAttackBuilder() {
 		return new SkillBuilder<>(ComboAttacks::new).setCategory(SkillCategories.BASIC_ATTACK).setActivateType(ActivateType.ONE_SHOT).setResource(Resource.NONE);
 	}
@@ -104,6 +108,12 @@ public class ComboAttacks extends Skill {
     }
 
 	@Override
+	public void gatherArguments(SkillContainer container, yesman.epicfight.client.events.engine.ControlEngine controlEngine, CompoundTag arguments) {
+		super.gatherArguments(container, controlEngine, arguments);
+		ARGUMENT_WRITERS.forEach(writer -> writer.accept(container, arguments));
+	}
+
+	@Override
 	public boolean isExecutableState(PlayerPatch<?> executor) {
 		EntityState playerState = executor.getEntityState();
 		Player player = executor.getOriginal();
@@ -120,7 +130,7 @@ public class ComboAttacks extends Skill {
 			skillConsumeEvent.getResourceType().consumer.consume(skillContainer, executor, skillConsumeEvent.getAmount());
 		}
 
-        ComboAttackEvent comboAttackEvent = new ComboAttackEvent(executor);
+        ComboAttackEvent comboAttackEvent = new ComboAttackEvent(executor, args);
         EpicFightEventHooks.Player.COMBO_ATTACK.postWithListener(comboAttackEvent, executor.getEventListener());
 
 		if (comboAttackEvent.isCanceled()) {
@@ -172,7 +182,13 @@ public class ComboAttacks extends Skill {
             }
 		}
 
-        if (!airAttack && !dashAttack) dataManager.setData(EpicFightSkillDataKeys.COMBO_COUNTER, comboCounter);
+        if (comboAttackEvent.getMotionOverride() != null) {
+            attackMotion = comboAttackEvent.getMotionOverride();
+            dashAttack = false;
+            airAttack = false;
+        } else if (!airAttack && !dashAttack) {
+            dataManager.setData(EpicFightSkillDataKeys.COMBO_COUNTER, comboCounter);
+        }
 
         if (attackMotion != null && this.checkConsumption(skillContainer, dashAttack, airAttack)) {
             // Remove an existing data
