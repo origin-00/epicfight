@@ -45,7 +45,6 @@ import yesman.epicfight.api.client.input.action.MinecraftInputAction;
 import yesman.epicfight.api.event.types.player.SkillCastEvent;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.screen.EmoteWheelScreen;
-import yesman.epicfight.client.gui.screen.SkillEditScreen;
 import yesman.epicfight.client.gui.screen.config.EpicFightSettingScreen;
 import yesman.epicfight.client.input.InputUtils;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
@@ -59,7 +58,6 @@ import yesman.epicfight.skill.modules.ChargeableSkill;
 import yesman.epicfight.skill.modules.HoldableSkill;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.skill.PlayerSkills;
 import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 import java.util.HashSet;
@@ -153,8 +151,6 @@ public class ControlEngine implements IEventBasedEngine {
         if (this.playerpatch == null) {
             return;
         }
-
-        InputManager.triggerOnPress(EpicFightInputAction.OPEN_SKILL_SCREEN, this::openSkillEditor);
 
         InputManager.triggerOnPress(EpicFightInputAction.OPEN_CONFIG_SCREEN, this::openConfig);
 
@@ -357,15 +353,6 @@ public class ControlEngine implements IEventBasedEngine {
             ClientConfig.cameraVerticalLocation = Math.max(-2, ClientConfig.cameraVerticalLocation - 1);
         }
 	}
-
-    private void openSkillEditor() {
-        final PlayerSkills playerSkills = this.playerpatch.getPlayerSkills();
-        if (playerSkills == null) {
-            return;
-        }
-
-        this.minecraft().setScreen(new SkillEditScreen(this.player, playerSkills));
-    }
 
     private void openConfig() {
     	this.minecraft().setScreen(new EpicFightSettingScreen(null, null));
